@@ -1,10 +1,10 @@
-/* NOTIFYSYNC V5.8.2.0 (Jellyfin 12 preview) */
+/* NOTIFYSYNC V5.8.3.0 (Jellyfin 12 preview) */
 (function () {
     // Single source for the version this file reports. It used to be spelled out a
     // second time inside the Authorization header, where it silently stayed at
     // 5.7.15.0 across a dozen releases — a literal nobody thinks to update is a
     // literal that lies. Bump it with the header comment above, in one place.
-    const NS_VERSION = '5.8.2.0';
+    const NS_VERSION = '5.8.3.0';
     let currentData = [];
     let groupedData = [];
     let firstLoadDone = false;
@@ -348,10 +348,15 @@
                     const seasons = subset.map(e => e.ParentIndexNumber);
                     const episodes = subset.map(e => e.IndexNumber);
                     const seriesKey = latest.SeriesId || latest.Id;
-                    // Id stays the series id — it is what navigation opens. CardId addresses
-                    // this card alone, and MemberIds says exactly what it stands for, so a
-                    // dismissal never reaches beyond it.
-                    result.push({ ...latest, IsGroup: true, GroupCount: subset.length, Name: latest.SeriesName || latest.Name, Id: seriesKey, CardId: seriesKey + '#' + subsetKey, MemberIds: subset.map(e => e.Id), IsNew: hasNew, Seasons: seasons, Episodes: episodes, IsFavorite: subset.some(e => e.IsFavorite) });
+                    // Open what the card actually announces. "Season 4 • Ep. 1-12" should land
+                    // on that season, not on the series — which is what music already did, a
+                    // track's container being its album. A batch spanning two seasons keeps
+                    // the series, because that is what it describes.
+                    const oneSeason = latest.SeasonId && subset.every(e => e.SeasonId === latest.SeasonId);
+                    // Id stays the series id — grouping and the favorite lookup key on it.
+                    // CardId addresses this card alone, MemberIds says exactly what it stands
+                    // for, and NavId is where a click goes.
+                    result.push({ ...latest, IsGroup: true, GroupCount: subset.length, Name: latest.SeriesName || latest.Name, Id: seriesKey, NavId: oneSeason ? latest.SeasonId : seriesKey, CardId: seriesKey + '#' + subsetKey, MemberIds: subset.map(e => e.Id), IsNew: hasNew, Seasons: seasons, Episodes: episodes, IsFavorite: subset.some(e => e.IsFavorite) });
                 } else { result.push(latest); }
             });
         });
@@ -703,7 +708,7 @@
             }
 
             const safeHeroId = escapeHtml(hero.CardId || hero.Id);
-            const heroNavId = escapeHtml(hero.RealItemId || hero.Id);
+            const heroNavId = escapeHtml(hero.NavId || hero.RealItemId || hero.Id);
             const heroFallbackImg = client.getUrl(`Items/${encodeURIComponent(hero.SeriesId || hero.Id)}/Images/Primary?quality=70&fillWidth=380&fillHeight=160&format=webp`);
             htmlParts.push(`<div class="hero-section" onclick="document.dispatchEvent(new CustomEvent('ns-navigate', {detail: '${heroNavId}'}))"><div class="hero-bg"><img src="${escapeHtml(heroImg)}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="if(this.dataset.fb){this.src=this.dataset.fb;this.removeAttribute('data-fb')}else{this.style.display='none'}" data-fb="${escapeHtml(heroFallbackImg)}"></div><div class="hero-overlay"></div><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('ns-dismiss', {detail: '${safeHeroId}'}))">close</button><div class="hero-content">${hero.IsUpgrade ? `<span class="hero-badge-upgrade">${escapeHtml(upgradeBadgeText(hero))}</span>` : `<span class="hero-badge">${T.badgeNew}</span>`}<div style="font-size:18px;font-weight:700;text-shadow:0 2px 4px #000;line-height:1.2;">${heroTitle}${hero.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div style="font-size:12px;opacity:0.8;margin-top:4px">${timeAgo(hero.DateCreated)} &bull; ${heroSub}</div></div></div>`);
         }
@@ -722,7 +727,7 @@
             if (isGroup) { sub = groupSubtitle(item); }
 
             const safeId = escapeHtml(item.CardId || item.Id);
-            const navId = escapeHtml(item.RealItemId || item.Id);
+            const navId = escapeHtml(item.NavId || item.RealItemId || item.Id);
             const badgeHtml = `<span class="item-badge">${escapeHtml(upgradeBadgeText(item))}</span>`;
             htmlParts.push(`<div class="dropdown-item ${item.IsUpgrade ? 'style-upgrade' : 'style-new'}" data-item-id="${safeId}" onclick="document.dispatchEvent(new CustomEvent('ns-navigate', {detail: '${navId}'}))"><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('ns-dismiss', {detail: '${safeId}'}))">close</button><div class="swipe-delete">${T.dismiss}</div><div class="thumb-wrapper"><img data-src="${imgUrl}" decoding="async" class="dropdown-thumb ${isMusic ? 'music' : ''}" loading="lazy" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.removeAttribute('data-fallback')}else{this.style.display='none'}" data-fallback="${fallbackUrl}"><span class="material-icons" style="color:#555;font-size:24px;">${isMusic ? 'album' : 'movie'}</span></div><div class="dropdown-info">${badgeHtml}<div class="dropdown-title" title="${title}">${title}${item.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div class="dropdown-subtitle" title="${sub}"><span class="sub-time">${timeAgo(item.DateCreated)} &bull;</span><span class="sub-text">${sub}</span></div></div></div>`);
         });
