@@ -10,6 +10,14 @@
     "imageUrl": "https://raw.githubusercontent.com/peterdu1109/NotifySync/main/icon.svg",
     "versions": [
       {
+        "version": "5.8.3.0",
+        "changelog": "<a style='color:white;text-decoration:none' href=\"https://github.com/peterdu1109/NotifySync/releases/tag/v5.8.3.0-jf12\">🧪 <span style='text-decoration:underline'>Jellyfin 12 Preview — Release Notes</span></a>",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/peterdu1109/NotifySync/releases/download/v5.8.3.0-jf12/NotifySync.zip",
+        "checksum": "8A702F66805A46BA7BABE6838260E3D8",
+        "timestamp": "2026-09-05T23:45:00Z"
+      },
+      {
         "version": "5.8.2.0",
         "changelog": "<a style='color:white;text-decoration:none' href=\"https://github.com/peterdu1109/NotifySync/releases/tag/v5.8.2.0-jf12\">🧪 <span style='text-decoration:underline'>Jellyfin 12 Preview — Release Notes</span></a>",
         "targetAbi": "12.0.0.0",
