@@ -2,10 +2,10 @@
   {
     "category": "UI",
     "guid": "95655672-2342-4321-8291-321312312312",
-    "name": "NotifySync (Jellyfin 12 Preview)",
-    "description": "🧪 JELLYFIN 12 PREVIEW — NotifySync built for Jellyfin 12.0 (rc3+). Requires manual bell injection (File Transformation has no Jellyfin 12 build yet). For Jellyfin 10.11.x use the regular repository.\n\nNotifySync transforms the Jellyfin interface by adding a native notification bell, inspired by major streaming platforms. Your users instantly see the latest additions — Movies, Series, Music — without ever leaving their current page.\n\n🧪 APERÇU JELLYFIN 12 — NotifySync compilé pour Jellyfin 12.0 (rc3+). Injection manuelle de la cloche requise. Pour Jellyfin 10.11.x, utilisez le dépôt standard.",
+    "name": "NotifySync (Jellyfin 12)",
+    "description": "🚀 JELLYFIN 12 — NotifySync built for Jellyfin 12.0 and newer. Install File Transformation for automatic injection, as on 10.11. For Jellyfin 10.11.x use the regular repository.\n\nNotifySync transforms the Jellyfin interface by adding a native notification bell, inspired by major streaming platforms. Your users instantly see the latest additions — Movies, Series, Music — without ever leaving their current page.\n\n🚀 JELLYFIN 12 — NotifySync compilé pour Jellyfin 12.0 et plus récent. Installez File Transformation pour l'injection automatique, comme en 10.11. Pour Jellyfin 10.11.x, utilisez le dépôt standard.",
     "owner": "ElieM & Peterdu1109",
-    "overview": "🧪 Jellyfin 12 preview channel for NotifySync. On Jellyfin 10.11.x use the main repository.\n🧪 Canal aperçu Jellyfin 12 pour NotifySync. Sur Jellyfin 10.11.x, utilisez le dépôt principal.",
+    "overview": "🚀 Jellyfin 12 channel for NotifySync. On Jellyfin 10.11.x use the main repository.\n🚀 Canal Jellyfin 12 pour NotifySync. Sur Jellyfin 10.11.x, utilisez le dépôt principal.",
     "supportUrl": "https://github.com/peterdu1109/NotifySync",
     "imageUrl": "https://raw.githubusercontent.com/peterdu1109/NotifySync/main/icon.svg",
     "versions": [
