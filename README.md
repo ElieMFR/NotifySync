@@ -36,7 +36,6 @@ NotifySync transforms the Jellyfin interface by adding a native notification bel
 - [🚀 Quick Start](#-quick-start)
 - [✨ Key Features](#-key-features)
 - [📦 Installation](#-installation)
-- [🚀 Jellyfin 12](#-jellyfin-12)
 - [⚙️ Configuration](#️-configuration)
 - [❓ Troubleshooting](#-troubleshooting)
 - [🎨 Recommended Theme](#-recommended-theme)
@@ -71,16 +70,21 @@ That's it. The bell appears in the top-right header and starts populating as new
 
 > [!IMPORTANT]
 > **Prerequisites:**
-> * Jellyfin **10.11.X**
+> * Jellyfin **10.11.x** or **12.x**
 > * A web client — browser on desktop, tablet or phone, or the mobile app. TV apps render natively and cannot display the bell.
 
 ### Steps
 1.  Open your Jellyfin dashboard > **Plugins** > **Repositories**.
-2.  Add a new repository:
-    ```
-    https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
-    ```
-3.  Go to the **Catalog**, find **NotifySync** and click **Install**.
+2.  Add the repository **for your Jellyfin version** — one build cannot target both:
+    *   Jellyfin **10.11.x**
+        ```
+        https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
+        ```
+    *   Jellyfin **12.x**
+        ```
+        https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/jellyfin-12/repository-12.json
+        ```
+3.  Go to the **Catalog** and install **NotifySync** — the Jellyfin 12 channel lists it as **NotifySync (Jellyfin 12)**.
 4.  Restart your Jellyfin server.
 
 ### 🔔 Enable the Bell
@@ -105,20 +109,6 @@ If you prefer not to install another plugin, manually add the script tag to your
 | **Docker** | `docker exec jellyfin sed -i 's\|</body>\|    <script src="/NotifySync/client.js"></script>\n</body>\|' /jellyfin/jellyfin-web/index.html` |
 | **Windows** | Add `<script src="/NotifySync/client.js"></script>` before `</body>` in `C:\Program Files\Jellyfin\Server\jellyfin-web\index.html` |
 
-## 🚀 Jellyfin 12
-
-NotifySync runs on **Jellyfin 12** from the `jellyfin-12` branch. Same plugin, same features — a separate channel only because a build cannot target 10.11 and 12 at once.
-
-> [!IMPORTANT]
-> Requires Jellyfin **12.0** or newer — do **not** add this repository on a 10.11 server.
-
-### Steps
-1.  In Jellyfin: **Dashboard → Plugins → Repositories** → add the Jellyfin 12 channel:
-    ```
-    https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/jellyfin-12/repository-12.json
-    ```
-2.  Go to the **Catalog**, install **NotifySync (Jellyfin 12)**, and restart Jellyfin.
-3.  Install **File Transformation** for automatic injection, exactly as on 10.11 — see [Enable the Bell](#-enable-the-bell). It ships builds for Jellyfin 12.0 and 12.1.
 
 ## ⚙️ Configuration
 
@@ -190,7 +180,6 @@ NotifySync transforme l'interface Jellyfin en y ajoutant une cloche de notificat
 - [🚀 Démarrage Rapide](#-démarrage-rapide)
 - [✨ Fonctionnalités](#-fonctionnalités)
 - [📦 Installation](#-installation-1)
-- [🚀 Jellyfin 12](#-jellyfin-12-1)
 - [⚙️ Configuration](#️-configuration-1)
 - [❓ Dépannage](#-dépannage)
 - [🎨 Thème recommandé](#-thème-recommandé)
@@ -225,16 +214,21 @@ C'est tout. La cloche apparaît en haut à droite de l'interface et se remplit a
 
 > [!IMPORTANT]
 > **Pré-requis :**
-> * Jellyfin **10.11.X**
+> * Jellyfin **10.11.x** ou **12.x**
 > * Un client web — navigateur sur ordinateur, tablette ou téléphone, ou l'application mobile. Les applications TV ont un rendu natif et ne peuvent pas afficher la cloche.
 
 ### Étapes
 1.  Tableau de bord Jellyfin > **Extensions** > **Dépôts**.
-2.  Ajoutez un nouveau dépôt :
-    ```
-    https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
-    ```
-3.  Allez dans le **Catalogue**, trouvez **NotifySync** et cliquez sur **Installer**.
+2.  Ajoutez le dépôt **correspondant à votre version de Jellyfin** — un même binaire ne peut pas viser les deux :
+    *   Jellyfin **10.11.x**
+        ```
+        https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
+        ```
+    *   Jellyfin **12.x**
+        ```
+        https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/jellyfin-12/repository-12.json
+        ```
+3.  Allez dans le **Catalogue** et installez **NotifySync** — sur le canal Jellyfin 12 il s'appelle **NotifySync (Jellyfin 12)**.
 4.  Redémarrez votre serveur Jellyfin.
 
 ### 🔔 Activer la Cloche
@@ -258,20 +252,6 @@ Si vous préférez ne pas installer d'extension tierce :
 | **Docker** | `docker exec jellyfin sed -i 's\|</body>\|    <script src="/NotifySync/client.js"></script>\n</body>\|' /jellyfin/jellyfin-web/index.html` |
 | **Windows** | Ajoutez `<script src="/NotifySync/client.js"></script>` avant `</body>` dans `index.html` |
 
-## 🚀 Jellyfin 12
-
-NotifySync tourne sur **Jellyfin 12** depuis la branche `jellyfin-12`. Même plugin, mêmes fonctionnalités — un canal séparé uniquement parce qu'un même binaire ne peut pas viser 10.11 et 12 à la fois.
-
-> [!IMPORTANT]
-> Nécessite Jellyfin **12.0** ou plus récent — n'ajoutez **pas** ce dépôt sur un serveur 10.11.
-
-### Étapes
-1.  Dans Jellyfin : **Tableau de bord → Extensions → Dépôts** → ajoutez le canal Jellyfin 12 :
-    ```
-    https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/jellyfin-12/repository-12.json
-    ```
-2.  Allez dans le **Catalogue**, installez **NotifySync (Jellyfin 12)**, puis redémarrez Jellyfin.
-3.  Installez **File Transformation** pour l'injection automatique, exactement comme en 10.11 — voir [Activer la cloche](#-activer-la-cloche). Il publie des builds pour Jellyfin 12.0 et 12.1.
 
 ## ⚙️ Configuration
 
