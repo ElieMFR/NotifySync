@@ -2,8 +2,8 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/version-5.8.3.0-blue" alt="Version">
-  <img src="https://img.shields.io/badge/.NET-10.0-purple" alt=".NET Framework">
-  <img src="https://img.shields.io/badge/Jellyfin-12.x-blueviolet" alt="Jellyfin">
+  <img src="https://img.shields.io/badge/.NET-9.0%20%7C%2010.0-purple" alt=".NET Framework">
+  <img src="https://img.shields.io/badge/Jellyfin-10.11.x%20%7C%2012.x-blueviolet" alt="Jellyfin">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
   <img src="https://img.shields.io/github/stars/peterdu1109/NotifySync?style=flat&color=yellow&cacheSeconds=3600" alt="GitHub stars">
   <img src="https://img.shields.io/github/downloads/peterdu1109/NotifySync/total?color=brightgreen&cacheSeconds=3600" alt="Downloads">
@@ -64,21 +64,27 @@ That's it. The bell appears in the top-right header and starts populating as new
 *   **Deletion history** — Admins get a log of recently deleted media, with configurable retention.
 *   **Synced across devices** — Read and cleared states live on the server: phone and desktop always agree.
 *   **Respects permissions** — Every user only ever sees content from libraries they can access, with strict per-user isolation.
-*   **Bilingual & responsive** — French / English following your Jellyfin language, on desktop, tablet, and mobile (*not supported on TV apps*).
+*   **Bilingual & responsive** — French / English following your Jellyfin language, on desktop, tablet, and mobile.
 
 ## 📦 Installation
 
 > [!IMPORTANT]
 > **Prerequisites:**
-> * Jellyfin **10.11.X**
+> * Jellyfin **10.11.x** or **12.x**
+> * A web client — browser on desktop, tablet or phone, or the mobile app. TV apps render natively and cannot display the bell.
 
 ### Steps
 1.  Open your Jellyfin dashboard > **Plugins** > **Repositories**.
-2.  Add a new repository:
-    ```
-    https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
-    ```
-3.  Go to the **Catalog**, find **NotifySync** and click **Install**.
+2.  Add the repository **for your Jellyfin version** — one build cannot target both:
+    *   Jellyfin **10.11.x**
+        ```
+        https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
+        ```
+    *   Jellyfin **12.x**
+        ```
+        https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/jellyfin-12/repository-12.json
+        ```
+3.  Go to the **Catalog** and install **NotifySync** — the Jellyfin 12 channel lists it as **NotifySync (Jellyfin 12)**.
 4.  Restart your Jellyfin server.
 
 ### 🔔 Enable the Bell
@@ -103,20 +109,6 @@ If you prefer not to install another plugin, manually add the script tag to your
 | **Docker** | `docker exec jellyfin sed -i 's\|</body>\|    <script src="/NotifySync/client.js"></script>\n</body>\|' /jellyfin/jellyfin-web/index.html` |
 | **Windows** | Add `<script src="/NotifySync/client.js"></script>` before `</body>` in `C:\Program Files\Jellyfin\Server\jellyfin-web\index.html` |
 
-## 🚀 Jellyfin 12
-
-This branch builds NotifySync for **Jellyfin 12**. Same plugin, same features as the 10.11 build — a separate channel only because one binary cannot target 10.11 and 12 at once.
-
-> [!IMPORTANT]
-> Requires Jellyfin **12.0** or newer — do **not** add this repository on a 10.11 server.
-
-### Steps
-1.  In Jellyfin: **Dashboard → Plugins → Repositories** → add:
-    ```
-    https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/jellyfin-12/repository-12.json
-    ```
-2.  Go to the **Catalog**, install **NotifySync (Jellyfin 12)**, and restart Jellyfin.
-3.  Install **File Transformation** for automatic injection, exactly as on 10.11 — see [Enable the Bell](#-enable-the-bell). It ships builds for Jellyfin 12.0 and 12.1.
 
 ## ⚙️ Configuration
 
@@ -145,7 +137,8 @@ Go to **Dashboard > Plugins > NotifySync**.
 | **Content missing** | Ensure the library is checked in "Monitored Libraries". |
 | **New TV episode missing** | Make sure the **Series-type library** containing the episode is checked in "Monitored Libraries". |
 | **Replaced file shows NEW instead of UPD** | Enable **Deleted Items Tracking** in config — required for the delete+re-import detection path. |
-| **A renamed file shows a false UPD badge** | UPD detection is **filename-based**. A plain rename of the same file is now suppressed automatically (identical file size). A false UPD can only slip through if the rename also changes the file's content/size, or for items added before v5.7.9 (no stored size) — just dismiss it. |
+| **A renamed file shows a false UPD badge** | Renaming alone is recognised and stays silent. A badge can still slip through if the rename changed the file itself — dismiss it, and it will not come back. |
+| **A moved series still shows as NEW** | Move detection needs **Deleted Items Tracking** enabled, and it only recognises a folder that kept its name — moving *and* renaming in one go is indistinguishable from a deletion followed by an addition. |
 | **Unauthorized content visible** | Plugin respects Jellyfin permissions — check user restrictions in the dashboard. |
 | **429 Error** | Wait 30 seconds between "Regenerate history" clicks (anti-spam). |
 | **Incompatible** | Ensure you are running Jellyfin **10.11.X**. |
@@ -215,21 +208,27 @@ C'est tout. La cloche apparaît en haut à droite de l'interface et se remplit a
 *   **Historique des suppressions** — Les admins disposent d'un journal des médias récemment supprimés, avec rétention paramétrable.
 *   **Synchronisé entre appareils** — États lu / vidé stockés côté serveur : téléphone et bureau toujours d'accord.
 *   **Respecte les permissions** — Chaque utilisateur ne voit que le contenu des bibliothèques auxquelles il a accès, avec une isolation stricte par utilisateur.
-*   **Bilingue & responsive** — Français / Anglais selon la langue de votre Jellyfin, sur bureau, tablette et mobile (*non supporté sur les apps TV*).
+*   **Bilingue & responsive** — Français / Anglais selon la langue de votre Jellyfin, sur bureau, tablette et mobile.
 
 ## 📦 Installation
 
 > [!IMPORTANT]
 > **Pré-requis :**
-> * Jellyfin **10.11.X**
+> * Jellyfin **10.11.x** ou **12.x**
+> * Un client web — navigateur sur ordinateur, tablette ou téléphone, ou l'application mobile. Les applications TV ont un rendu natif et ne peuvent pas afficher la cloche.
 
 ### Étapes
 1.  Tableau de bord Jellyfin > **Extensions** > **Dépôts**.
-2.  Ajoutez un nouveau dépôt :
-    ```
-    https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
-    ```
-3.  Allez dans le **Catalogue**, trouvez **NotifySync** et cliquez sur **Installer**.
+2.  Ajoutez le dépôt **correspondant à votre version de Jellyfin** — un même binaire ne peut pas viser les deux :
+    *   Jellyfin **10.11.x**
+        ```
+        https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
+        ```
+    *   Jellyfin **12.x**
+        ```
+        https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/jellyfin-12/repository-12.json
+        ```
+3.  Allez dans le **Catalogue** et installez **NotifySync** — sur le canal Jellyfin 12 il s'appelle **NotifySync (Jellyfin 12)**.
 4.  Redémarrez votre serveur Jellyfin.
 
 ### 🔔 Activer la Cloche
@@ -253,20 +252,6 @@ Si vous préférez ne pas installer d'extension tierce :
 | **Docker** | `docker exec jellyfin sed -i 's\|</body>\|    <script src="/NotifySync/client.js"></script>\n</body>\|' /jellyfin/jellyfin-web/index.html` |
 | **Windows** | Ajoutez `<script src="/NotifySync/client.js"></script>` avant `</body>` dans `index.html` |
 
-## 🚀 Jellyfin 12
-
-Cette branche compile NotifySync pour **Jellyfin 12**. Même plugin, mêmes fonctionnalités que la version 10.11 — un canal séparé uniquement parce qu'un même binaire ne peut pas viser 10.11 et 12 à la fois.
-
-> [!IMPORTANT]
-> Nécessite Jellyfin **12.0** ou plus récent — n'ajoutez **pas** ce dépôt sur un serveur 10.11.
-
-### Étapes
-1.  Dans Jellyfin : **Tableau de bord → Extensions → Dépôts** → ajoutez :
-    ```
-    https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/jellyfin-12/repository-12.json
-    ```
-2.  Allez dans le **Catalogue**, installez **NotifySync (Jellyfin 12)**, puis redémarrez Jellyfin.
-3.  Installez **File Transformation** pour l'injection automatique, exactement comme en 10.11 — voir [Activer la cloche](#-activer-la-cloche). Il publie des builds pour Jellyfin 12.0 et 12.1.
 
 ## ⚙️ Configuration
 
@@ -295,7 +280,8 @@ Allez dans **Tableau de bord > Extensions > NotifySync**.
 | **Contenu manquant** | Vérifiez que la bibliothèque est cochée dans "Bibliothèques Surveillées". |
 | **Nouvel épisode TV manquant** | Vérifiez que la **bibliothèque de type Série** contenant l'épisode est cochée dans "Bibliothèques Surveillées". |
 | **Fichier remplacé apparaît en NOUVEAU au lieu de MAJ** | Activez le **Suivi des Suppressions** dans la config — nécessaire pour la détection du scénario delete+ré-import. |
-| **Un fichier renommé affiche un faux badge MAJ** | La détection MAJ est **basée sur le nom de fichier**. Un simple renommage du même fichier est maintenant supprimé automatiquement (taille identique). Un faux MAJ ne peut subsister que si le renommage change aussi le contenu/la taille, ou pour les éléments ajoutés avant la v5.7.9 (taille non stockée) — retirez la notification. |
+| **Un fichier renommé affiche un faux badge MAJ** | Un simple renommage est reconnu et reste silencieux. Un badge ne peut subsister que si le renommage a aussi modifié le fichier — retirez la notification, elle ne reviendra pas. |
+| **Une série déplacée apparaît quand même en NOUVEAU** | La détection nécessite le **Suivi des Suppressions** activé, et elle ne reconnaît qu'un dossier ayant conservé son nom — déplacer *et* renommer en une fois est indistinguable d'une suppression suivie d'un ajout. |
 | **Contenu non autorisé visible** | Le plugin respecte les permissions Jellyfin — vérifiez les restrictions utilisateur. |
 | **Erreur 429** | Attendez 30 secondes entre chaque clic sur "Régénérer l'historique" (anti-spam). |
 | **Incompatible** | Vérifiez que vous utilisez Jellyfin **10.11.X**. |
