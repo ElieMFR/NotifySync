@@ -43,7 +43,7 @@ NotifySync transforms the Jellyfin interface by adding a native notification bel
 
 ## 🚀 Quick Start
 
-1. Add the repository in Jellyfin: `https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json`
+1. Add the repository for **your** Jellyfin version, 10.11.x or 12.x — see [Installation](#-installation).
 2. Install **NotifySync** from the Catalog → restart Jellyfin.
 3. Install the **File Transformation** plugin to inject the bell automatically (see [Enable the Bell](#-enable-the-bell)).
 
@@ -103,11 +103,17 @@ That's it. The bell appears in the top-right header and starts populating as new
 
 If you prefer not to install another plugin, manually add the script tag to your `index.html`:
 
-| Platform | Command |
-|----------|---------|
-| **Linux** | `sudo sed -i 's\|</body>\|    <script src="/NotifySync/client.js"></script>\n</body>\|' /usr/share/jellyfin/web/index.html` |
-| **Docker** | `docker exec jellyfin sed -i 's\|</body>\|    <script src="/NotifySync/client.js"></script>\n</body>\|' /jellyfin/jellyfin-web/index.html` |
-| **Windows** | Add `<script src="/NotifySync/client.js"></script>` before `</body>` in `C:\Program Files\Jellyfin\Server\jellyfin-web\index.html` |
+**Linux**
+```bash
+sudo sed -i 's|</body>|    <script src="/NotifySync/client.js"></script>\n</body>|' /usr/share/jellyfin/web/index.html
+```
+
+**Docker**
+```bash
+docker exec jellyfin sed -i 's|</body>|    <script src="/NotifySync/client.js"></script>\n</body>|' /jellyfin/jellyfin-web/index.html
+```
+
+**Windows** — add `<script src="/NotifySync/client.js"></script>` before `</body>` in `C:\Program Files\Jellyfin\Server\jellyfin-web\index.html`.
 
 
 ## ⚙️ Configuration
@@ -187,7 +193,7 @@ NotifySync transforme l'interface Jellyfin en y ajoutant une cloche de notificat
 
 ## 🚀 Démarrage Rapide
 
-1. Ajoutez le dépôt dans Jellyfin : `https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json`
+1. Ajoutez le dépôt correspondant à **votre** version de Jellyfin, 10.11.x ou 12.x — voir [Installation](#-installation-1).
 2. Installez **NotifySync** depuis le Catalogue → redémarrez Jellyfin.
 3. Installez le plugin **File Transformation** pour injecter la cloche automatiquement (voir [Activer la Cloche](#-activer-la-cloche)).
 
@@ -246,11 +252,17 @@ C'est tout. La cloche apparaît en haut à droite de l'interface et se remplit a
 
 Si vous préférez ne pas installer d'extension tierce :
 
-| Plateforme | Commande |
-|------------|----------|
-| **Linux** | `sudo sed -i 's\|</body>\|    <script src="/NotifySync/client.js"></script>\n</body>\|' /usr/share/jellyfin/web/index.html` |
-| **Docker** | `docker exec jellyfin sed -i 's\|</body>\|    <script src="/NotifySync/client.js"></script>\n</body>\|' /jellyfin/jellyfin-web/index.html` |
-| **Windows** | Ajoutez `<script src="/NotifySync/client.js"></script>` avant `</body>` dans `index.html` |
+**Linux**
+```bash
+sudo sed -i 's|</body>|    <script src="/NotifySync/client.js"></script>\n</body>|' /usr/share/jellyfin/web/index.html
+```
+
+**Docker**
+```bash
+docker exec jellyfin sed -i 's|</body>|    <script src="/NotifySync/client.js"></script>\n</body>|' /jellyfin/jellyfin-web/index.html
+```
+
+**Windows** — ajoutez `<script src="/NotifySync/client.js"></script>` avant `</body>` dans `index.html`.
 
 
 ## ⚙️ Configuration
