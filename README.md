@@ -104,27 +104,20 @@ If you prefer not to install another plugin, manually add the script tag to your
 | **Docker** | `docker exec jellyfin sed -i 's\|</body>\|    <script src="/NotifySync/client.js"></script>\n</body>\|' /jellyfin/jellyfin-web/index.html` |
 | **Windows** | Add `<script src="/NotifySync/client.js"></script>` before `</body>` in `C:\Program Files\Jellyfin\Server\jellyfin-web\index.html` |
 
-## 🧪 Jellyfin 12.0 (Preview)
+## 🚀 Jellyfin 12
 
-A preview build of NotifySync runs on **Jellyfin 12.0** (from the `jellyfin-12` branch). The bell, real-time updates and admin page are fully functional — but it's a separate channel and installs differently from the 10.11 stable build above.
+NotifySync runs on **Jellyfin 12** from the `jellyfin-12` branch. Same plugin, same features — a separate channel only because a build cannot target 10.11 and 12 at once.
 
 > [!IMPORTANT]
-> - Requires Jellyfin **12.0 rc3** or newer — do **not** add this on a 10.11 server.
-> - Automatic bell injection is the one piece still missing — see step 3.
+> Requires Jellyfin **12.0** or newer — do **not** add this repository on a 10.11 server.
 
 ### Steps
-1.  In Jellyfin: **Dashboard → Plugins → Repositories** → add the preview channel:
+1.  In Jellyfin: **Dashboard → Plugins → Repositories** → add the Jellyfin 12 channel:
     ```
     https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/jellyfin-12/repository-12.json
     ```
-2.  Go to the **Catalog**, install **NotifySync (Jellyfin 12 Preview)**, and restart Jellyfin.
-3.  **Enable the bell — manual injection is required.** The File Transformation plugin has no Jellyfin 12 build yet, so add the script tag before `</body>` in the web client's `index.html`. On the official server build it lives at `/jellyfin/jellyfin-web/index.html`:
-    ```
-    <script src="/NotifySync/client.js"></script>
-    ```
-
-> [!WARNING]
-> The manual injection must be **re-applied after every Jellyfin update** (Jellyfin overwrites `index.html`). Automatic injection returns once File Transformation ships a Jellyfin 12 build.
+2.  Go to the **Catalog**, install **NotifySync (Jellyfin 12)**, and restart Jellyfin.
+3.  Install **File Transformation** for automatic injection, exactly as on 10.11 — see [Enable the Bell](#-enable-the-bell). It ships builds for Jellyfin 12.0 and 12.1.
 
 ## ⚙️ Configuration
 
@@ -263,27 +256,20 @@ Si vous préférez ne pas installer d'extension tierce :
 | **Docker** | `docker exec jellyfin sed -i 's\|</body>\|    <script src="/NotifySync/client.js"></script>\n</body>\|' /jellyfin/jellyfin-web/index.html` |
 | **Windows** | Ajoutez `<script src="/NotifySync/client.js"></script>` avant `</body>` dans `index.html` |
 
-## 🧪 Jellyfin 12.0 (Aperçu)
+## 🚀 Jellyfin 12
 
-Une version aperçu de NotifySync tourne sur **Jellyfin 12.0** (branche `jellyfin-12`). La cloche, le temps réel et la page d'admin sont pleinement fonctionnels — mais c'est un canal séparé, avec une installation différente de la version stable 10.11 ci-dessus.
+NotifySync tourne sur **Jellyfin 12** depuis la branche `jellyfin-12`. Même plugin, mêmes fonctionnalités — un canal séparé uniquement parce qu'un même binaire ne peut pas viser 10.11 et 12 à la fois.
 
 > [!IMPORTANT]
-> - Nécessite Jellyfin **12.0 rc3** ou plus récent — ne l'ajoutez **pas** sur un serveur 10.11.
-> - L'injection automatique de la cloche est la seule pièce encore manquante — voir l'étape 3.
+> Nécessite Jellyfin **12.0** ou plus récent — n'ajoutez **pas** ce dépôt sur un serveur 10.11.
 
 ### Étapes
-1.  Dans Jellyfin : **Tableau de bord → Extensions → Dépôts** → ajoutez le canal aperçu :
+1.  Dans Jellyfin : **Tableau de bord → Extensions → Dépôts** → ajoutez le canal Jellyfin 12 :
     ```
     https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/jellyfin-12/repository-12.json
     ```
-2.  Allez dans le **Catalogue**, installez **NotifySync (Jellyfin 12 Preview)**, puis redémarrez Jellyfin.
-3.  **Activer la cloche — l'injection manuelle est requise.** Le plugin File Transformation n'a pas encore de build Jellyfin 12 : ajoutez la balise script avant `</body>` dans le `index.html` du client web. Sur le serveur officiel il se trouve à `/jellyfin/jellyfin-web/index.html` :
-    ```
-    <script src="/NotifySync/client.js"></script>
-    ```
-
-> [!WARNING]
-> L'injection manuelle doit être **réappliquée après chaque mise à jour de Jellyfin** (Jellyfin écrase `index.html`). L'injection automatique reviendra dès que File Transformation publiera un build Jellyfin 12.
+2.  Allez dans le **Catalogue**, installez **NotifySync (Jellyfin 12)**, puis redémarrez Jellyfin.
+3.  Installez **File Transformation** pour l'injection automatique, exactement comme en 10.11 — voir [Activer la cloche](#-activer-la-cloche). Il publie des builds pour Jellyfin 12.0 et 12.1.
 
 ## ⚙️ Configuration
 
