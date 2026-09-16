@@ -89,12 +89,16 @@ That's it. The bell appears in the top-right header and starts populating as new
 
 ### 🔔 Enable the Bell
 
-> [!TIP]
-> **Method 1: File Transformation (Highly Recommended) ✅**
-> Install the File Transformation plugin for automatic injection — no file editing required, and **survives Jellyfin updates**:
-> 1.  Add repository: `https://www.iamparadox.dev/jellyfin/plugins/manifest.json`
-> 2.  Install **File Transformation**.
-> 3.  Restart Jellyfin → `Ctrl+F5`.
+#### Method 1: File Transformation — recommended ✅
+
+Automatic injection, no file to edit, and it **survives Jellyfin updates**.
+
+1.  In **Dashboard → Plugins → Repositories**, add:
+    ```
+    https://www.iamparadox.dev/jellyfin/plugins/manifest.json
+    ```
+2.  Install **File Transformation** from the catalog.
+3.  Restart Jellyfin, then `Ctrl+F5` in your browser.
 
 #### Method 2: Manual Injection
 
@@ -239,11 +243,16 @@ C'est tout. La cloche apparaît en haut à droite de l'interface et se remplit a
 
 ### 🔔 Activer la Cloche
 
-> [!TIP]
-> **Méthode 1 : File Transformation (Recommandé) ✅**
-> Injection automatique sans modification de fichier, et **survit aux mises à jour de Jellyfin** :
-> 1.  Dépôt : `https://www.iamparadox.dev/jellyfin/plugins/manifest.json`
-> 2.  Installez **File Transformation** et redémarrez Jellyfin → `Ctrl+F5`.
+#### Méthode 1 : File Transformation — recommandée ✅
+
+Injection automatique, aucun fichier à modifier, et ça **survit aux mises à jour de Jellyfin**.
+
+1.  Dans **Tableau de bord → Extensions → Dépôts**, ajoutez :
+    ```
+    https://www.iamparadox.dev/jellyfin/plugins/manifest.json
+    ```
+2.  Installez **File Transformation** depuis le catalogue.
+3.  Redémarrez Jellyfin, puis `Ctrl+F5` dans votre navigateur.
 
 #### Méthode 2 : Injection Manuelle
 
