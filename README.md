@@ -117,7 +117,17 @@ sudo sed -i 's|</body>|    <script src="/NotifySync/client.js"></script>\n</body
 docker exec jellyfin sed -i 's|</body>|    <script src="/NotifySync/client.js"></script>\n</body>|' /jellyfin/jellyfin-web/index.html
 ```
 
-**Windows** — add `<script src="/NotifySync/client.js"></script>` before `</body>` in `C:\Program Files\Jellyfin\Server\jellyfin-web\index.html`.
+**Windows** — open the web client's `index.html` in a text editor started as administrator:
+
+```
+C:\Program Files\Jellyfin\Server\jellyfin-web\index.html
+```
+
+and paste this line just before the closing `</body>`:
+
+```html
+<script src="/NotifySync/client.js"></script>
+```
 
 
 ## ⚙️ Configuration
@@ -271,7 +281,17 @@ sudo sed -i 's|</body>|    <script src="/NotifySync/client.js"></script>\n</body
 docker exec jellyfin sed -i 's|</body>|    <script src="/NotifySync/client.js"></script>\n</body>|' /jellyfin/jellyfin-web/index.html
 ```
 
-**Windows** — ajoutez `<script src="/NotifySync/client.js"></script>` avant `</body>` dans `index.html`.
+**Windows** — ouvrez le `index.html` du client web dans un éditeur lancé en administrateur :
+
+```
+C:\Program Files\Jellyfin\Server\jellyfin-web\index.html
+```
+
+et collez cette ligne juste avant la balise `</body>` :
+
+```html
+<script src="/NotifySync/client.js"></script>
+```
 
 
 ## ⚙️ Configuration
