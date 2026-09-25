@@ -103,6 +103,15 @@ namespace NotifySync
         public bool IsFavorite { get; set; }
 
         /// <summary>
+        /// Gets or sets where this item's category sits in the admin's category list, which sets
+        /// the order of the bell's filters. Null for a category that list does not name — a
+        /// library without a mapping, a collection, "Other" — and those follow, newest first.
+        /// Transient per-response property set during API response building, not persisted.
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? CategoryOrder { get; set; }
+
+        /// <summary>
         /// Gets or sets the real Jellyfin item ID for synthetic notifications (e.g. collection items).
         /// When <see cref="Id"/> is a synthetic key like "col:{collectionId}:{itemId}", this stores
         /// the actual Jellyfin item ID so permission and played-status checks can resolve the real item.

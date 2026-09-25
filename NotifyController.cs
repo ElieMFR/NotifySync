@@ -7,14 +7,11 @@ using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
-using MediaBrowser.Controller.Net;
 using MediaBrowser.Model.Entities;
-using MediaBrowser.Model.Querying;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -399,6 +396,7 @@ namespace NotifySync
                 }
 
                 // Clone only the filtered items and apply per-user read state
+                var categoryOrder = BuildCategoryOrder(Plugin.Instance?.Configuration);
                 var filteredClones = new List<NotificationItem>(filtered.Count);
                 foreach (var n in filtered)
                 {
@@ -406,6 +404,7 @@ namespace NotifySync
                     userStates.TryGetValue(clone.Id, out var readState);
                     clone.IsRead = readState.IsRead && !IsBumpedSinceRead(n, readState.ReadAt);
                     clone.IsFavorite = favoriteIds.Contains(clone.Id);
+                    clone.CategoryOrder = categoryOrder.TryGetValue(clone.Category, out var rank) ? rank : null;
                     filteredClones.Add(clone);
                 }
 
@@ -688,6 +687,28 @@ namespace NotifySync
         }
 
         private static string NormalizeId(string userId) => IdHelper.NormalizeId(userId);
+
+        /// <summary>
+        /// Position of each category in the admin's category list — the order the up and down
+        /// arrows set, which the bell follows for its filters. A name used by several mappings
+        /// keeps its first position. Read at every render rather than stored, so a new order
+        /// applies to notifications that already exist.
+        /// </summary>
+        /// <param name="config">The plugin configuration.</param>
+        /// <returns>Category name to position, from 0.</returns>
+        private static Dictionary<string, int> BuildCategoryOrder(PluginConfiguration? config)
+        {
+            var order = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var map in config?.CategoryMappings ?? Enumerable.Empty<CategoryMapping>())
+            {
+                if (!string.IsNullOrEmpty(map.CategoryName))
+                {
+                    order.TryAdd(map.CategoryName, order.Count);
+                }
+            }
+
+            return order;
+        }
 
         /// <summary>
         /// True when the identifier can actually be resolved by the library manager —

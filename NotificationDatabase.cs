@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 
@@ -214,16 +212,22 @@ namespace NotifySync
                     }
                 }
 
-                // Purge LiveTvProgram deletions accumulated by earlier builds. The plugin no
-                // longer tracks them (they cycle naturally and don't serve any debug purpose
-                // in the Deletions tab); the historic rows are pure noise.
-                using (var purgeLiveTv = connection.CreateCommand())
+                // Keep only the rows detection can ever match — the rule the recording side now
+                // follows (NotificationManager.IsWorthRecording; keep the two lists in step): a
+                // film, episode or track with a file, or a container move detection reads.
+                // Earlier builds also recorded removals with no file and removals of things that
+                // are not media — live TV, channel catalogues, studios, playlists. On a test
+                // server they were the whole log, and none of them could ever match anything.
+                using (var purgeUnmatchable = connection.CreateCommand())
                 {
-                    purgeLiveTv.CommandText = "DELETE FROM DeletedItems WHERE Type = 'LiveTvProgram'";
-                    int purged = purgeLiveTv.ExecuteNonQuery();
+                    purgeUnmatchable.CommandText = @"
+                        DELETE FROM DeletedItems
+                        WHERE FilePath IS NULL OR FilePath = ''
+                           OR Type NOT IN ('Movie', 'Episode', 'Audio', 'Series', 'Season', 'Folder', 'MusicAlbum', 'MusicArtist')";
+                    int purged = purgeUnmatchable.ExecuteNonQuery();
                     if (purged > 0)
                     {
-                        _logger.LogInformation("NotifySync: {Count} legacy LiveTvProgram deletions purged from history.", purged);
+                        _logger.LogInformation("NotifySync: {Count} deletion record(s) that could never be matched removed from history.", purged);
                     }
                 }
             }
