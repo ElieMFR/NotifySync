@@ -3,19 +3,19 @@
     "category": "UI",
     "guid": "95655672-2342-4321-8291-321312312312",
     "name": "NotifySync (Beta)",
-    "description": "🧪 BETA CHANNEL — Pre-release versions of NotifySync for testers. Use the regular repository for stable installs.\n\nNotifySync transforms the Jellyfin interface by adding a native notification bell, inspired by major streaming platforms. Your users instantly see the latest additions — Movies, Series, Music — without ever leaving their current page.\n\n🧪 CANAL BETA — Versions pré-release de NotifySync pour testeurs. Utilisez le dépôt standard pour les installations stables.",
+    "description": "🧪 BETA CHANNEL — Pre-release versions of NotifySync for testers. Use the regular repository for stable installs.\n\nNotifySync transforms the Jellyfin interface by adding a native notification bell, inspired by major streaming platforms. Your users see the latest additions — Movies, Series, Music — without ever leaving their current page.\n\n🧪 CANAL BETA — Versions pré-release de NotifySync pour testeurs. Utilisez le dépôt standard pour les installations stables.",
     "owner": "ElieM & Peterdu1109",
     "overview": "🧪 Beta channel for NotifySync. Stable users should use the main repository.\n🧪 Canal beta pour NotifySync. Les utilisateurs en production doivent utiliser le dépôt principal.",
     "supportUrl": "https://github.com/peterdu1109/NotifySync",
     "imageUrl": "https://raw.githubusercontent.com/peterdu1109/NotifySync/main/icon.svg",
     "versions": [
       {
-        "version": "5.8.3.0",
-        "changelog": "<a style='color:white;text-decoration:none' href=\"https://github.com/peterdu1109/NotifySync/releases/tag/v5.8.3.0\">📋 <span style='text-decoration:underline'>Release Notes v5.8.3.0</span></a>",
+        "version": "5.8.3.1",
+        "changelog": "<a style='color:white;text-decoration:none' href=\"https://github.com/peterdu1109/NotifySync/releases/tag/v5.8.3.1-beta\">🧪 <span style='text-decoration:underline'>Beta — Release Notes</span></a>",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/peterdu1109/NotifySync/releases/download/v5.8.3.0/NotifySync.zip",
-        "checksum": "1043D57185D50B3207737A5F9DB1C95F",
-        "timestamp": "2026-09-05T23:15:00Z"
+        "sourceUrl": "https://github.com/peterdu1109/NotifySync/releases/download/v5.8.3.1-beta/NotifySync.zip",
+        "checksum": "BA5F2BEA1E91E22C593979AC11CC40FB",
+        "timestamp": "2026-09-25T09:00:00Z"
       }
     ]
   }
