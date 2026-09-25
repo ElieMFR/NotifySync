@@ -161,7 +161,7 @@ Go to **Dashboard > Plugins > NotifySync**.
 | **A moved series still shows as NEW** | Move detection needs **Deleted Items Tracking** enabled, and it only recognises a folder that kept its name — moving *and* renaming in one go is indistinguishable from a deletion followed by an addition. |
 | **Unauthorized content visible** | Plugin respects Jellyfin permissions — check user restrictions in the dashboard. |
 | **429 Error** | Wait 30 seconds between "Regenerate history" clicks (anti-spam). |
-| **Incompatible** | Ensure you are running Jellyfin **10.11.X**. |
+| **Incompatible** | Use the repository that matches your Jellyfin version, 10.11.x or 12.x — see [Installation](#-installation). |
 
 ## 🎨 Recommended Theme
 
@@ -325,7 +325,7 @@ Allez dans **Tableau de bord > Extensions > NotifySync**.
 | **Une série déplacée apparaît quand même en NOUVEAU** | La détection nécessite le **Suivi des Suppressions** activé, et elle ne reconnaît qu'un dossier ayant conservé son nom — déplacer *et* renommer en une fois est indistinguable d'une suppression suivie d'un ajout. |
 | **Contenu non autorisé visible** | Le plugin respecte les permissions Jellyfin — vérifiez les restrictions utilisateur. |
 | **Erreur 429** | Attendez 30 secondes entre chaque clic sur "Régénérer l'historique" (anti-spam). |
-| **Incompatible** | Vérifiez que vous utilisez Jellyfin **10.11.X**. |
+| **Incompatible** | Utilisez le dépôt qui correspond à votre version de Jellyfin, 10.11.x ou 12.x — voir [Installation](#-installation-1). |
 
 ## 🎨 Thème recommandé
 
