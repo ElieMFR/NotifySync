@@ -36,9 +36,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Jellyfin.Controller" Version="12.0.0-rc3" PrivateAssets="All" />
-    <PackageReference Include="Jellyfin.Model" Version="12.0.0-rc3" PrivateAssets="All" />
-    <PackageReference Include="Jellyfin.Data" Version="12.0.0-rc3" PrivateAssets="All" />
+    <PackageReference Include="Jellyfin.Controller" Version="12.0.0" PrivateAssets="All" />
+    <PackageReference Include="Jellyfin.Model" Version="12.0.0" PrivateAssets="All" />
+    <PackageReference Include="Jellyfin.Data" Version="12.0.0" PrivateAssets="All" />
 
     <!-- MUST match the Microsoft.Data.Sqlite version Jellyfin 12 ships (the plugin does NOT
          bundle it: PrivateAssets=All + CopyLocalLockFileAssemblies=false, so at runtime it

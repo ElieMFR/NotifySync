@@ -1,4 +1,4 @@
-/* NOTIFYSYNC V5.8.3.0 (Jellyfin 12 preview) */
+/* NOTIFYSYNC V5.8.3.0 (Jellyfin 12) */
 (function () {
     // Single source for the version this file reports. It used to be spelled out a
     // second time inside the Authorization header, where it silently stayed at
