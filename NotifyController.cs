@@ -445,28 +445,6 @@ namespace NotifySync
         }
 
         /// <summary>
-        /// Gets the last cleared timestamp for a user.
-        /// </summary>
-        /// <param name="userId">The user identifier.</param>
-        /// <returns>An ActionResult containing the last cleared timestamp.</returns>
-        [HttpGet("Cleared/{userId}")]
-        public ActionResult GetCleared([FromRoute] string userId)
-        {
-            if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out _))
-            {
-                return BadRequest("Invalid UserId");
-            }
-
-            if (!IsAuthorizedForUser(userId))
-            {
-                return Forbid();
-            }
-
-            long cleared = NotificationManager.Instance?.GetUserCleared(userId) ?? 0;
-            return Ok(new DateTime(cleared, DateTimeKind.Utc).ToString("O"));
-        }
-
-        /// <summary>
         /// Sets the cleared timestamp for a user.
         /// </summary>
         /// <param name="userId">The user identifier.</param>
@@ -678,40 +656,6 @@ namespace NotifySync
                 _logger.LogError(ex, "NotifySync: Error in BulkDismiss for user {UserId}.", userId);
                 return StatusCode(500, "Internal error.");
             }
-        }
-
-        /// <summary>
-        /// Gets all read/dismissed states for a user.
-        /// </summary>
-        /// <param name="userId">The user identifier.</param>
-        /// <returns>An ActionResult containing a dictionary of notification states.</returns>
-        [HttpGet("UserStates/{userId}")]
-        public ActionResult GetUserStates([FromRoute] string userId)
-        {
-            if (string.IsNullOrEmpty(userId))
-            {
-                return BadRequest();
-            }
-
-            if (!IsAuthorizedForUser(userId))
-            {
-                return Forbid();
-            }
-
-            var normalizedUserId = NormalizeId(userId);
-            var states = NotificationManager.Instance?.Db.GetUserStates(normalizedUserId)
-                ?? new Dictionary<string, (bool IsRead, bool IsDismissed, DateTime? ReadAt)>();
-
-            // Flatten to AOT-compatible Dictionary<string, bool> with composite keys
-            var result = new Dictionary<string, bool>();
-            foreach (var kvp in states)
-            {
-                result[kvp.Key + ":isRead"] = kvp.Value.IsRead;
-                result[kvp.Key + ":isDismissed"] = kvp.Value.IsDismissed;
-            }
-
-            byte[] serialized = JsonSerializer.SerializeToUtf8Bytes(result, PluginJsonContext.Default.DictionaryStringBoolean);
-            return new FileContentResult(serialized, "application/json");
         }
 
         /// <summary>
