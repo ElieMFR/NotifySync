@@ -993,7 +993,7 @@
         const bellBtn = document.createElement('button');
         bellBtn.id = 'netflix-bell';
         bellBtn.className = 'paper-icon-button-light headerButton headerButtonRight';
-        bellBtn.setAttribute('aria-label', T === strings.fr ? 'Notifications' : 'Notifications');
+        bellBtn.setAttribute('aria-label', 'Notifications');
         bellBtn.innerHTML = '<span class="material-icons notifications"></span>';
         bellBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); toggleDropdown(); };
         header.prepend(bellBtn);
