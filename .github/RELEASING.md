@@ -1,91 +1,54 @@
 # Releasing NotifySync
 
-Two channels: **stable** (default for end-users) and **beta** (opt-in for testers).
+Three channels, one version number per build.
 
-## Channels
-
-| Channel | Git branch | Tags | GitHub release | Repository file | Audience |
+| Channel | Branch | Tag | GitHub release | Catalog | Audience |
 |---|---|---|---|---|---|
-| **Stable** | `main` | `vX.Y.Z.W` | Latest | `repository.json` | Everyone |
-| **Beta** | `beta` | `vX.Y.Z.W-betaN` / `-rcN` | Pre-release ✅ | `repository-beta.json` | Opt-in testers |
+| **Stable** | `main` | `vX.Y.Z.0` | normal — becomes *Latest* | `repository.json` on `main` | Jellyfin 10.11.x |
+| **Beta** | `main` | `vX.Y.Z.W-beta`, W ≥ 1 | pre-release | `repository-beta.json` on `main` | testers on 10.11.x |
+| **Jellyfin 12** | `jellyfin-12` | `vX.Y.Z.0-jf12` | pre-release | `repository-12.json` on `jellyfin-12` | Jellyfin 12.x |
 
-Users opt into beta by adding a second repository URL in Jellyfin:
+- A stable number always ends in `.0`, a beta's never does. The admin page relies on it: its version link adds `-beta` when the last number is not 0, and `-jf12` on a 12.x server.
+- Jellyfin 12 releases stay **pre-releases** on purpose. GitHub gives *Latest* to the newest normal release, and a build for 12 must never be offered as the default download to 10.11 users.
+- The beta catalog holds a single entry, the current beta. The stable and Jellyfin 12 catalogs keep their history.
+
+## Where the version number lives
+
+- `NotifySync.csproj` — `AssemblyVersion`, `FileVersion`, `Version`
+- `meta.json` — `version`
+- `client.js` — the header comment, and on `jellyfin-12` the `NS_VERSION` constant just below it
+
+The admin page and the README carry no version number: the page reads it from the installed plugin, the README badge from GitHub.
+
+## Build and package
+
+```bash
+dotnet build -c Release
 ```
-https://raw.githubusercontent.com/peterdu1109/NotifySync/main/repository-beta.json
-```
 
-## Beta workflow (recommended for non-trivial changes)
+- The zip holds exactly `NotifySync.dll`, `meta.json` and `client.js`; Jellyfin provides everything else.
+- The catalog `checksum` is the zip's MD5, upper case. Check that the uploaded asset, the local zip and the catalog agree before announcing the release.
+- The catalog `timestamp` must be in the past **in UTC** (`date -u`) — Jellyfin can hide a version dated in the future.
+- Never raise `Jellyfin.*` or `Microsoft.Data.Sqlite` above what the target Jellyfin ships. The plugin binds to the server's copies, and .NET refuses a server version lower than the one the plugin was compiled against: the plugin then shows as *Malfunctioned*.
 
-1. **Develop on the `beta` branch.**
+## A beta
 
-   ```bash
-   rtk git checkout beta
-   rtk git pull
-   # ...code, commit...
-   rtk git push
-   ```
+1. Bump to the next beta number in the places above, build, zip.
+2. Tag `vX.Y.Z.W-beta` and publish it as a **pre-release** titled `🔔 NotifySync vX.Y.Z.W — Beta`, with notes following [RELEASE_NOTES_TEMPLATE.md](RELEASE_NOTES_TEMPLATE.md).
+3. Replace the entry of `repository-beta.json` — changelog label `🧪 Beta — Release Notes`, `targetAbi` `10.11.0.0`.
 
-2. **Cut a beta release.** Bump version with a beta suffix in `csproj`, `meta.json`, `client.js`, `ConfigurationPage.html`, `README.md`. Use `vX.Y.Z.W-beta1`, `-beta2`, then `-rc1` when feature-complete.
+## Promoting a beta to stable
 
-3. **Build + tag + push:**
+1. Bump to the next stable number, build, zip.
+2. Tag `vX.Y.Z.0` and publish it as a normal release titled `🔔 NotifySync vX.Y.Z.0`. Its notes gather the betas of the cycle.
+3. Add the entry to `repository.json` — changelog label `📋 Release Notes vX.Y.Z.0` — and point `repository-beta.json` at the same build.
+4. On every beta of the cycle, swap the beta banner for the *shipped as stable* one.
 
-   ```bash
-   rtk dotnet build --configuration Release
-   # zip + checksum as usual
-   rtk git tag v5.5.12.0-beta1
-   rtk git push origin v5.5.12.0-beta1
-   ```
+## Jellyfin 12
 
-4. **Create GitHub release with `--prerelease` flag:**
+`jellyfin-12` carries the same C# as `main`, built for .NET 10 against Jellyfin 12. Its `client.js` differs where the 12 web client does: where the bell goes, the authentication header, the WebSocket.
 
-   ```bash
-   rtk gh release create v5.5.12.0-beta1 NotifySync.zip \
-     --title "🧪 NotifySync v5.5.12.0-beta1" \
-     --prerelease \
-     --notes-file notes.md
-   ```
-
-   The `--prerelease` flag matters: it keeps the stable "Latest" pointer untouched.
-
-5. **Add the beta entry to `repository-beta.json` only** (not `repository.json`). Commit on `main` so the beta feed picks it up immediately.
-
-6. **Wait for testers.** Iterate with `-beta2`, `-beta3`, etc. on the `beta` branch as needed.
-
-7. **Promote to stable** when ready:
-
-   - Merge `beta` → `main` (fast-forward if possible, otherwise normal merge).
-   - Cut the stable release: drop the `-betaN` suffix from versions everywhere, build a fresh ZIP, tag `v5.5.12.0`, create release **without** `--prerelease`.
-   - Add the entry to `repository.json`.
-
-## Direct-to-stable workflow (small, low-risk fixes)
-
-For trivial bumps (CSS tweak, one-line bug fix) the beta channel is overkill. Continue with the standard:
-
-1. Work on `main`
-2. Bump version, build, zip
-3. Tag `vX.Y.Z.W`, push
-4. Create GitHub release (no `--prerelease`)
-5. Update `repository.json`
-
-Keep this path for the cases where you're confident in the change.
-
-## Don'ts
-
-- ❌ Don't add `-beta` entries to `repository.json` (stable feed) — that pushes them to every user.
-- ❌ Don't tag a stable version on the `beta` branch — promote via merge first, then tag on `main`.
-- ❌ Don't forget the `--prerelease` flag on `gh release create` for betas — without it, the stable "Latest" pointer shifts and Jellyfin's catalog will surface the beta.
-- ❌ Don't ship a beta with a placeholder ZIP — every beta still needs to be installable (testers depend on it).
-
-## What goes in beta vs stable
-
-Beta is for:
-- New features that need real-world testing (e.g., Phase B classification)
-- Refactors that touch the DB schema or event handlers
-- UI changes you want feedback on before everyone sees them
-- Anything you'd label *"this could regress something subtle"*
-
-Stable accepts:
-- Bug fixes after beta validation
-- Tiny CSS/text fixes
-- Security patches (skip beta if the fix is urgent)
-- Documentation updates (README, etc.) — these don't need a release at all most of the time
+1. Cherry-pick the code commits from `main`, settle `client.js` by hand if needed, build with 0 errors and 0 warnings.
+2. Bump the version in the places above, `NS_VERSION` included.
+3. Tag `vX.Y.Z.0-jf12` and publish it as a **pre-release** titled `🔔 NotifySync vX.Y.Z.0 — Jellyfin 12`, its notes opening with the 🚀 banner.
+4. Add the entry to `repository-12.json` on `jellyfin-12` — `targetAbi` `12.0.0.0`.

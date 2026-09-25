@@ -1,138 +1,70 @@
-# Release Notes Template
+# Release notes
 
-> Use this template for every GitHub release. Goal: an end-user can understand the value of the release in **30 seconds** without reading any code references.
+Every GitHub release has the same shape: English, then French.
 
-## Philosophy
+## Rules
 
-- **TL;DR first** — one sentence in plain language at the very top, before any heading, with its French translation in italics right below. If the reader stops here, they should still know what changed.
-- **Details next** — concrete examples, tables, comparisons. No code symbols.
-- **Technical details after** — a single collapsible `<details>` section (shared by both languages) for the curious. Internal class names, schema changes, regex patterns go here.
-- **Upgrading section last** — every release ends with the fixed `## 📦 Upgrading / Mise à jour` two-liner (auto-update + hard-refresh). Add extra steps only when this release has a non-standard migration.
+- **One short bold line per change**, saying what the user sees — never how it was done. No file, class or setting names, no code.
+- **No introduction.** The notes open on the sections, after the channel banner when there is one.
+- **Each version has its own wording.** Never copy the previous release's lines.
+- A beta lists every change since the last stable; a stable gathers the betas of its cycle.
+- Sections, in this order, only those that apply: `✨ New` or `✨ Improvement`, `🐛 Fixes`, `🔧 Internal — nothing changes on screen`.
 
-## ⛔ Hard Rules — above the `<details>` tag
+## Banners
 
-Anything visible to a non-developer **must not contain**:
-
-| Forbidden | Why | Replace with |
-|---|---|---|
-| Any token with a dot-and-CapitalCase (`PluginManifest.Id`, `ApiClient.getItems`) | Sounds like API docs | A description of the user-visible effect |
-| Any C# or JS keyword (`true`, `false`, `null`, `void`, `using`, `const`, `await`) | Code symbols | Plain sentence |
-| Any backtick code span like `client.js`, `meta.json`, `OnItemUpdated`, `IsMainConfigPage` | Internal names | Describe what the file/function does, in plain words |
-| `[JsonPropertyName(...)]`, `[ApiController]`, attribute brackets | Dev annotations | Skip — not relevant to users |
-| Version references like *"from 5.5.X.Y"*, *"introduced in 5.5.X.Y"*, *"reverted Fix #N"* | Internal history | Describe the current state, not the path |
-| Code blocks (` ``` `) | Implementation detail | Move to the `<details>` block |
-| Field/parameter names: `pathChanged`, `sizeRatio`, `UpgradeKind`, `EnableInMainMenu` | API surface | User-facing label: *"upgrade type"*, *"sidebar entry"* |
-| Database / SQL terms: `ALTER TABLE`, `nullable column`, `migration` | DBA-speak | *"Existing data keeps working"* |
-| Regex syntax: `[a-z0-9]`, `\b`, `(?:...)` | Compiler-speak | *"Detects filename keywords like BluRay, HEVC, VFF"* |
-
-The `<details>` block has no rules. Put all the jargon there.
-
-## ✅ Pre-publish checklist
-
-Before clicking "Publish release", verify ALL of these about the user-facing section (everything above the first `<details>` tag):
-
-1. [ ] **No backticks**, except around UI labels the user actually sees (`UPD`, `MAJ • Quality`).
-2. [ ] **No filenames** ending in `.cs`, `.js`, `.html`, `.json`.
-3. [ ] **No CamelCase identifiers** that aren't user-facing product names.
-4. [ ] **No reference to previous internal versions** like "fix from 5.5.X.Y".
-5. [ ] **A non-technical reader can rephrase the In Short section** without losing meaning.
-
-If you can't tick all 5, rewrite the section.
-
-## Format (copy-paste this)
+A beta opens with:
 
 ```markdown
-[One TL;DR sentence in English. What the user sees / experiences differently after this release.]
+> 🧪 **Beta channel.** To be validated before it reaches stable.
+> *Canal beta — à valider avant passage en stable.*
+```
 
-*[La même phrase TL;DR en français, en italique.]*
+Once it ships, that banner becomes:
 
----
+```markdown
+> ✅ **Validated and shipped as stable [vX.Y.Z.0](https://github.com/peterdu1109/NotifySync/releases/tag/vX.Y.Z.0).** Nothing left to test here.
+> *Validée et publiée en stable [vX.Y.Z.0](https://github.com/peterdu1109/NotifySync/releases/tag/vX.Y.Z.0). Plus rien à tester ici.*
+```
 
+A Jellyfin 12 release opens with:
+
+```markdown
+> 🚀 **For Jellyfin 12.0 and newer.** On Jellyfin 10.11.x, use the stable release — this build will not load there.
+> *Pour Jellyfin 12.0 et plus récent. En 10.11.x, utilisez la version stable — ce build ne s'y chargera pas.*
+```
+
+A stable release has no banner.
+
+## Shape
+
+```markdown
 ## 🇬🇧 English
 
-### 🐛 Fixes  (or ✨ What's New / 🛡️ Fixes — pick the emoji that fits)
+### 🐛 Fixes
 
-- **[Feature/Fix Title]** — Plain-language description. Concrete example if possible.
-- **[Feature/Fix Title]** — ...
+- **A card announcing one season now opens that season, not the whole series.**
+
+### 🔧 Internal — nothing changes on screen
+
+- **…**
 
 ---
 
 ## 🇫🇷 Français
 
-### 🐛 Corrections  (ou ✨ Quoi de neuf — même emoji que la section EN)
+### 🐛 Corrections
 
-- **[Titre Feature/Fix]** — Description en langage humain. Exemple concret si possible.
-- **[Titre Feature/Fix]** — ...
+- **Une carte qui annonce une saison ouvre cette saison, plus la série entière.**
 
----
+### 🔧 Interne — rien ne change à l'écran
 
-<details>
-<summary>🔧 Technical details</summary>
-
-[All the dev jargon, shared for both languages: file names, function names,
-schema changes, regex patterns, performance numbers, edge cases.
-End with "No database migration — self-contained update." when true.]
-
-</details>
-
----
-
-## 📦 Upgrading / Mise à jour
-
-Auto-updates from the stable channel on your next Jellyfin restart. Hard-refresh your browser (`Ctrl+Shift+R`) to pick up the new client script.
-
-*Mise à jour auto depuis le canal stable au prochain redémarrage Jellyfin. Rafraîchissez votre navigateur (`Ctrl+Shift+R`) pour charger le nouveau script client.*
+- **…**
 ```
 
-## DOs
+In French the sections are `✨ Nouveauté` or `✨ Amélioration`, `🐛 Corrections`, `🔧 Interne — rien ne change à l'écran`.
 
-- ✅ Use **tables** for feature comparisons (before/after)
-- ✅ Use **real filenames as content examples** (`Movie.WEB-DL.1080p.mkv → Movie.BluRay.2160p.mkv`) — these are user-recognizable, not code
-- ✅ Use **bold** for badge labels and UI elements (**UPD**, **Quality**, **MAJ • Codec**)
-- ✅ Lead with the **user benefit**, not the implementation
-- ✅ End with **"That's it."** when no reconfiguration is needed — reassures the user
-- ✅ When the release is part of a chain of iterations and on its own is incomplete, say so plainly: *"This release alone wasn't enough; the full result lands in 5.5.X.Y."* (this is fine because it's about user behavior, not internal mechanics)
+## Titles
 
-## DON'Ts
-
-- ❌ No internal class names in the user-facing section (`OnItemUpdated`, `ProcessBuffer`, etc. → only in `<details>`)
-- ❌ No file paths or line numbers in the user-facing section
-- ❌ No `pathChanged`, `ALTER TABLE`, `regex` etc. above the fold
-- ❌ No phrase like *"reverted Fix #N from version X.Y.Z"* — translate to user impact (*"file replacements now appear correctly again"*)
-- ❌ No emoji overload — 1-2 per section header, none in the body
-- ❌ Don't describe the bug in dev terms — describe the symptom
-
-## Example Translation (dev → user)
-
-| Dev wording (bad) | User wording (good) |
-|---|---|
-| Reverted `IsItemInEnabledLibrary` pre-filter in `OnItemAdded` | File replacements appear correctly again |
-| Added column `UpgradeKind TEXT NULL` with `ALTER TABLE` migration | New sub-label on the UPD badge tells you what changed |
-| `pathChanged \|\| (sizeChanged && dateChanged)` triggers `IsUpgrade = true` | The bell now detects when a file was replaced |
-| Phase A heuristic using path-based regex with word boundaries | Detection based on filename keywords like `BluRay`, `HEVC`, `VFF` |
-| Removed `installAdminSidebarIcon()` DOM-injection fallback from client.js | One icon instead of two in the admin sidebar entry |
-| Set `MenuIcon = "notifications"` on `PluginPageInfo` so Jellyfin renders the bell | NotifySync's bell icon shows up natively next to its sidebar entry |
-| `meta.json` was using `"id"` but `PluginManifest` is annotated `[JsonPropertyName("guid")]` | Removes a recurring error in your Jellyfin logs |
-| Refactored `ClassifyUpgrade` to add `DetectCodec(path)` returning `"av1"`/`"hevc"`/`"x264"` | Codec swaps between AV1 / x265 / x264 are now correctly labelled |
-
-## Title Format
-
-Always: `🔔 NotifySync vX.Y.Z.W` (matches the established pattern from earlier releases).
-
-## Repository Auto-Refresh Reminder
-
-Jellyfin caches the `repository.json` feed for a few minutes. When testing the release in Jellyfin:
-1. **Tableau de bord → Extensions → Catalogue → F5**
-2. If still stale: **Extensions → Dépôts** → remove and re-add the NotifySync repository
-
-Mention this in the release notes only if there's a known issue requiring it — otherwise it's just noise.
-
-## Timestamps
-
-The `timestamp` field in `repository.json` must be **strictly in the past** in UTC. Always:
-
-```bash
-date -u    # check actual UTC time first
-```
-
-Don't trust the local-zone date you might see in editor banners or system reminders — France crossed midnight before UTC did, so taking "today" as the local date can produce a UTC timestamp in the future, which Jellyfin can silently filter out of the catalog.
+- Stable: `🔔 NotifySync vX.Y.Z.0`
+- Beta: `🔔 NotifySync vX.Y.Z.W — Beta`
+- Jellyfin 12: `🔔 NotifySync vX.Y.Z.0 — Jellyfin 12`
