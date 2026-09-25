@@ -933,8 +933,8 @@ namespace NotifySync
 
                         // Folder rule LAST, and only when no deleted file matched. A file that
                         // replaced another is a replacement, whatever folder it landed in — and
-                        // a real quality upgrade dropped into a series moved less than six hours
-                        // ago would otherwise be swallowed as if it were part of the move.
+                        // a real quality upgrade dropped into a series that has just been moved
+                        // would otherwise be swallowed as if it were part of the move.
                         if (deletedRecord == null && MediaChangeDetector.CameFromDeletedFolder(notif.FilePath, deletedFolders, out var movedFrom))
                         {
                             _logger.LogDebug(
@@ -1599,7 +1599,15 @@ namespace NotifySync
                     SeriesName = (item as Episode)?.SeriesName,
                     SeriesId = UsableIdOrNull((item as Episode)?.SeriesId.ToString()),
                     SeasonId = UsableIdOrNull((item as Episode)?.SeasonId.ToString()),
-                    DateCreated = item.DateCreated.ToUniversalTime(),
+
+                    // When it joined the collection — which is now, give or take the 15-minute
+                    // scan — not when it joined the library. It used to take the item's own
+                    // DateCreated, so a film owned for two years and added to a collection today
+                    // was born two years old: deleted on creation once the store sits at its
+                    // 2000-entry cap, hidden from anyone who had cleared their list since, and
+                    // otherwise sorted to the bottom. That is the curated-collection case, the one
+                    // where this feature is the only announcement a title will ever get.
+                    DateCreated = DateTime.UtcNow,
                     Type = item.GetType().Name,
                     RunTimeTicks = item.RunTimeTicks,
                     ProductionYear = item.ProductionYear,

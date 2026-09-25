@@ -10,7 +10,6 @@ namespace NotifySync
     [JsonSerializable(typeof(List<NotificationItem>))]
     [JsonSerializable(typeof(List<DeletedItemRecord>))]
     [JsonSerializable(typeof(Dictionary<string, long>))]
-    [JsonSerializable(typeof(Dictionary<string, bool>))]
     internal sealed partial class PluginJsonContext : JsonSerializerContext
     {
     }

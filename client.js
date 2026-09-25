@@ -684,7 +684,10 @@
 
         if (hero) {
             const isGroup = !!hero.IsGroup;
-            let heroImg = (hero.BackdropImageTags && hero.BackdropImageTags[0]) ? client.getUrl(`Items/${encodeURIComponent(hero.Id)}/Images/Backdrop/0?tag=${encodeURIComponent(hero.BackdropImageTags[0])}&quality=70&fillWidth=380&fillHeight=160&format=webp`) : client.getUrl(`Items/${encodeURIComponent(hero.SeriesId || hero.Id)}/Images/Primary?quality=70&fillWidth=380&fillHeight=160&format=webp`);
+            // Same rule as the list cards: a collection card's own Id is synthetic, so images go
+            // through RealItemId — except on a group, whose Id is the series it stands for.
+            const heroItemId = isGroup ? hero.Id : (hero.RealItemId || hero.Id);
+            let heroImg = (hero.BackdropImageTags && hero.BackdropImageTags[0]) ? client.getUrl(`Items/${encodeURIComponent(heroItemId)}/Images/Backdrop/0?tag=${encodeURIComponent(hero.BackdropImageTags[0])}&quality=70&fillWidth=380&fillHeight=160&format=webp`) : client.getUrl(`Items/${encodeURIComponent(hero.SeriesId || heroItemId)}/Images/Primary?quality=70&fillWidth=380&fillHeight=160&format=webp`);
             if (isGroup && hero.SeriesId) heroImg = client.getUrl(`Items/${encodeURIComponent(hero.Id)}/Images/Backdrop/0?quality=70&fillWidth=380&fillHeight=160&format=webp`);
 
             let heroTitle = escapeHtml(hero.Name), heroSub = '';
@@ -699,7 +702,7 @@
 
             const safeHeroId = escapeHtml(hero.CardId || hero.Id);
             const heroNavId = escapeHtml(hero.NavId || hero.RealItemId || hero.Id);
-            const heroFallbackImg = client.getUrl(`Items/${encodeURIComponent(hero.SeriesId || hero.Id)}/Images/Primary?quality=70&fillWidth=380&fillHeight=160&format=webp`);
+            const heroFallbackImg = client.getUrl(`Items/${encodeURIComponent(hero.SeriesId || heroItemId)}/Images/Primary?quality=70&fillWidth=380&fillHeight=160&format=webp`);
             htmlParts.push(`<div class="hero-section" onclick="document.dispatchEvent(new CustomEvent('ns-navigate', {detail: '${heroNavId}'}))"><div class="hero-bg"><img src="${escapeHtml(heroImg)}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="if(this.dataset.fb){this.src=this.dataset.fb;this.removeAttribute('data-fb')}else{this.style.display='none'}" data-fb="${escapeHtml(heroFallbackImg)}"></div><div class="hero-overlay"></div><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('ns-dismiss', {detail: '${safeHeroId}'}))">close</button><div class="hero-content">${hero.IsUpgrade ? `<span class="hero-badge-upgrade">${escapeHtml(upgradeBadgeText(hero))}</span>` : `<span class="hero-badge">${T.badgeNew}</span>`}<div style="font-size:18px;font-weight:700;text-shadow:0 2px 4px #000;line-height:1.2;">${heroTitle}${hero.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div style="font-size:12px;opacity:0.8;margin-top:4px">${timeAgo(hero.DateCreated)} &bull; ${heroSub}</div></div></div>`);
         }
 
@@ -709,7 +712,11 @@
             if (sec !== curSection) { curSection = sec; htmlParts.push(`<div class="ns-section">${sec}</div>`); }
             const isMusic = item.Type === 'Audio';
             const isGroup = !!item.IsGroup;
-            const imgUrl = client.getUrl(`Items/${encodeURIComponent(item.Id)}/Images/Primary?tag=${encodeURIComponent(item.PrimaryImageTag || '')}&${isMusic ? 'fillHeight=100&fillWidth=100' : 'fillHeight=112&fillWidth=200'}&quality=80&format=webp`);
+            // A collection card's Id is synthetic ("col:{collection}:{item}") and Jellyfin
+            // answers 400 for it; the item itself is in RealItemId. Groups keep their Id — it is
+            // the series, while RealItemId on a group is merely its latest episode's.
+            const imgItemId = isGroup ? item.Id : (item.RealItemId || item.Id);
+            const imgUrl = client.getUrl(`Items/${encodeURIComponent(imgItemId)}/Images/Primary?tag=${encodeURIComponent(item.PrimaryImageTag || '')}&${isMusic ? 'fillHeight=100&fillWidth=100' : 'fillHeight=112&fillWidth=200'}&quality=80&format=webp`);
             const fallbackUrl = item.SeriesId ? client.getUrl(`Items/${encodeURIComponent(item.SeriesId)}/Images/Primary?${isMusic ? 'fillHeight=100&fillWidth=100' : 'fillHeight=112&fillWidth=200'}&quality=80&format=webp`) : '';
 
             let title = escapeHtml(item.Name), sub = escapeHtml(String(item.ProductionYear ?? ''));

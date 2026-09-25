@@ -21,7 +21,7 @@
     <Authors>ElieM, Peterdu1109</Authors>
     <Company>NotifySync</Company>
     <Product>NotifySync</Product>
-    <Description>NotifySync transforme l'interface de Jellyfin en ajoutant une icône de notification (cloche) native. Il permet à vos utilisateurs de voir instantanément les derniers ajouts (Films, Séries, Musique) sans quitter leur page actuelle.</Description>
+    <Description>NotifySync transforme l'interface de Jellyfin en ajoutant une icône de notification (cloche) native. Il permet à vos utilisateurs de voir les derniers ajouts (Films, Séries, Musique) sans quitter leur page actuelle.</Description>
     <Copyright>Copyright © 2026 ElieM &amp; Peterdu1109</Copyright>
     
     <!-- Optimizations -->
