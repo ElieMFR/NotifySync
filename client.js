@@ -353,6 +353,20 @@
         return result.sort((a, b) => new Date(b.DateCreated) - new Date(a.DateCreated));
     };
 
+    // The categories present, in the order the bell shows its filters: first the ones the
+    // admin listed, in the order set with the arrows of the Categories tab — the server sends
+    // each item's position as CategoryOrder — then the rest (a library without a mapping, a
+    // collection, "Other") newest first, which is the order they first appear in the list.
+    const orderedCategories = (items) => {
+        const rank = new Map();
+        items.forEach(i => {
+            if (!rank.has(i.Category)) rank.set(i.Category, Number.isInteger(i.CategoryOrder) ? i.CategoryOrder : Infinity);
+        });
+        return Array.from(rank.keys())
+            .filter(c => c !== 'All')
+            .sort((a, b) => (rank.get(a) === rank.get(b) ? 0 : (rank.get(a) < rank.get(b) ? -1 : 1)));
+    };
+
     const clearAllNotifications = async () => {
         const userId = getUserId();
         if (!userId) return;
@@ -640,15 +654,15 @@
         let filtered = groupedData || [];
         if (activeFilter === '__fav') filtered = filtered.filter(i => i.IsFavorite);
         else if (activeFilter !== 'All') filtered = filtered.filter(i => i.Category === activeFilter);
-        const cats = new Set(['All']); groupedData.forEach(i => cats.add(i.Category));
         const filterBar = drop.querySelector('.filter-bar');
         // Category pills only earn their place when they add a distinction:
         //   - 2+ distinct categories → show them all.
         //   - a single USER-NAMED category → show it (the user created it on
         //     purpose and expects to see it).
-        //   - a single "Other" (the default fallback for un-mapped libraries) →
-        //     hide it: it's an exact duplicate of "All" (same list).
-        const realCats = Array.from(cats).filter(c => c !== 'All');
+        //   - a single "Other" (left for items whose library cannot be identified —
+        //     an unmapped library now shows under its own name) → hide it: it's an
+        //     exact duplicate of "All" (same list).
+        const realCats = orderedCategories(groupedData);
         const showCats = realCats.length > 1 || (realCats.length === 1 && realCats[0] !== 'Other');
         const catList = showCats ? ['All', ...realCats] : ['All'];
         let pillsHtml = catList.map(c => `<div class="filter-pill ${activeFilter === c ? 'active' : ''}" data-category="${escapeHtml(c)}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">${T['filter' + c] || escapeHtml(c)}</div>`).join('');

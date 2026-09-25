@@ -6,8 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Data.Enums;
@@ -147,6 +145,17 @@ namespace NotifySync
         public void IncrementUserStateVersion(string normalizedUserId)
         {
             _userStateVersion.AddOrUpdate(normalizedUserId, 1, (_, v) => v + 1);
+        }
+
+        /// <summary>
+        /// Called when the plugin configuration is saved. What the bell shows depends on it — the
+        /// quota per category, the order of the filters — while every cached view is keyed on the
+        /// notifications alone, so a save used to reach the bell only once the library next
+        /// changed. Moving the version on makes it reach every user at their next refresh.
+        /// </summary>
+        public void OnConfigurationChanged()
+        {
+            Interlocked.Increment(ref _versionCounter);
         }
 
         /// <summary>
@@ -505,6 +514,31 @@ namespace NotifySync
             }
         }
 
+        /// <summary>
+        /// True for a removal the deletion log can ever use: a film, episode or track that had a
+        /// file — a replacement is recognised by comparing against that file's name and size — or
+        /// a container that move detection matches on by its path.
+        /// <para>
+        /// Everything else used to be recorded as well, and can never be matched to anything.
+        /// Measured on a test server, all 217 rows of the log were channel content with no file —
+        /// XFusion films, episodes, replays and live channels. On a production server, 37 of
+        /// 2,043: episodes with no file, studios and playlists. Keep the list of types in step
+        /// with the startup purge in NotificationDatabase.
+        /// </para>
+        /// </summary>
+        /// <param name="item">The item Jellyfin is removing.</param>
+        /// <returns><c>true</c> when the removal is worth a row in the log.</returns>
+        private static bool IsWorthRecording(BaseItem item)
+        {
+            if (string.IsNullOrEmpty(item.Path))
+            {
+                return false;
+            }
+
+            return item.GetType().Name is "Movie" or "Episode" or "Audio"
+                or "Series" or "Season" or "Folder" or "MusicAlbum" or "MusicArtist";
+        }
+
         private void OnItemRemoved(object? sender, ItemChangeEventArgs e)
         {
             if (e.Item == null)
@@ -532,10 +566,9 @@ namespace NotifySync
             // measured on a live server, one removal for the folder, none for the four episodes
             // that then arrived as adds. The folder's own path is the only trace left of where
             // those files came from, and its last segment survives the move unchanged.
-            // Folders without a path (Jellyfin also emits phantom "Saison inconnue" seasons)
-            // carry nothing usable, so they stay out.
+            // What is kept is decided by IsWorthRecording: only what detection can ever match.
             bool isFolderItem = e.Item.IsFolder || e.Item is Folder;
-            if (config != null && config.EnableDeletedTracking && (!isFolderItem || !string.IsNullOrEmpty(e.Item.Path)))
+            if (config != null && config.EnableDeletedTracking && IsWorthRecording(e.Item))
             {
                 try
                 {
@@ -1523,10 +1556,6 @@ namespace NotifySync
         }
 
         /// <summary>
-        /// Creates a notification from an item found in a monitored collection.
-        /// Unlike <see cref="CreateNotificationFromItem"/>, this does NOT check library membership.
-        /// </summary>
-        /// <summary>
         /// True for the material neither path should ever announce: declared extras, and the
         /// openings, endings and theme tracks Jellyfin files as season-zero episodes or as
         /// audio named after the show.
@@ -1575,6 +1604,10 @@ namespace NotifySync
             return false;
         }
 
+        /// <summary>
+        /// Creates a notification from an item found in a monitored collection.
+        /// Unlike <see cref="CreateNotificationFromItem"/>, this does NOT check library membership.
+        /// </summary>
         private NotificationItem? CreateNotificationFromCollectionItem(BaseItem item, string collectionName, Guid collectionId)
         {
             // Ignorer les dossiers
@@ -1634,6 +1667,43 @@ namespace NotifySync
             }
         }
 
+        /// <summary>
+        /// Name of the monitored library — or channel — an item was picked up through, which
+        /// becomes its category when no category mapping claims it.
+        /// </summary>
+        /// <param name="item">The library item.</param>
+        /// <param name="owners">Its ancestor ids, already resolved by the caller.</param>
+        /// <param name="config">The plugin configuration.</param>
+        /// <returns>The library or channel name, or <c>null</c> when none applies.</returns>
+        private string? MonitoredSourceName(BaseItem item, Guid[] owners, PluginConfiguration? config)
+        {
+            if (config == null)
+            {
+                return null;
+            }
+
+            var monitored = (config.EnabledLibraries ?? Enumerable.Empty<string>())
+                .Concat(config.ManualLibraryIds ?? Enumerable.Empty<string>());
+            foreach (var id in monitored)
+            {
+                if (!Guid.TryParse(id, out var libGuid) || libGuid == Guid.Empty)
+                {
+                    continue;
+                }
+
+                if (owners.Contains(libGuid) || (item.ChannelId != Guid.Empty && item.ChannelId == libGuid))
+                {
+                    var name = _libraryManager.GetItemById(libGuid)?.Name;
+                    if (!string.IsNullOrWhiteSpace(name))
+                    {
+                        return name;
+                    }
+                }
+            }
+
+            return null;
+        }
+
         private NotificationItem? CreateNotificationFromItem(BaseItem item)
         {
             if (!IsItemInEnabledLibrary(item))
@@ -1654,7 +1724,7 @@ namespace NotifySync
 
             try
             {
-                string category = "Other";
+                string? category = null;
                 var owners = item.GetAncestorIds().ToArray();
                 var config = Plugin.Instance?.Configuration;
 
@@ -1678,6 +1748,12 @@ namespace NotifySync
                         }
                     }
                 }
+
+                // No category of its own: file it under the library it was picked up from. It used
+                // to fall into one shared "Other" instead — no filters in the bell and a single
+                // quota for everything, the opposite of what the quota setting describes. A
+                // mapping still wins, so naming and grouping stay the admin's choice.
+                category ??= MonitoredSourceName(item, owners, config) ?? "Other";
 
                 var notif = new NotificationItem
                 {

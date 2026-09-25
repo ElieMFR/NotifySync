@@ -83,6 +83,17 @@ namespace NotifySync
         }
 
         /// <inheritdoc />
+        public override void UpdateConfiguration(BasePluginConfiguration configuration)
+        {
+            base.UpdateConfiguration(configuration);
+
+            // A save changes what the bell shows (quota, filter order) without touching a single
+            // notification — tell the manager, or the cached views would hide it until the
+            // library next changed.
+            _notificationManager?.OnConfigurationChanged();
+        }
+
+        /// <inheritdoc />
         public void Dispose()
         {
             _notificationManager?.Dispose();
