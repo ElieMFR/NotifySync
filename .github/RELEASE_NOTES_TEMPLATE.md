@@ -8,7 +8,7 @@ Every GitHub release has the same shape: English, then French.
 - **No introduction.** The notes open on the sections, after the channel banner when there is one.
 - **Each version has its own wording.** Never copy the previous release's lines.
 - A beta lists every change since the last stable; a stable gathers the betas of its cycle.
-- Sections, in this order, only those that apply: `✨ New` or `✨ Improvement`, `🐛 Fixes`, `🔧 Internal — nothing changes on screen`.
+- Sections, in this order, only those that apply: `🛡️ Security`, `✨ New` or `✨ Improvement`, `🐛 Fixes`, `🔧 Internal — nothing changes on screen`.
 
 ## Banners
 
@@ -61,7 +61,7 @@ A stable release has no banner.
 - **…**
 ```
 
-In French the sections are `✨ Nouveauté` or `✨ Amélioration`, `🐛 Corrections`, `🔧 Interne — rien ne change à l'écran`.
+In French the sections are `🛡️ Sécurité`, `✨ Nouveauté` or `✨ Amélioration`, `🐛 Corrections`, `🔧 Interne — rien ne change à l'écran`.
 
 ## Titles
 
