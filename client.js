@@ -1084,6 +1084,12 @@
 
     const setupEvents = () => {
         if (window.Events && window.ApiClient) {
+            // Jellyfin's web client announces every server message as 'message' — the event its
+            // own components listen to. The 10.11 client never emits 'websocketmessage': measured
+            // on a 10.11.11 server, two messages arrived as 'message' and none under the other
+            // name, so the bell only refreshed on navigation, focus or its 5-minute poll. Both
+            // are listened to; the handler debounces, so a client emitting both costs one fetch.
+            window.Events.on(window.ApiClient, "message", onWebSocketMessage);
             window.Events.on(window.ApiClient, "websocketmessage", onWebSocketMessage);
 
             // Detect Jellyfin user language preference
