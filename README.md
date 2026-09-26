@@ -46,8 +46,9 @@ NotifySync transforms the Jellyfin interface by adding a native notification bel
 1. Add the repository for **your** Jellyfin version, 10.11.x or 12.x — see [Installation](#-installation).
 2. Install **NotifySync** from the Catalog → restart Jellyfin.
 3. Install the **File Transformation** plugin to inject the bell automatically (see [Enable the Bell](#-enable-the-bell)).
+4. In **Dashboard → Plugins → NotifySync**, check the libraries to monitor, **Save**, then click **Regenerate history** — nothing is announced until at least one library is checked.
 
-That's it. The bell appears in the top-right header and starts populating as new content is added.
+That's it. The bell appears in the top-right header with your latest additions, and keeps up as new content arrives.
 
 ## ✨ Key Features
 
@@ -165,7 +166,7 @@ Go to **Dashboard > Plugins > NotifySync**.
 
 ## 🎨 Recommended Theme
 
-NotifySync integrates beautifully with the [**ElegantFin Cinema Edition**](https://github.com/peterdu1109/ElegantFin) theme — a streaming-inspired CSS theme for Jellyfin with a full suite of cinematic modules, including dedicated styling for the NotifySync notification bell.
+NotifySync integrates beautifully with the [**ElegantFin Cinema Edition**](https://github.com/peterdu1109/ElegantFin) theme — a streaming-inspired CSS theme for Jellyfin with a full suite of cinematic modules.
 
 Both projects work flawlessly together on **PC (browser)** and **mobile (Jellyfin app + browser)**.
 
@@ -210,8 +211,9 @@ NotifySync transforme l'interface Jellyfin en y ajoutant une cloche de notificat
 1. Ajoutez le dépôt correspondant à **votre** version de Jellyfin, 10.11.x ou 12.x — voir [Installation](#-installation-1).
 2. Installez **NotifySync** depuis le Catalogue → redémarrez Jellyfin.
 3. Installez le plugin **File Transformation** pour injecter la cloche automatiquement (voir [Activer la Cloche](#-activer-la-cloche)).
+4. Dans **Tableau de bord → Extensions → NotifySync**, cochez les bibliothèques à surveiller, **Sauvegardez**, puis cliquez sur **Régénérer l'historique** — rien n'est annoncé tant qu'aucune bibliothèque n'est cochée.
 
-C'est tout. La cloche apparaît en haut à droite de l'interface et se remplit au fur et à mesure des nouveaux ajouts.
+C'est tout. La cloche apparaît en haut à droite de l'interface avec vos derniers ajouts, et suit les nouveautés au fil de l'eau.
 
 ## ✨ Fonctionnalités
 
@@ -329,7 +331,7 @@ Allez dans **Tableau de bord > Extensions > NotifySync**.
 
 ## 🎨 Thème recommandé
 
-NotifySync s'intègre parfaitement avec le thème [**ElegantFin Cinema Edition**](https://github.com/peterdu1109/ElegantFin) — un thème CSS inspiré des plateformes de streaming pour Jellyfin avec une suite complète de modules cinématographiques, dont un styling dédié pour la cloche de notifications NotifySync.
+NotifySync s'intègre parfaitement avec le thème [**ElegantFin Cinema Edition**](https://github.com/peterdu1109/ElegantFin) — un thème CSS inspiré des plateformes de streaming pour Jellyfin avec une suite complète de modules cinématographiques.
 
 Les deux projets fonctionnent ensemble sur **PC (navigateur)** et **mobile (app Jellyfin + navigateur)**.
 
