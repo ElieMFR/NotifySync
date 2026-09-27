@@ -991,20 +991,21 @@
                     page.querySelectorAll('.ns-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === tabName));
                 },
 
-                // One version number can be published under three tags: vX.Y.Z.W (stable),
-                // vX.Y.Z.W-beta and vX.Y.Z.W-jf12. A beta's number never ends in .0 and a
-                // stable's always does — true of every release since 5.6 — and the Jellyfin 12
-                // build is the one running on a 12.x server. Linking the bare number sent every
-                // beta tester to a 404, and Jellyfin 12 users to the other build's notes.
+                // One version number can be published under four tags: vX.Y.Z.W (stable),
+                // vX.Y.Z.W-beta, vX.Y.Z.W-jf12 and vX.Y.Z.W-jf12-beta. A beta's number never
+                // ends in .0 and a stable's always does — true of every release since 5.6 — and
+                // the Jellyfin 12 builds are the ones running on a 12.x server. Linking the bare
+                // number sent every beta tester to a 404, and Jellyfin 12 users to the other
+                // build's notes.
                 releaseTagSuffix: async function (version) {
                     const parts = String(version).split('.');
-                    if (parts.length === 4 && parts[3] !== '0') return '-beta';
+                    const beta = parts.length === 4 && parts[3] !== '0' ? '-beta' : '';
                     try {
                         const info = await ApiClient.getJSON(ApiClient.getUrl('System/Info/Public'));
                         const major = parseInt(String((info && info.Version) || '').split('.')[0], 10);
-                        if (major >= 12) return '-jf12';
-                    } catch (e) { /* server version unknown: the stable tag is the likelier one */ }
-                    return '';
+                        if (major >= 12) return '-jf12' + beta;
+                    } catch (e) { /* server version unknown: the 10.11 tag is the likelier one */ }
+                    return beta;
                 },
 
                 updateCounters: function (page) {
