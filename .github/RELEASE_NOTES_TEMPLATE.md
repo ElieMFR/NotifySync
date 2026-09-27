@@ -33,7 +33,7 @@ A Jellyfin 12 release opens with:
 > *Pour Jellyfin 12.0 et plus récent. En 10.11.x, utilisez la version stable — ce build ne s'y chargera pas.*
 ```
 
-A stable release has no banner.
+A Jellyfin 12 beta opens with the beta banner, then the 🚀 one; once it ships, its link goes to `vX.Y.Z.0-jf12`. A stable release has no banner.
 
 ## Shape
 
@@ -68,3 +68,4 @@ In French the sections are `🛡️ Sécurité`, `✨ Nouveauté` or `✨ Améli
 - Stable: `🔔 NotifySync vX.Y.Z.0`
 - Beta: `🔔 NotifySync vX.Y.Z.W — Beta`
 - Jellyfin 12: `🔔 NotifySync vX.Y.Z.0 — Jellyfin 12`
+- Jellyfin 12 beta: `🔔 NotifySync vX.Y.Z.W — Jellyfin 12 — Beta`

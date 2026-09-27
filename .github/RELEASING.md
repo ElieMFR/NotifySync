@@ -1,16 +1,17 @@
 # Releasing NotifySync
 
-Three channels, one version number per build.
+Four channels, one version number per build.
 
 | Channel | Branch | Tag | GitHub release | Catalog | Audience |
 |---|---|---|---|---|---|
 | **Stable** | `main` | `vX.Y.Z.0` | normal — becomes *Latest* | `repository.json` on `main` | Jellyfin 10.11.x |
 | **Beta** | `main` | `vX.Y.Z.W-beta`, W ≥ 1 | pre-release | `repository-beta.json` on `main` | testers on 10.11.x |
 | **Jellyfin 12** | `jellyfin-12` | `vX.Y.Z.0-jf12` | pre-release | `repository-12.json` on `jellyfin-12` | Jellyfin 12.x |
+| **Jellyfin 12 beta** | `jellyfin-12` | `vX.Y.Z.W-jf12-beta`, W ≥ 1 | pre-release | `repository-12-beta.json` on `jellyfin-12` | testers on 12.x |
 
-- A stable number always ends in `.0`, a beta's never does. The admin page relies on it: its version link adds `-beta` when the last number is not 0, and `-jf12` on a 12.x server.
+- A stable number always ends in `.0`, a beta's never does. The admin page relies on it: its version link adds `-jf12` on a 12.x server, then `-beta` when the last number is not 0.
 - Jellyfin 12 releases stay **pre-releases** on purpose. GitHub gives *Latest* to the newest normal release, and a build for 12 must never be offered as the default download to 10.11 users.
-- The beta catalog holds a single entry, the current beta. The stable and Jellyfin 12 catalogs keep their history.
+- Each beta catalog holds a single entry, the current beta. The stable and Jellyfin 12 catalogs keep their history.
 
 ## Where the version number lives
 
@@ -51,4 +52,9 @@ dotnet build -c Release
 1. Cherry-pick the code commits from `main`, settle `client.js` by hand if needed, build with 0 errors and 0 warnings.
 2. Bump the version in the places above, `NS_VERSION` included.
 3. Tag `vX.Y.Z.0-jf12` and publish it as a **pre-release** titled `🔔 NotifySync vX.Y.Z.0 — Jellyfin 12`, its notes opening with the 🚀 banner.
-4. Add the entry to `repository-12.json` on `jellyfin-12` — `targetAbi` `12.0.0.0`.
+4. Add the entry to `repository-12.json` on `jellyfin-12` — `targetAbi` `12.0.0.0` — and point `repository-12-beta.json` at the same build.
+
+A Jellyfin 12 beta takes steps 1 and 2 with a beta number, then:
+
+3. Tag `vX.Y.Z.W-jf12-beta` and publish it as a **pre-release** titled `🔔 NotifySync vX.Y.Z.W — Jellyfin 12 — Beta`, its notes opening with the beta banner, then the 🚀 one.
+4. Replace the entry of `repository-12-beta.json` on `jellyfin-12` — changelog label `🧪 Beta — Release Notes`, `targetAbi` `12.0.0.0`.
