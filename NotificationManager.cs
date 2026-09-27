@@ -45,6 +45,12 @@ namespace NotifySync
         /// </summary>
         private const int MovedFolderCapHours = 24;
 
+        /// <summary>
+        /// Stored in a collection's snapshot next to its members, to tell "scanned, and empty"
+        /// apart from "never scanned". Cannot collide with a member, whose id is a GUID.
+        /// </summary>
+        private const string CollectionScannedMarker = "#scanned";
+
         private readonly ILibraryManager _libraryManager;
         private readonly IUserDataManager _userDataManager;
         private readonly ILogger<NotificationManager> _logger;
@@ -1467,6 +1473,35 @@ namespace NotifySync
         }
 
         /// <summary>
+        /// The films, episodes and tracks a collection holds: its linked members, and for a member
+        /// that is itself a folder — a series, a season, an album — everything under it. Jellyfin's
+        /// own walk of a folder adds the linked members but does not descend into them, so a series
+        /// placed in a collection would otherwise contribute nothing.
+        /// </summary>
+        /// <param name="collection">The collection (BoxSet).</param>
+        /// <returns>Its members that a notification can be made of.</returns>
+        private static List<BaseItem> CollectionMembers(Folder collection)
+        {
+            static bool Announceable(BaseItem i) => i.GetBaseItemKind() is BaseItemKind.Movie or BaseItemKind.Episode or BaseItemKind.Audio;
+
+            var members = new Dictionary<Guid, BaseItem>();
+            foreach (var item in collection.GetRecursiveChildren(Announceable, true))
+            {
+                members[item.Id] = item;
+            }
+
+            foreach (var folder in collection.GetLinkedChildren().OfType<Folder>())
+            {
+                foreach (var item in folder.GetRecursiveChildren(Announceable, false))
+                {
+                    members[item.Id] = item;
+                }
+            }
+
+            return members.Values.ToList();
+        }
+
+        /// <summary>
         /// Scans all monitored collections (BoxSets) for newly added items and creates notifications.
         /// Called by <see cref="CollectionScanTask"/> on a periodic schedule.
         /// </summary>
@@ -1501,23 +1536,26 @@ namespace NotifySync
                     continue;
                 }
 
-                // List current children of the collection
-                var children = _libraryManager.GetItemList(new InternalItemsQuery
-                {
-                    AncestorIds = new[] { collectionGuid },
-                    Recursive = true,
-                    IncludeItemTypes = new[] { BaseItemKind.Movie, BaseItemKind.Episode, BaseItemKind.Audio },
-                    DtoOptions = new MediaBrowser.Controller.Dto.DtoOptions(false)
-                });
+                // Read the members through the collection itself. The scan used to look for items
+                // with the collection among their ancestors, and Jellyfin never records one there:
+                // an item's ancestors are its folders and its library, while collection membership
+                // is kept as linked children. Measured on a live 12.1 server, a collection holding
+                // one film was scanned as empty — no collection had ever announced anything.
+                var children = boxSet is Folder collection ? CollectionMembers(collection) : new List<BaseItem>();
 
                 var currentIds = new HashSet<string>(children.Select(c => c.Id.ToString()), StringComparer.Ordinal);
                 var snapshot = _db.GetCollectionSnapshot(collectionIdStr);
+
+                // Stored with the members so a collection that was empty at its first scan is not
+                // taken for a new one at every scan after: each title added to it later would be
+                // filed as part of the baseline and never announced.
+                var toStore = currentIds.Append(CollectionScannedMarker);
 
                 if (snapshot.Count == 0)
                 {
                     // First scan: store the baseline without creating notifications
                     _logger.LogInformation("NotifySync: First scan of collection \"{Name}\" — {Count} items recorded as baseline.", boxSet.Name, currentIds.Count);
-                    _db.UpdateCollectionSnapshot(collectionIdStr, currentIds);
+                    _db.UpdateCollectionSnapshot(collectionIdStr, toStore);
                 }
                 else
                 {
@@ -1537,7 +1575,7 @@ namespace NotifySync
                         _logger.LogInformation("NotifySync: {Count} new items detected in collection \"{Name}\".", newIds.Count, boxSet.Name);
                     }
 
-                    _db.UpdateCollectionSnapshot(collectionIdStr, currentIds);
+                    _db.UpdateCollectionSnapshot(collectionIdStr, toStore);
                 }
 
                 idx++;
