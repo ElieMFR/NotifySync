@@ -1082,12 +1082,21 @@
             || route.indexOf('configurationpage') !== -1;
     };
 
+    // The pages for someone not signed in: the list Jellyfin's own app bar uses to drop its
+    // buttons (PUBLIC_PATHS in the 12 web client's router).
+    const PUBLIC_ROUTES = ['/addserver', '/selectserver', '/login', '/forgotpassword', '/forgotpasswordpin',
+        '/wizardremoteaccess', '/wizardfinish', '/wizardlibrary', '/wizardsettings', '/wizardstart', '/wizarduser'];
+    const isPublicRoute = () => PUBLIC_ROUTES.indexOf(location.hash.replace(/^#!?/, '').split('?')[0].toLowerCase()) !== -1;
+
     const installBell = () => {
         const existing = document.getElementById('netflix-bell');
 
-        // No bell on admin pages. On <=10.11 this is implicit (.headerRight is
-        // absent from the admin area, so the bell never installs there).
-        if (isAdminRoute()) {
+        // No bell on admin pages — on <=10.11 this is implicit (.headerRight is absent from
+        // the admin area) — nor on a public page, nor without a signed-in user. The app bar
+        // keeps its right-hand box mounted on the login page and only takes its own buttons
+        // out of it, so the bell a signed-in page had placed there stayed behind: alone on
+        // the login screen after a sign-out or an expired session (seen on a 12.1 server).
+        if (isAdminRoute() || isPublicRoute() || !getUserId()) {
             if (existing) existing.remove();
             const openDrop = document.getElementById('notification-dropdown');
             if (openDrop && openDrop.style.display === 'flex') closeDropdown();
