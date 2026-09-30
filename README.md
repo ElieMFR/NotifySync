@@ -85,7 +85,7 @@ That's it. The bell appears in the top-right header with your latest additions, 
         ```
         https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/jellyfin-12/repository-12.json
         ```
-3.  Go to the **Catalog** and install **NotifySync** — the Jellyfin 12 channel lists it as **NotifySync (Jellyfin 12)**.
+3.  Go to the **Catalog** and install **NotifySync**.
 4.  Restart your Jellyfin server.
 
 ### 🔔 Enable the Bell
@@ -250,7 +250,7 @@ C'est tout. La cloche apparaît en haut à droite de l'interface avec vos dernie
         ```
         https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/jellyfin-12/repository-12.json
         ```
-3.  Allez dans le **Catalogue** et installez **NotifySync** — sur le canal Jellyfin 12 il s'appelle **NotifySync (Jellyfin 12)**.
+3.  Allez dans le **Catalogue** et installez **NotifySync**.
 4.  Redémarrez votre serveur Jellyfin.
 
 ### 🔔 Activer la Cloche
