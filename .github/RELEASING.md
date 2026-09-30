@@ -12,6 +12,7 @@ Four channels, one version number per build.
 - A stable number always ends in `.0`, a beta's never does. The admin page relies on it: its version link adds `-jf12` on a 12.x server, then `-beta` when the last number is not 0.
 - Jellyfin 12 releases stay **pre-releases** on purpose. GitHub gives *Latest* to the newest normal release, and a build for 12 must never be offered as the default download to 10.11 users.
 - Each beta catalog holds a single entry, the current beta. The stable and Jellyfin 12 catalogs keep their history.
+- Every catalog names the package **NotifySync**, exactly the `name` of `meta.json`. Jellyfin names a fresh install after its catalog entry, and at startup only removes an older version that carries the same name: under another name, both versions can load together, and Jellyfin then rewrites the settings with their defaults.
 
 ## Where the version number lives
 
