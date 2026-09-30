@@ -821,7 +821,7 @@
 
             // Confirmation modal
             function showConfirm(title, message, onConfirm) {
-                const page = document.querySelector('.pluginConfigurationPage');
+                const page = NotifySyncConf.pageEl();
                 const backdrop = page.querySelector('#ns-modal-backdrop');
                 page.querySelector('#ns-modal-title').textContent = title;
                 page.querySelector('#ns-modal-message').textContent = message;
@@ -847,6 +847,17 @@
                 libsRendered: false,
                 colsRendered: false,
 
+                // The page this script runs in. jellyfin-web keeps the plugin pages it has
+                // shown in the DOM, so "the first .pluginConfigurationPage" was another plugin's
+                // hidden page whenever that one had been opened first: saving, adding a category,
+                // the deletion switch and select-all all failed until a reload.
+                page: null,
+                pageEl: function () {
+                    if (this.page && this.page.isConnected) return this.page;
+                    const form = document.getElementById('notifySyncConfigForm');
+                    return form ? form.closest('.pluginConfigurationPage') : null;
+                },
+
                 load: async function (page) {
                     // Concurrency guard: Jellyfin's SPA can fire `pageshow` multiple times in
                     // quick succession when navigating between plugin pages. Two overlapping
@@ -854,6 +865,7 @@
                     // would throw. Skip if already loading.
                     if (this._loading) return;
                     this._loading = true;
+                    this.page = page;
 
                     applyTranslations(page);
                     Dashboard.showLoadingMsg();
@@ -876,51 +888,8 @@
                         }
                     } catch (e) { /* keep browser lang */ }
 
-                    // Version badge — read from the installed plugin so the page never needs
-                    // a per-release edit. The hardcoded value in the HTML is only a fallback
-                    // if this lookup fails.
-                    try {
-                        // Two ways in, because getPlugins() is a convenience helper that has
-                        // not always existed on every client build — when it is missing the
-                        // call throws, the badge silently kept its placeholder, and the page
-                        // reported a version that had not been installed for months.
-                        let plugins = [];
-                        try {
-                            plugins = await ApiClient.getPlugins();
-                        } catch (inner) {
-                            plugins = await ApiClient.getJSON(ApiClient.getUrl('Plugins'));
-                        }
-                        // Match by GUID (normalized — Jellyfin may return it dash-less or
-                        // upper-case, so a strict === on the dashed lowercase constant fails
-                        // and the page silently showed the stale hard-coded version below),
-                        // then fall back to the plugin name for full robustness.
-                        const norm = (s) => (s || '').toString().replace(/-/g, '').toLowerCase();
-                        // Jellyfin returns ONE entry per installed version folder, all sharing
-                        // this GUID, so taking the first match showed whichever version happened
-                        // to come first — often an old superseded one. Prefer the entry Jellyfin
-                        // marks active, and fall back to the highest version number.
-                        const mine = plugins.filter(p => norm(p.Id) === norm(this.pluginId) || p.Name === 'NotifySync');
-                        const newestFirst = (a, b) => {
-                            const pa = String(a.Version || '0').split('.').map(n => parseInt(n, 10) || 0);
-                            const pb = String(b.Version || '0').split('.').map(n => parseInt(n, 10) || 0);
-                            for (let i = 0; i < 4; i++) {
-                                if ((pa[i] || 0) !== (pb[i] || 0)) return (pb[i] || 0) - (pa[i] || 0);
-                            }
-                            return 0;
-                        };
-                        const me = mine.filter(p => p.Status === 'Active').sort(newestFirst)[0]
-                            || mine.sort(newestFirst)[0];
-                        if (me && me.Version) {
-                            const v = 'v' + me.Version;
-                            const badge = page.querySelector('#ns-version-badge');
-                            const link = page.querySelector('#ns-version-link');
-                            if (badge) badge.textContent = v;
-                            if (link) link.href = 'https://github.com/peterdu1109/NotifySync/releases/tag/' + v + await this.releaseTagSuffix(me.Version);
-                        }
-                    } catch (e) {
-                        // Badge stays empty rather than showing a number we cannot vouch for.
-                        console.warn('NotifySync: could not read the installed plugin version.', e);
-                    }
+                    // Version badge: filled in the background, nothing below waits for it.
+                    this.renderVersionBadge(page);
 
                     // Plugin config fetch — this one is required; if it fails, abort load gracefully.
                     try {
@@ -975,15 +944,73 @@
                         console.error('NotifySync: settings DOM wiring failed', e);
                     }
 
-                    // Each section now runs independently — a failure here is logged and the
-                    // user still sees the rest of the page rendered. No global error toast.
-                    await safe('renderLibs', () => this.renderLibs(page));
-                    await safe('renderCollections', () => this.renderCollections(page));
-                    safe('renderMap', () => this.renderMap(page));
-                    await safe('loadDeletedItems', () => this.loadDeletedItems(page));
-
-                    this._loading = false;
+                    // The settings are usable as soon as the configuration is in. The lists come
+                    // from slower calls — on a real server the libraries and the collection
+                    // search took about 0.4 s each, one after the other, with the whole page
+                    // waiting behind the spinner — so they now load side by side, each filling
+                    // its own tab. Saving early is safe: save() only harvests a list that has
+                    // rendered. A failure is logged and leaves the rest of the page usable.
+                    // The concurrency guard stays up until the lists are in: two renders of
+                    // the same list at once would empty it and fill it twice.
                     Dashboard.hideLoadingMsg();
+
+                    const mappingList = page.querySelector('#mappingList');
+                    if (mappingList) mappingList.innerHTML = '<div class="ns-empty">' + CT.fetching + '</div>';
+                    await Promise.all([
+                        // The category rows name their library from the libraries list.
+                        safe('renderLibs', () => this.renderLibs(page)).then(() => safe('renderMap', () => this.renderMap(page))),
+                        safe('renderCollections', () => this.renderCollections(page)),
+                        safe('loadDeletedItems', () => this.loadDeletedItems(page))
+                    ]);
+                    this._loading = false;
+                },
+
+                // Version badge — read from the installed plugin so the page never needs
+                // a per-release edit. The hardcoded value in the HTML is only a fallback
+                // if this lookup fails.
+                renderVersionBadge: async function (page) {
+                    try {
+                        // Two ways in, because getPlugins() is a convenience helper that has
+                        // not always existed on every client build — when it is missing the
+                        // call throws, the badge silently kept its placeholder, and the page
+                        // reported a version that had not been installed for months.
+                        let plugins = [];
+                        try {
+                            plugins = await ApiClient.getPlugins();
+                        } catch (inner) {
+                            plugins = await ApiClient.getJSON(ApiClient.getUrl('Plugins'));
+                        }
+                        // Match by GUID (normalized — Jellyfin may return it dash-less or
+                        // upper-case, so a strict === on the dashed lowercase constant fails
+                        // and the page silently showed the stale hard-coded version below),
+                        // then fall back to the plugin name for full robustness.
+                        const norm = (s) => (s || '').toString().replace(/-/g, '').toLowerCase();
+                        // Jellyfin returns ONE entry per installed version folder, all sharing
+                        // this GUID, so taking the first match showed whichever version happened
+                        // to come first — often an old superseded one. Prefer the entry Jellyfin
+                        // marks active, and fall back to the highest version number.
+                        const mine = plugins.filter(p => norm(p.Id) === norm(this.pluginId) || p.Name === 'NotifySync');
+                        const newestFirst = (a, b) => {
+                            const pa = String(a.Version || '0').split('.').map(n => parseInt(n, 10) || 0);
+                            const pb = String(b.Version || '0').split('.').map(n => parseInt(n, 10) || 0);
+                            for (let i = 0; i < 4; i++) {
+                                if ((pa[i] || 0) !== (pb[i] || 0)) return (pb[i] || 0) - (pa[i] || 0);
+                            }
+                            return 0;
+                        };
+                        const me = mine.filter(p => p.Status === 'Active').sort(newestFirst)[0]
+                            || mine.sort(newestFirst)[0];
+                        if (me && me.Version) {
+                            const v = 'v' + me.Version;
+                            const badge = page.querySelector('#ns-version-badge');
+                            const link = page.querySelector('#ns-version-link');
+                            if (badge) badge.textContent = v;
+                            if (link) link.href = 'https://github.com/peterdu1109/NotifySync/releases/tag/' + v + await this.releaseTagSuffix(me.Version);
+                        }
+                    } catch (e) {
+                        // Badge stays empty rather than showing a number we cannot vouch for.
+                        console.warn('NotifySync: could not read the installed plugin version.', e);
+                    }
                 },
 
                 switchTab: function (page, tabName) {
@@ -1031,7 +1058,7 @@
                 },
 
                 toggleAll: function (kind, checked) {
-                    const page = document.querySelector('.pluginConfigurationPage');
+                    const page = this.pageEl();
                     const containerId = kind === 'libs' ? '#libraryCheckboxes' : '#collectionCheckboxes';
                     page.querySelectorAll(containerId + ' .ns-check-row:not(.hidden) input[type="checkbox"]').forEach(cb => {
                         cb.checked = checked;
@@ -1040,7 +1067,7 @@
                 },
 
                 toggleDeletedTracking: function () {
-                    const page = document.querySelector('.pluginConfigurationPage');
+                    const page = this.pageEl();
                     const toggle = page.querySelector('#enableDeletedToggle');
                     toggle.classList.toggle('on');
                     toggle.setAttribute('aria-checked', toggle.classList.contains('on'));
@@ -1247,7 +1274,7 @@
                 },
 
                 addMapping: function () {
-                    const page = document.querySelector('.pluginConfigurationPage');
+                    const page = this.pageEl();
                     const lib = page.querySelector('#mappingLibrarySelect').value;
                     const cat = page.querySelector('#mappingCategoryInput').value.trim();
                     if (lib && cat) {
@@ -1259,7 +1286,7 @@
 
                 delMap: function (index) {
                     this.config.CategoryMappings.splice(index, 1);
-                    this.renderMap(document.querySelector('.pluginConfigurationPage'));
+                    this.renderMap(this.pageEl());
                 },
 
                 loadDeletedItems: async function (page) {
@@ -1453,7 +1480,7 @@
                 save: async function () {
                     Dashboard.showLoadingMsg();
                     try {
-                        const page = document.querySelector('.pluginConfigurationPage');
+                        const page = this.pageEl();
 
                         const rawMax = parseInt(page.querySelector('#maxItemsSlider').value, 10);
                         this.config.MaxItems = (isNaN(rawMax) || rawMax < 1) ? 10 : Math.min(rawMax, 50);
@@ -1497,7 +1524,9 @@
             });
 
             document.addEventListener('pageshow', (e) => {
-                if (e.target.classList.contains('pluginConfigurationPage')) {
+                // This plugin's page only: every plugin page carries .pluginConfigurationPage,
+                // and the settings used to load themselves into whichever one was opened.
+                if (e.target.querySelector && e.target.querySelector('#notifySyncConfigForm')) {
                     NotifySyncConf.load(e.target);
                 }
             });
