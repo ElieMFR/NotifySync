@@ -10,12 +10,12 @@
     "imageUrl": "https://raw.githubusercontent.com/peterdu1109/NotifySync/main/icon.svg",
     "versions": [
       {
-        "version": "5.8.4.1",
-        "changelog": "<a style='color:white;text-decoration:none' href=\"https://github.com/peterdu1109/NotifySync/releases/tag/v5.8.4.1-jf12-beta\">🧪 <span style='text-decoration:underline'>Beta — Release Notes</span></a>",
+        "version": "5.8.4.2",
+        "changelog": "<a style='color:white;text-decoration:none' href=\"https://github.com/peterdu1109/NotifySync/releases/tag/v5.8.4.2-jf12-beta\">🧪 <span style='text-decoration:underline'>Beta — Release Notes</span></a>",
         "targetAbi": "12.0.0.0",
-        "sourceUrl": "https://github.com/peterdu1109/NotifySync/releases/download/v5.8.4.1-jf12-beta/NotifySync.zip",
-        "checksum": "FF043E5B421AF6FCEB1FDA32E8C3E68D",
-        "timestamp": "2026-09-30T19:05:00Z"
+        "sourceUrl": "https://github.com/peterdu1109/NotifySync/releases/download/v5.8.4.2-jf12-beta/NotifySync.zip",
+        "checksum": "819077389C34B49CA5138186BB41DB8B",
+        "timestamp": "2026-10-01T16:45:00Z"
       }
     ]
   }
