@@ -1,10 +1,10 @@
-/* NOTIFYSYNC V5.8.4.2 (Jellyfin 12) */
+/* NOTIFYSYNC V5.8.4.3 (Jellyfin 12) */
 (function () {
     // Single source for the version this file reports. It used to be spelled out a
     // second time inside the Authorization header, where it silently stayed at
     // 5.7.15.0 across a dozen releases — a literal nobody thinks to update is a
     // literal that lies. Bump it with the header comment above, in one place.
-    const NS_VERSION = '5.8.4.2';
+    const NS_VERSION = '5.8.4.3';
     let currentData = [];
     let groupedData = [];
     let firstLoadDone = false;
