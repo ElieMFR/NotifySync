@@ -1446,6 +1446,10 @@
                 },
 
                 refreshHistory: async function () {
+                    // The rescan reads the SAVED settings: a library ticked a moment ago without
+                    // Save was ignored, and the choice lost on leaving the page. Save the form
+                    // first, with Save's own checks, and rescan only if that worked.
+                    if (!await this.save({ quiet: true })) return;
                     Dashboard.showLoadingMsg();
                     try {
                         await ApiClient.ajax({ type: "POST", url: "/NotifySync/Refresh" });
@@ -1477,7 +1481,10 @@
                     }
                 },
 
-                save: async function () {
+                // Returns whether the settings were saved. `quiet` leaves the confirmation to the
+                // caller (Regenerate shows its own).
+                save: async function (options) {
+                    const quiet = !!(options && options.quiet);
                     Dashboard.showLoadingMsg();
                     try {
                         const page = this.pageEl();
@@ -1508,10 +1515,12 @@
 
                         const response = await ApiClient.updatePluginConfiguration(this.pluginId, this.config);
                         Dashboard.processPluginConfigurationUpdateResult(response);
-                        showToast(CT.successMsg, 'success');
+                        if (!quiet) showToast(CT.successMsg, 'success');
+                        return true;
                     } catch (err) {
                         console.error('updatePluginConfiguration error', err);
                         showToast(CT.errorMsg, 'error');
+                        return false;
                     } finally {
                         Dashboard.hideLoadingMsg();
                     }
