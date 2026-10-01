@@ -49,6 +49,14 @@ namespace NotifySync
         /// <inheritdoc />
         public override Guid Id => Guid.Parse("95655672-2342-4321-8291-321312312312");
 
+        /// <inheritdoc />
+        /// <remarks>
+        /// The dashboard's plugin page shows this first and falls back to the catalog's text,
+        /// which describes a release channel, not the plugin.
+        /// </remarks>
+        public override string Description =>
+            "Ajoute une cloche de notifications à Jellyfin : les derniers films, séries et musiques ajoutés, sans quitter la page.";
+
         /// <summary>
         /// Gets the notification manager.
         /// </summary>
