@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
+using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
@@ -15,6 +16,7 @@ namespace NotifySync
     public sealed class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages, IDisposable
     {
         private readonly IApplicationPaths _applicationPaths;
+        private readonly IServerConfigurationManager _serverConfiguration;
         private NotificationManager? _notificationManager;
 
         /// <summary>
@@ -25,15 +27,18 @@ namespace NotifySync
         /// <param name="libraryManager">The library manager.</param>
         /// <param name="loggerFactory">The logger factory.</param>
         /// <param name="userDataManager">The user data manager.</param>
+        /// <param name="serverConfiguration">The server configuration, for its display language.</param>
         public Plugin(
             IApplicationPaths applicationPaths,
             IXmlSerializer xmlSerializer,
             ILibraryManager libraryManager,
             ILoggerFactory loggerFactory,
-            IUserDataManager userDataManager)
+            IUserDataManager userDataManager,
+            IServerConfigurationManager serverConfiguration)
             : base(applicationPaths, xmlSerializer)
         {
             _applicationPaths = applicationPaths;
+            _serverConfiguration = serverConfiguration;
             Instance = this;
             _notificationManager = new NotificationManager(libraryManager, loggerFactory.CreateLogger<NotificationManager>(), userDataManager);
         }
@@ -51,11 +56,10 @@ namespace NotifySync
 
         /// <inheritdoc />
         /// <remarks>
-        /// The dashboard's plugin page shows this first and falls back to the catalog's text,
-        /// which describes a release channel, not the plugin.
+        /// French on a French server, English otherwise: see <see cref="PluginDescription"/>. Read on
+        /// every display, so it follows a language change without a restart.
         /// </remarks>
-        public override string Description =>
-            "Ajoute une cloche de notifications à Jellyfin : les derniers films, séries et musiques ajoutés, sans quitter la page.";
+        public override string Description => PluginDescription.For(_serverConfiguration?.Configuration?.UICulture);
 
         /// <summary>
         /// Gets the notification manager.
