@@ -13,12 +13,13 @@ Four channels, one version number per build.
 - Jellyfin 12 releases stay **pre-releases** on purpose. GitHub gives *Latest* to the newest normal release, and a build for 12 must never be offered as the default download to 10.11 users.
 - Each beta catalog holds a single entry, the current beta. The stable and Jellyfin 12 catalogs keep their history.
 - Every catalog names the package **NotifySync**, exactly the `name` of `meta.json`. Jellyfin names a fresh install after its catalog entry, and at startup only removes an older version that carries the same name: under another name, both versions can load together, and Jellyfin then rewrites the settings with their defaults.
+- On `jellyfin-12`, both catalogs and `meta.json` carry the same `description`: the French then the English text of `PluginDescription.cs`, with no install steps. Jellyfin shows it in the catalog, and on the plugin page until the restart that loads the plugin; from then on the page shows the plugin's own description, in the server's language.
 
 ## Where the version number lives
 
 - `NotifySync.csproj` — `AssemblyVersion`, `FileVersion`, `Version`
 - `meta.json` — `version`
-- `client.js` — the header comment, and on `jellyfin-12` the `NS_VERSION` constant just below it
+- `client.js` — the header comment
 
 The admin page and the README carry no version number: the page reads it from the installed plugin, the README badge from GitHub.
 
@@ -51,7 +52,7 @@ dotnet build -c Release
 `jellyfin-12` carries the same C# as `main`, built for .NET 10 against Jellyfin 12. Its `client.js` differs where the 12 web client does: where the bell goes, the authentication header, the WebSocket.
 
 1. Cherry-pick the code commits from `main`, settle `client.js` by hand if needed, build with 0 errors and 0 warnings.
-2. Bump the version in the places above, `NS_VERSION` included.
+2. Bump the version in the places above.
 3. Tag `vX.Y.Z.0-jf12` and publish it as a **pre-release** titled `🔔 NotifySync vX.Y.Z.0 — Jellyfin 12`, its notes opening with the 🚀 banner.
 4. Add the entry to `repository-12.json` on `jellyfin-12` — `targetAbi` `12.0.0.0` — and point `repository-12-beta.json` at the same build.
 
