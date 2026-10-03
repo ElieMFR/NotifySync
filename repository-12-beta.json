@@ -3,9 +3,9 @@
     "category": "UI",
     "guid": "95655672-2342-4321-8291-321312312312",
     "name": "NotifySync",
-    "description": "🧪 JELLYFIN 12 BETA CHANNEL — Pre-release versions of NotifySync for testers on Jellyfin 12.0 and newer. Use the Jellyfin 12 repository for stable installs.\n\nNotifySync transforms the Jellyfin interface by adding a native notification bell, inspired by major streaming platforms. Your users see the latest additions — Movies, Series, Music — without ever leaving their current page.\n\n🧪 CANAL BETA JELLYFIN 12 — Versions pré-release de NotifySync pour testeurs sur Jellyfin 12.0 et plus récent. Utilisez le dépôt Jellyfin 12 pour les installations stables.",
+    "description": "Ajoute une cloche de notifications à Jellyfin : les derniers films, séries et musiques ajoutés, sans quitter la page.\n\nAdds a notification bell to Jellyfin: the latest movies, series and music added, without leaving the page.",
     "owner": "ElieM & Peterdu1109",
-    "overview": "🧪 Jellyfin 12 beta channel for NotifySync. Stable users should use the Jellyfin 12 repository.\n🧪 Canal beta Jellyfin 12 pour NotifySync. Les utilisateurs en production doivent utiliser le dépôt Jellyfin 12.",
+    "overview": "Une cloche de notifications pour Jellyfin 12 — canal beta.\nA notification bell for Jellyfin 12 — beta channel.",
     "supportUrl": "https://github.com/peterdu1109/NotifySync",
     "imageUrl": "https://raw.githubusercontent.com/peterdu1109/NotifySync/main/icon.svg",
     "versions": [
