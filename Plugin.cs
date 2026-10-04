@@ -17,7 +17,15 @@ namespace NotifySync
     {
         private readonly IApplicationPaths _applicationPaths;
         private readonly IServerConfigurationManager _serverConfiguration;
+        private readonly ILogger<Plugin> _logger;
+        private readonly object _saveLock = new ();
         private NotificationManager? _notificationManager;
+
+        /// <summary>
+        /// False while the settings file on disk could not be read: the settings in memory are
+        /// then the defaults, and saving them would replace the real ones.
+        /// </summary>
+        private volatile bool _configurationRead;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Plugin"/> class.
@@ -39,6 +47,21 @@ namespace NotifySync
         {
             _applicationPaths = applicationPaths;
             _serverConfiguration = serverConfiguration;
+            _logger = loggerFactory.CreateLogger<Plugin>();
+
+            // Read here, by our own serializer, so BasePlugin never loads the settings itself:
+            // its loader replaces any file it cannot read with the defaults, and empties it in
+            // the attempt. See ConfigurationFile.
+            Configuration = ConfigurationFile.Read<PluginConfiguration>(ConfigurationFilePath, out var problem);
+            _configurationRead = problem is null;
+            if (problem is not null)
+            {
+                _logger.LogWarning(
+                    "NotifySync: settings unreadable ({Problem}) — running on the defaults until they are saved again; {Path} is left as it is.",
+                    problem,
+                    ConfigurationFilePath);
+            }
+
             Instance = this;
             _notificationManager = new NotificationManager(libraryManager, loggerFactory.CreateLogger<NotificationManager>(), userDataManager);
         }
@@ -94,9 +117,34 @@ namespace NotifySync
             };
         }
 
+        /// <summary>
+        /// Saves the settings through our own serializer, in one step (see <see cref="ConfigurationFile"/>).
+        /// While the file on disk could not be read, only a save from the settings page goes through:
+        /// any other would replace the real settings with the defaults.
+        /// </summary>
+        /// <param name="config">The settings.</param>
+        public override void SaveConfiguration(PluginConfiguration config)
+        {
+            ArgumentNullException.ThrowIfNull(config);
+
+            lock (_saveLock)
+            {
+                if (!_configurationRead)
+                {
+                    _logger.LogWarning("NotifySync: settings unreadable — {Path} is not overwritten.", ConfigurationFilePath);
+                    return;
+                }
+
+                ConfigurationFile.Write(ConfigurationFilePath, config);
+            }
+        }
+
         /// <inheritdoc />
         public override void UpdateConfiguration(BasePluginConfiguration configuration)
         {
+            // Saved from the settings page: from now on these are the real settings, even if the
+            // file could not be read at startup.
+            _configurationRead = true;
             base.UpdateConfiguration(configuration);
 
             // A save changes what the bell shows (quota, filter order) without touching a single
