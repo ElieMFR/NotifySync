@@ -394,6 +394,32 @@ namespace NotifySync
         }
 
         /// <summary>
+        /// The notification a title left behind in a folder Jellyfin reported gone without the
+        /// files in it: still in the list, pointing at an item that no longer exists.
+        /// </summary>
+        /// <param name="current">The notification of the copy that arrived elsewhere.</param>
+        /// <param name="folder">The folder Jellyfin reported gone.</param>
+        /// <param name="taken">Notifications already taken over in this batch.</param>
+        /// <returns>The notification, or null when the title was not in the bell.</returns>
+        private NotificationItem? FindLeftBehind(NotificationItem current, string folder, List<string> taken)
+        {
+            try
+            {
+                _dataLock.EnterReadLock();
+                return _notifications.FirstOrDefault(o => !taken.Contains(o.Id)
+                    && MediaChangeDetector.IsInside(o.FilePath, folder)
+                    && MediaChangeDetector.IsSameTitleMoved(o, current));
+            }
+            finally
+            {
+                if (_dataLock.IsReadLockHeld)
+                {
+                    _dataLock.ExitReadLock();
+                }
+            }
+        }
+
+        /// <summary>
         /// Gives a moved title's new notification what the old one had: its date — its place in
         /// the bell — and its upgrade badge. The category stays the new library's.
         /// </summary>
@@ -1131,6 +1157,9 @@ namespace NotifySync
                 // series, then complete. A later report of an item that has just followed its
                 // title replaces the earlier one, with the date and badge the follow gave it.
                 var followedInBatch = new Dictionary<string, NotificationItem>(StringComparer.Ordinal);
+
+                // Notifications left behind in a folder reported gone, taken over in this batch.
+                var leftBehind = new List<string>();
                 int movedIn = 0;
                 string movedInFrom = string.Empty;
 
@@ -1227,6 +1256,21 @@ namespace NotifySync
                                 continue;
                             }
 
+                            // Jellyfin can report only the folder that left, never the files in it
+                            // — with music, the artist folder and none of its tracks. Their
+                            // notifications are then still here, pointing at items that no longer
+                            // exist, which the bell cannot show: the copy takes one over.
+                            var stayed = FindLeftBehind(notif, movedFrom, leftBehind);
+                            if (stayed != null)
+                            {
+                                FollowMove(notif, stayed);
+                                followed.Add((notif, _db.GetStatesForNotification(stayed.Id), stayed.Id));
+                                followedInBatch[notif.Id] = stayed;
+                                leftBehind.Add(stayed.Id);
+                                newItems.Add(notif);
+                                continue;
+                            }
+
                             _logger.LogDebug(
                                 "NotifySync Move Detected: {Name} — its folder left {From} moments ago.",
                                 notif.Name,
@@ -1300,6 +1344,32 @@ namespace NotifySync
                 {
                     _db.MergeStates(notification.Id, states);
                     _db.MarkDeletedItemMatched(fromId, notification.Id);
+                }
+
+                if (leftBehind.Count > 0)
+                {
+                    // Taken over: the left-behind notifications go, now that their users' states
+                    // live on the copies.
+                    try
+                    {
+                        _dataLock.EnterWriteLock();
+                        var gone = new HashSet<string>(leftBehind, StringComparer.Ordinal);
+                        _notifications.RemoveAll(n => gone.Contains(n.Id));
+                        Interlocked.Increment(ref _versionCounter);
+                    }
+                    finally
+                    {
+                        if (_dataLock.IsWriteLockHeld)
+                        {
+                            _dataLock.ExitWriteLock();
+                        }
+                    }
+
+                    _db.DeleteNotifications(leftBehind);
+                    foreach (var id in leftBehind)
+                    {
+                        _db.DeleteStatesForNotification(id);
+                    }
                 }
 
                 if (followed.Count > 0)
