@@ -427,7 +427,7 @@
                             <a class="ns-version-link" id="ns-version-link"
                                href="https://github.com/peterdu1109/NotifySync/releases"
                                target="_blank" rel="noopener"
-                               title="Voir les release notes sur GitHub / View release notes on GitHub">
+                               title="View the release notes on GitHub">
                                 <!-- Filled in from the running plugin. Deliberately empty: a
                                      hardcoded number goes stale at the next release and then
                                      lies about which version is installed. -->
@@ -714,6 +714,7 @@
                     delStatusMatched: "Remplacé", delStatusOrphan: "Orphelin",
                     delStatusMatchedTitle: "Un nouvel item a remplacé ce fichier supprimé",
                     delStatusOrphanTitle: "Aucun remplacement détecté dans les 7 jours",
+                    versionLinkTitle: "Voir les notes de version sur GitHub",
                     confirmDeleteMappingTitle: "Supprimer le mappage ?",
                     confirmDeleteMappingMsg: "La catégorie \"{cat}\" pour cette bibliothèque sera supprimée.",
                     cancel: "Annuler", confirm: "Confirmer",
@@ -770,6 +771,7 @@
                     delStatusMatched: "Replaced", delStatusOrphan: "Orphan",
                     delStatusMatchedTitle: "A new item replaced this deleted file",
                     delStatusOrphanTitle: "No replacement detected within 7 days",
+                    versionLinkTitle: "View the release notes on GitHub",
                     confirmDeleteMappingTitle: "Delete this mapping?",
                     confirmDeleteMappingMsg: "The category \"{cat}\" for this library will be removed.",
                     cancel: "Cancel", confirm: "Confirm",
@@ -805,6 +807,8 @@
                 if (colSearch) colSearch.placeholder = CT.colSearchPlaceholder;
                 const delSearch = page.querySelector('#delSearch');
                 if (delSearch) delSearch.placeholder = CT.delSearchPlaceholder;
+                const versionLink = page.querySelector('#ns-version-link');
+                if (versionLink) versionLink.title = CT.versionLinkTitle;
             }
 
             // Toast helper
