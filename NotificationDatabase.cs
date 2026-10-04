@@ -816,6 +816,130 @@ namespace NotifySync
         }
 
         /// <summary>
+        /// Records that a removed item came back elsewhere as the item a notification now points
+        /// at. The deletion log then shows it as replaced, and the new copy is never taken for a
+        /// move again — a metadata refresh in the days after would otherwise drop it.
+        /// </summary>
+        /// <param name="itemId">The id of the item that was removed.</param>
+        /// <param name="notificationId">The notification of the copy that took its place.</param>
+        public void MarkDeletedItemMatched(string itemId, string notificationId)
+        {
+            try
+            {
+                using var connection = new SqliteConnection(_connectionString);
+                connection.Open();
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "UPDATE DeletedItems SET MatchedNotificationId = @NotifId WHERE ItemId = @ItemId AND MatchedNotificationId IS NULL";
+                cmd.Parameters.AddWithValue("@NotifId", notificationId);
+                cmd.Parameters.AddWithValue("@ItemId", itemId);
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "NotifySync: Error marking deleted item {ItemId} as replaced.", itemId);
+            }
+        }
+
+        /// <summary>
+        /// Reads every user's state for one notification, so it can travel with the notification
+        /// when its title moves to another library.
+        /// </summary>
+        /// <param name="notificationId">The notification whose states to read.</param>
+        /// <returns>One entry per user who read or dismissed it.</returns>
+        public IReadOnlyList<NotificationUserState> GetStatesForNotification(string notificationId)
+        {
+            var result = new List<NotificationUserState>();
+            try
+            {
+                using var connection = new SqliteConnection(_connectionString);
+                connection.Open();
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "SELECT UserId, IsRead, IsDismissed, ReadAt, DismissedAt FROM UserNotificationState WHERE NotificationId = @NotifId";
+                cmd.Parameters.AddWithValue("@NotifId", notificationId);
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    result.Add(new NotificationUserState
+                    {
+                        UserId = reader.GetString(0),
+                        IsRead = reader.GetInt32(1) != 0,
+                        IsDismissed = reader.GetInt32(2) != 0,
+                        ReadAt = reader.IsDBNull(3) ? null : reader.GetString(3),
+                        DismissedAt = reader.IsDBNull(4) ? null : reader.GetString(4)
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "NotifySync: Error reading states for notification {NotifId}.", notificationId);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Gives a notification the states of the one it takes over from: what a user read stays
+        /// read and what they dismissed stays dismissed, whichever of the two copies they acted on.
+        /// </summary>
+        /// <param name="notificationId">The notification that inherits the states.</param>
+        /// <param name="states">The states of the notification it takes over from.</param>
+        public void MergeStates(string notificationId, IReadOnlyList<NotificationUserState> states)
+        {
+            if (states.Count == 0)
+            {
+                return;
+            }
+
+            try
+            {
+                using var connection = new SqliteConnection(_connectionString);
+                connection.Open();
+                using var transaction = connection.BeginTransaction();
+                try
+                {
+                    using var cmd = connection.CreateCommand();
+                    cmd.Transaction = transaction;
+                    cmd.CommandText = @"
+                        INSERT INTO UserNotificationState (UserId, NotificationId, IsRead, IsDismissed, ReadAt, DismissedAt)
+                        VALUES (@UserId, @NotifId, @IsRead, @IsDismissed, @ReadAt, @DismissedAt)
+                        ON CONFLICT(UserId, NotificationId) DO UPDATE SET
+                            IsRead = MAX(IsRead, excluded.IsRead),
+                            IsDismissed = MAX(IsDismissed, excluded.IsDismissed),
+                            ReadAt = COALESCE(ReadAt, excluded.ReadAt),
+                            DismissedAt = COALESCE(DismissedAt, excluded.DismissedAt)";
+                    var pUserId = cmd.Parameters.Add("@UserId", SqliteType.Text);
+                    var pNotifId = cmd.Parameters.Add("@NotifId", SqliteType.Text);
+                    var pIsRead = cmd.Parameters.Add("@IsRead", SqliteType.Integer);
+                    var pIsDismissed = cmd.Parameters.Add("@IsDismissed", SqliteType.Integer);
+                    var pReadAt = cmd.Parameters.Add("@ReadAt", SqliteType.Text);
+                    var pDismissedAt = cmd.Parameters.Add("@DismissedAt", SqliteType.Text);
+                    pNotifId.Value = notificationId;
+
+                    foreach (var state in states)
+                    {
+                        pUserId.Value = state.UserId;
+                        pIsRead.Value = state.IsRead ? 1 : 0;
+                        pIsDismissed.Value = state.IsDismissed ? 1 : 0;
+                        pReadAt.Value = (object?)state.ReadAt ?? DBNull.Value;
+                        pDismissedAt.Value = (object?)state.DismissedAt ?? DBNull.Value;
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "NotifySync: Error carrying states over to notification {NotifId}.", notificationId);
+            }
+        }
+
+        /// <summary>
         /// Removes orphaned user notification states where the notification no longer exists.
         /// </summary>
         public void PurgeOrphanedStates()

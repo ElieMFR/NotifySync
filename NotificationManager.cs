@@ -65,6 +65,21 @@ namespace NotifySync
         private readonly CancellationTokenSource _disposeCts = new ();
 
         private readonly ConcurrentDictionary<string, long> _userStateVersion = new ();
+
+        /// <summary>
+        /// Notifications that left with their item a moment ago, with every user's state, keyed by
+        /// that item's id. Moving a title to another library makes Jellyfin remove the old copy and
+        /// add a new one under a new id: when the new copy arrives, the notification follows it
+        /// instead of being lost. Memory only — a move that spans a restart is not followed.
+        /// </summary>
+        private readonly ConcurrentDictionary<string, (NotificationItem Notification, IReadOnlyList<NotificationUserState> States, DateTime RemovedAtUtc)> _movedAway = new (StringComparer.Ordinal);
+
+        /// <summary>
+        /// Notifications that have just followed their title, and when. The rest of that move's
+        /// removals — the episode, the season, the series folder — must not take them for copies
+        /// to drop.
+        /// </summary>
+        private readonly ConcurrentDictionary<string, DateTime> _followedMove = new (StringComparer.Ordinal);
         private int _isClearedDirty;
         private List<NotificationItem> _notifications = new List<NotificationItem>();
         private long _versionCounter = DateTime.UtcNow.Ticks;
@@ -339,6 +354,78 @@ namespace NotifySync
             return _db.TryGetDeletedMatch(name, type, year, seriesName, indexNumber, parentIndexNumber);
         }
 
+        /// <summary>
+        /// Takes back the notification a moved title had before the move, from those that left a
+        /// moment ago with their item: by the removed item's id when the deletion log names it,
+        /// otherwise by the file itself. A notification follows its title once.
+        /// </summary>
+        /// <param name="current">The notification of the copy that arrived elsewhere.</param>
+        /// <param name="removedItemId">The id of the copy that left, when known.</param>
+        /// <returns>The old notification and its users' states, or null when the title was not in the bell.</returns>
+        private (NotificationItem Notification, IReadOnlyList<NotificationUserState> States)? TakeMovedAway(NotificationItem current, string? removedItemId)
+        {
+            var cutoff = MoveCandidateCutoffUtc();
+            foreach (var kvp in _movedAway)
+            {
+                if (kvp.Value.RemovedAtUtc < cutoff)
+                {
+                    _movedAway.TryRemove(kvp.Key, out _);
+                }
+            }
+
+            if (removedItemId != null
+                && _movedAway.TryGetValue(removedItemId, out var named)
+                && MediaChangeDetector.IsSameTitleMoved(named.Notification, current)
+                && _movedAway.TryRemove(removedItemId, out var taken))
+            {
+                return (taken.Notification, taken.States);
+            }
+
+            foreach (var kvp in _movedAway)
+            {
+                if (MediaChangeDetector.IsSameTitleMoved(kvp.Value.Notification, current)
+                    && _movedAway.TryRemove(kvp.Key, out var found))
+                {
+                    return (found.Notification, found.States);
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gives a moved title's new notification what the old one had: its date — its place in
+        /// the bell — and its upgrade badge. The category stays the new library's.
+        /// </summary>
+        /// <param name="current">The new copy's notification.</param>
+        /// <param name="previous">The notification the title had before the move.</param>
+        private void FollowMove(NotificationItem current, NotificationItem previous)
+        {
+            current.DateCreated = previous.DateCreated;
+            current.IsUpgrade = previous.IsUpgrade;
+            current.UpgradeKind = previous.UpgradeKind;
+
+            var cutoff = MoveCandidateCutoffUtc();
+            foreach (var kvp in _followedMove)
+            {
+                if (kvp.Value < cutoff)
+                {
+                    _followedMove.TryRemove(kvp.Key, out _);
+                }
+            }
+
+            _followedMove[current.Id] = DateTime.UtcNow;
+        }
+
+        /// <summary>
+        /// True when a notification has just followed its title to another library: a copy in
+        /// appearance only, to keep.
+        /// </summary>
+        /// <param name="notificationId">The notification.</param>
+        /// <returns><c>true</c> when it followed a move within the move window.</returns>
+        private bool HasJustFollowedMove(string notificationId)
+            => _followedMove.TryGetValue(notificationId, out var at) && at >= MoveCandidateCutoffUtc();
+
         private void LoadUserCleared()
         {
             if (!File.Exists(_clearedPath))
@@ -606,6 +693,8 @@ namespace NotifySync
 
             var itemId = e.Item.Id.ToString();
             var removedIds = new List<string>();
+            var follows = new List<(NotificationItem To, string FromId)>();
+            var explained = new List<string>();
             int movedCount = 0;
             string movedFromPath = e.Item.Path ?? string.Empty;
             try
@@ -631,37 +720,108 @@ namespace NotifySync
                     ? new[] { new DeletedFolder(e.Item.Path!, e.Item.GetType().Name) }
                     : Array.Empty<DeletedFolder>();
 
+                // The removed item's own notification, and the copies already re-added elsewhere.
+                // When the title was in the bell, a move hands the first to the second: the
+                // notification follows its title instead of both being dropped.
+                NotificationItem? leaving = null;
+                var twins = new List<NotificationItem>();
+                var folderTwins = new List<(NotificationItem Twin, string From)>();
                 foreach (var n in _notifications)
                 {
                     if (n.Id == itemId || n.RealItemId == itemId)
                     {
                         removedIds.Add(n.Id);
+                        if (n.Id == itemId)
+                        {
+                            leaving = n;
+                        }
                     }
                     else if (trackMoves && MediaChangeDetector.IsSameFileReadded(n, e.Item))
                     {
-                        _logger.LogDebug(
-                            "NotifySync Move Detected: {Name} | already re-added elsewhere with an identical size ({Size} bytes).",
-                            n.Name,
-                            n.Size);
-                        movedCount++;
-                        removedIds.Add(n.Id);
+                        twins.Add(n);
                     }
                     else if (!n.IsUpgrade && MediaChangeDetector.CameFromDeletedFolder(n.FilePath, goneFolder, out var leftFolder))
                     {
-                        _logger.LogDebug(
-                            "NotifySync Move Detected: {Name} — already re-added elsewhere before {From} was reported gone.",
-                            n.Name,
-                            leftFolder);
-                        movedCount++;
-                        movedFromPath = leftFolder;
-                        removedIds.Add(n.Id);
+                        folderTwins.Add((n, leftFolder));
                     }
                 }
 
-                if (removedIds.Count > 0)
+                foreach (var twin in twins)
+                {
+                    if (leaving != null && twin.RealItemId == null)
+                    {
+                        FollowMove(twin, leaving);
+                        follows.Add((twin, leaving.Id));
+                        explained.Add(twin.Id);
+                        leaving = null;
+                        continue;
+                    }
+
+                    if (HasJustFollowedMove(twin.Id))
+                    {
+                        // The old copy of a title that has already followed: this removal is
+                        // the end of that move.
+                        explained.Add(twin.Id);
+                        continue;
+                    }
+
+                    _logger.LogDebug(
+                        "NotifySync Move Detected: {Name} | already re-added elsewhere with an identical size ({Size} bytes).",
+                        twin.Name,
+                        twin.Size);
+                    movedCount++;
+                    removedIds.Add(twin.Id);
+                }
+
+                foreach (var (twin, from) in folderTwins)
+                {
+                    // Jellyfin reports the season or series folder before the episodes in it, so
+                    // the old copy's notification, if the title was in the bell, is still here,
+                    // inside the folder that is leaving.
+                    var previous = _notifications.FirstOrDefault(o => !removedIds.Contains(o.Id)
+                        && MediaChangeDetector.IsInside(o.FilePath, e.Item.Path)
+                        && MediaChangeDetector.IsSameTitleMoved(o, twin));
+                    if (previous != null)
+                    {
+                        FollowMove(twin, previous);
+                        follows.Add((twin, previous.Id));
+                        removedIds.Add(previous.Id);
+                        continue;
+                    }
+
+                    if (HasJustFollowedMove(twin.Id))
+                    {
+                        continue;
+                    }
+
+                    _logger.LogDebug(
+                        "NotifySync Move Detected: {Name} — already re-added elsewhere before {From} was reported gone.",
+                        twin.Name,
+                        from);
+                    movedCount++;
+                    movedFromPath = from;
+                    removedIds.Add(twin.Id);
+                }
+
+                // Gone for good unless the same file turns up in another library in a moment —
+                // then ProcessBuffer hands this notification to it. Kept with every user's
+                // state, which is deleted below.
+                if (leaving != null && trackMoves && leaving.RealItemId == null)
+                {
+                    _movedAway[itemId] = (leaving, _db.GetStatesForNotification(leaving.Id), DateTime.UtcNow);
+                }
+
+                if (removedIds.Count > 0 || follows.Count > 0)
                 {
                     var doomed = new HashSet<string>(removedIds, StringComparer.Ordinal);
                     _notifications.RemoveAll(n => doomed.Contains(n.Id));
+                    if (follows.Count > 0)
+                    {
+                        // A notification that followed its title took back its old date: put it
+                        // back in its place.
+                        _notifications = _notifications.OrderByDescending(n => n.DateCreated).ToList();
+                    }
+
                     Interlocked.Increment(ref _versionCounter);
                 }
             }
@@ -673,6 +833,25 @@ namespace NotifySync
                 }
             }
 
+            // States first: each user's read or dismissed state passes to the notification that
+            // followed its title, before the old notification's rows are deleted below.
+            foreach (var (to, fromId) in follows)
+            {
+                _db.MergeStates(to.Id, _db.GetStatesForNotification(fromId));
+            }
+
+            if (follows.Count > 0)
+            {
+                _db.SaveNotifications(follows.Select(f => f.To).ToList());
+            }
+
+            // The removed item's own row of the deletion log, written at the top of this method,
+            // now points at the copy that took its place.
+            foreach (var notificationId in explained)
+            {
+                _db.MarkDeletedItemMatched(itemId, notificationId);
+            }
+
             if (removedIds.Count > 0)
             {
                 _db.DeleteNotifications(removedIds);
@@ -680,6 +859,14 @@ namespace NotifySync
                 {
                     _db.DeleteStatesForNotification(removedId);
                 }
+            }
+
+            if (follows.Count > 0)
+            {
+                _logger.LogInformation(
+                    "NotifySync: {Count} notification(s) followed their title out of \"{From}\" to another library.",
+                    follows.Count,
+                    e.Item.Path ?? string.Empty);
             }
 
             if (movedCount > 0)
@@ -705,6 +892,8 @@ namespace NotifySync
             NotificationItem? updatedNotif = null;
             bool isGhostItemRescue = false;
             bool movedElsewhere = false;
+            IReadOnlyList<NotificationUserState>? followedStates = null;
+            string? followedFromId = null;
 
             try
             {
@@ -771,6 +960,14 @@ namespace NotifySync
                                 updatedNotif.SeriesName,
                                 updatedNotif.IndexNumber,
                                 updatedNotif.ParentIndexNumber);
+
+                            // The old copy of a title whose notification followed it here: that
+                            // deletion is already explained, by this very notification.
+                            if (deletedRecord != null && string.Equals(deletedRecord.MatchedNotificationId, updatedNotif.Id, StringComparison.Ordinal))
+                            {
+                                deletedRecord = null;
+                            }
+
                             if (deletedRecord != null)
                             {
                                 var deletedAsNotif = new NotificationItem { FilePath = deletedRecord.FilePath, Size = deletedRecord.Size };
@@ -794,11 +991,25 @@ namespace NotifySync
                                     // nothing and the notification gets created as brand new.
                                     // Now that the metadata is complete the deletion matches,
                                     // and an identical size means the file merely moved.
-                                    movedElsewhere = true;
-                                    _logger.LogInformation(
-                                        "NotifySync Move Detected (recovered on metadata refresh): {Name} | identical size ({Size} bytes) as a recently deleted copy — dropping its notification.",
-                                        updatedNotif.Name,
-                                        updatedNotif.Size);
+                                    var previous = TakeMovedAway(updatedNotif, deletedRecord.ItemId);
+                                    if (previous != null)
+                                    {
+                                        // It was in the bell before the move: it stays, as it was.
+                                        FollowMove(updatedNotif, previous.Value.Notification);
+                                        followedStates = previous.Value.States;
+                                        followedFromId = previous.Value.Notification.Id;
+                                        _logger.LogInformation(
+                                            "NotifySync Move Detected (recovered on metadata refresh): {Name} | its notification follows it to its new library.",
+                                            updatedNotif.Name);
+                                    }
+                                    else
+                                    {
+                                        movedElsewhere = true;
+                                        _logger.LogInformation(
+                                            "NotifySync Move Detected (recovered on metadata refresh): {Name} | identical size ({Size} bytes) as a recently deleted copy — dropping its notification.",
+                                            updatedNotif.Name,
+                                            updatedNotif.Size);
+                                    }
                                 }
                                 else
                                 {
@@ -831,6 +1042,10 @@ namespace NotifySync
                         else
                         {
                             _notifications[existingIndex] = updatedNotif;
+                            if (followedStates != null)
+                            {
+                                _notifications = _notifications.OrderByDescending(n => n.DateCreated).ToList();
+                            }
                         }
 
                         dbNeedsUpdate = true;
@@ -882,6 +1097,11 @@ namespace NotifySync
                 if (updatedNotif != null)
                 {
                     _db.SaveNotifications(new[] { updatedNotif });
+                    if (followedStates != null && followedFromId != null)
+                    {
+                        _db.MergeStates(updatedNotif.Id, followedStates);
+                        _db.MarkDeletedItemMatched(followedFromId, updatedNotif.Id);
+                    }
                 }
                 else
                 {
@@ -905,6 +1125,12 @@ namespace NotifySync
             try
             {
                 var newItems = new List<NotificationItem>();
+                var followed = new List<(NotificationItem Notification, IReadOnlyList<NotificationUserState> States, string FromId)>();
+
+                // Jellyfin reports an added item more than once in a batch, first without its
+                // series, then complete. A later report of an item that has just followed its
+                // title replaces the earlier one, with the date and badge the follow gave it.
+                var followedInBatch = new Dictionary<string, NotificationItem>(StringComparer.Ordinal);
                 int movedIn = 0;
                 string movedInFrom = string.Empty;
 
@@ -949,6 +1175,20 @@ namespace NotifySync
                             continue;
                         }
 
+                        if (followedInBatch.TryGetValue(notif.Id, out var followedFrom))
+                        {
+                            FollowMove(notif, followedFrom);
+                            newItems.RemoveAll(n => n.Id == notif.Id);
+                            newItems.Add(notif);
+                            int at = followed.FindIndex(f => f.Notification.Id == notif.Id);
+                            if (at >= 0)
+                            {
+                                followed[at] = (notif, followed[at].States, followed[at].FromId);
+                            }
+
+                            continue;
+                        }
+
                         // New item — check deleted history for upgrade detection.
                         // We fetch the actual record (not just a bool) so ClassifyUpgrade
                         // can compare the new filename against the deleted file's filename.
@@ -976,6 +1216,17 @@ namespace NotifySync
                         // would otherwise be swallowed as if it were part of the move.
                         if (deletedRecord == null && MediaChangeDetector.CameFromDeletedFolder(notif.FilePath, deletedFolders, out var movedFrom))
                         {
+                            var previous = TakeMovedAway(notif, null);
+                            if (previous != null)
+                            {
+                                // It was in the bell before the move: it follows the title.
+                                FollowMove(notif, previous.Value.Notification);
+                                followed.Add((notif, previous.Value.States, previous.Value.Notification.Id));
+                                followedInBatch[notif.Id] = previous.Value.Notification;
+                                newItems.Add(notif);
+                                continue;
+                            }
+
                             _logger.LogDebug(
                                 "NotifySync Move Detected: {Name} — its folder left {From} moments ago.",
                                 notif.Name,
@@ -1008,7 +1259,19 @@ namespace NotifySync
                                 // id, so it reaches us as a fresh add. A byte-for-byte identical
                                 // size against a recent deletion of the same episode is the
                                 // signature of that move — nothing was actually added, so
-                                // notifying would push real news out of everyone's bell.
+                                // notifying would push real news out of everyone's bell. Unless
+                                // the title was in the bell before the move: then its
+                                // notification follows it, with its date and every user's state.
+                                var previous = TakeMovedAway(notif, deletedRecord.ItemId);
+                                if (previous != null)
+                                {
+                                    FollowMove(notif, previous.Value.Notification);
+                                    followed.Add((notif, previous.Value.States, previous.Value.Notification.Id));
+                                    followedInBatch[notif.Id] = previous.Value.Notification;
+                                    newItems.Add(notif);
+                                    continue;
+                                }
+
                                 _logger.LogDebug(
                                     "NotifySync Move Detected: {Name} | identical size ({Size} bytes) as a recently deleted copy.",
                                     notif.Name,
@@ -1031,6 +1294,19 @@ namespace NotifySync
                 if (newItems.Count > 0)
                 {
                     MergeAndPersistNotifications(newItems);
+                }
+
+                foreach (var (notification, states, fromId) in followed)
+                {
+                    _db.MergeStates(notification.Id, states);
+                    _db.MarkDeletedItemMatched(fromId, notification.Id);
+                }
+
+                if (followed.Count > 0)
+                {
+                    _logger.LogInformation(
+                        "NotifySync: {Count} notification(s) followed their title to another library.",
+                        followed.Count);
                 }
 
                 if (movedIn > 0)
