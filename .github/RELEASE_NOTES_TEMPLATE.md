@@ -7,7 +7,7 @@ Every GitHub release has the same shape: English, then French.
 - **One short bold line per change**, saying what the user sees — never how it was done. No file, class or setting names, no code.
 - **No introduction.** The notes open on the sections, after the channel banner when there is one.
 - **Each version has its own wording.** Never copy the previous release's lines.
-- A beta lists every change since the last stable; a stable gathers the betas of its cycle.
+- A beta lists only what it adds since the previous beta; a stable gathers the betas of its cycle.
 - Sections, in this order, only those that apply: `🛡️ Security`, `✨ New` or `✨ Improvement`, `🐛 Fixes`, `🔧 Internal — nothing changes on screen`.
 
 ## Banners
