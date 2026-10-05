@@ -80,6 +80,14 @@ namespace NotifySync
         /// to drop.
         /// </summary>
         private readonly ConcurrentDictionary<string, DateTime> _followedMove = new (StringComparer.Ordinal);
+
+        /// <summary>
+        /// When each notification first reached the list in this session. The bell holds a title
+        /// back while Jellyfin is still identifying it, a few minutes at most, counted from here:
+        /// the item's own date is its file's creation time, often older than the scan that finds
+        /// it, and counting from that one released half-scanned titles at once.
+        /// </summary>
+        private readonly ConcurrentDictionary<string, DateTime> _firstSeen = new (StringComparer.Ordinal);
         private int _isClearedDirty;
         private List<NotificationItem> _notifications = new List<NotificationItem>();
         private long _versionCounter = DateTime.UtcNow.Ticks;
@@ -207,7 +215,17 @@ namespace NotifySync
         }
 
         /// <summary>
-        /// True when at least one notification was created after the given moment.
+        /// When a notification first reached the list in this session, or null for one loaded from
+        /// the database at startup.
+        /// </summary>
+        /// <param name="notificationId">The notification.</param>
+        /// <returns>The moment, in UTC, or null.</returns>
+        public DateTime? FirstSeen(string notificationId)
+            => _firstSeen.TryGetValue(notificationId, out var at) ? at : null;
+
+        /// <summary>
+        /// True when at least one notification was created, or first reached the list, after the
+        /// given moment.
         /// <para>
         /// Answers the only question the "not modified" path needs, without the copy that
         /// <see cref="GetRecentNotifications"/> makes: that call sits before the 304 shortcut and
@@ -224,6 +242,14 @@ namespace NotifySync
                 foreach (var n in _notifications)
                 {
                     if (n.DateCreated.ToUniversalTime() > cutoffUtc)
+                    {
+                        return true;
+                    }
+                }
+
+                foreach (var seen in _firstSeen)
+                {
+                    if (seen.Value > cutoffUtc)
                     {
                         return true;
                     }
@@ -1411,10 +1437,21 @@ namespace NotifySync
             try
             {
                 _dataLock.EnterWriteLock();
+                var now = DateTime.UtcNow;
                 foreach (var ni in newItems)
                 {
                     _notifications.RemoveAll(n => n.Id == ni.Id);
                     _notifications.Add(ni);
+                    _firstSeen.TryAdd(ni.Id, now);
+                }
+
+                // Only the last few minutes matter to the bell's hold-back.
+                foreach (var kvp in _firstSeen)
+                {
+                    if (now - kvp.Value > TimeSpan.FromMinutes(30))
+                    {
+                        _firstSeen.TryRemove(kvp.Key, out _);
+                    }
                 }
 
                 var quotaResult = CategoryQuotaService.ApplyCategoryQuotas(_notifications, DatabaseCategoryLimit);

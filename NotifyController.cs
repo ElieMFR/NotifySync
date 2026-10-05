@@ -368,7 +368,7 @@ namespace NotifySync
                         continue;
                     }
 
-                    if (IsStillResolving(n, item))
+                    if (IsStillResolving(n, item, NotificationManager.Instance.FirstSeen(n.Id)))
                     {
                         continue;
                     }
@@ -742,19 +742,26 @@ namespace NotifySync
         /// </summary>
         /// <param name="n">The notification to test.</param>
         /// <param name="item">The live Jellyfin item, already resolved for the visibility check.</param>
+        /// <param name="firstSeenUtc">When the bell first saw it; null for one loaded at startup.</param>
         /// <returns><c>true</c> while it should stay out of the bell.</returns>
-        private static bool IsStillResolving(NotificationItem n, BaseItem item)
+        private static bool IsStillResolving(NotificationItem n, BaseItem item, DateTime? firstSeenUtc)
         {
-            // Past the ceiling nothing is held back any longer, whatever state it is in.
-            if (DateTime.UtcNow - n.DateCreated.ToUniversalTime() >= TimeSpan.FromMinutes(ResolveGraceMinutes))
+            // Past the ceiling nothing is held back any longer, whatever state it is in. Counted
+            // from when the bell first saw the item, not from the item's own date: that one is
+            // the file's creation time, often older than the scan that finds it — a download
+            // finished an hour earlier was released at once, half identified.
+            var since = firstSeenUtc ?? n.DateCreated.ToUniversalTime();
+            if (DateTime.UtcNow - since >= TimeSpan.FromMinutes(ResolveGraceMinutes))
             {
                 return false;
             }
 
-            // An episode with no series yet cannot be grouped and has no artwork to show.
+            // An episode with no series yet cannot be grouped and has no artwork to show. Once
+            // linked, its title can still be its file's name — "Breaking Bad - S02E07" — until
+            // Jellyfin's metadata pass reaches the episode itself, moments later.
             if (string.Equals(n.Type, "Episode", StringComparison.Ordinal))
             {
-                return string.IsNullOrEmpty(n.SeriesId);
+                return string.IsNullOrEmpty(n.SeriesId) || IsNamedAfterItsFile(n);
             }
 
             // No external id means Jellyfin has not matched this against a provider yet — the
@@ -779,6 +786,18 @@ namespace NotifySync
             // No artwork yet: the card would be a grey placeholder that fills in shortly.
             return !item.ImageInfos.Any(i => i.Type == ImageType.Primary);
         }
+
+        /// <summary>
+        /// True when the title the bell would show is still the file's name, which a new episode
+        /// carries until Jellyfin applies its metadata. Read from the notification, not from the
+        /// live item: the notification is what the bell displays, and it is refreshed only once
+        /// Jellyfin has saved the item.
+        /// </summary>
+        /// <param name="n">The notification to test.</param>
+        /// <returns><c>true</c> while the title is the file's name.</returns>
+        private static bool IsNamedAfterItsFile(NotificationItem n)
+            => !string.IsNullOrEmpty(n.FilePath)
+                && string.Equals(n.Name, Path.GetFileNameWithoutExtension(n.FilePath), StringComparison.Ordinal);
 
         /// <summary>
         /// True when a title still carries the provider id its folder is named with, which
