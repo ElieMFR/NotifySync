@@ -20,11 +20,20 @@
     // on every refresh, recreating every <img> with it, several times an hour.
     let lastRenderedHtml = null;
 
+    // Where the server's API lives. In a browser the page comes from the server itself, so this
+    // is the address the bell always called; in a TV app the page ships inside the app, and a
+    // bare path would never reach Jellyfin.
+    const serverUrl = (path) => {
+        const client = window.ApiClient;
+        const base = client && client.serverAddress ? (client.serverAddress() || '') : '';
+        return base.replace(/\/+$/, '') + path;
+    };
+
     const markReadOnServer = async (itemIds) => {
         const userId = getUserId();
         if (!userId || !itemIds || itemIds.length === 0) return;
         try {
-            const res = await fetch(`/NotifySync/MarkRead?userId=${userId}`, {
+            const res = await fetch(serverUrl(`/NotifySync/MarkRead?userId=${userId}`), {
                 method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(itemIds)
             });
             // On failure (e.g. 429 when a late fill re-marks within the server's 500ms
@@ -39,7 +48,7 @@
         const userId = getUserId();
         if (!userId || !itemId) return false;
         try {
-            const res = await fetch(`/NotifySync/Dismiss/${userId}/${itemId}`, {
+            const res = await fetch(serverUrl(`/NotifySync/Dismiss/${userId}/${itemId}`), {
                 method: 'POST', headers: getAuthHeaders()
             });
             return res.ok;
@@ -50,7 +59,7 @@
         const userId = getUserId();
         if (!userId || !itemIds || itemIds.length === 0) return false;
         try {
-            const res = await fetch(`/NotifySync/BulkDismiss/${userId}`, {
+            const res = await fetch(serverUrl(`/NotifySync/BulkDismiss/${userId}`), {
                 method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(itemIds)
             });
             return res.ok;
@@ -233,8 +242,16 @@
             .ns-section { font-size: 11px; color: #999; letter-spacing: 1.1px; text-transform: uppercase; padding: 12px 20px 4px; display: flex; align-items: center; gap: 8px; user-select: none; }
             .ns-section::after { content: ''; flex: 1; height: 1px; background: var(--ns-border); }
             .ns-fav { color: #f0a92d; font-size: 11px; vertical-align: 1px; }
+            .layout-tv #notification-dropdown { transform: scale(1.5); transform-origin: top right; max-height: calc(80vh / 1.5); animation-name: nsSlideDownTv; }
+            @keyframes nsSlideDownTv { from { opacity:0; transform:translateY(-10px) scale(1.5); } to { opacity:1; transform:scale(1.5); } }
+            .layout-tv #notification-dropdown .filter-pill:focus, .layout-tv #notification-dropdown .footer-tools:focus { outline: 3px solid #fff; outline-offset: -3px; }
+            .layout-tv #notification-dropdown .hero-section:focus, .layout-tv #notification-dropdown .dropdown-item:focus { outline: none; }
+            .layout-tv #notification-dropdown .hero-section:focus::after, .layout-tv #notification-dropdown .dropdown-item:focus::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; border: 3px solid #fff; pointer-events: none; z-index: 4; }
+            .layout-tv #notification-dropdown .dropdown-item:focus, .layout-tv #notification-dropdown .footer-tools:focus { background: rgba(255,255,255,0.12); color: #fff; }
+            .layout-tv #notification-dropdown .dropdown-item:focus .dismiss-btn, .layout-tv #notification-dropdown .hero-section:focus .dismiss-btn { opacity: 0.8; }
+            .layout-tv #notification-dropdown .dismiss-btn:focus { opacity: 1; background: #fff; color: #000; outline: none; }
             @media (prefers-reduced-motion: reduce) {
-                #notification-dropdown, .ns-pulse, .ns-pulse .ns-badge { animation: none; }
+                #notification-dropdown, .layout-tv #notification-dropdown, .ns-pulse, .ns-pulse .ns-badge { animation: none; }
                 .dismissing { animation-duration: 0.01ms; }
                 .dropdown-item { transition: none; }
             }
@@ -381,7 +398,7 @@
         if (!userId) return;
 
         try {
-            const res = await fetch(`/NotifySync/Clear/${userId}?date=${encodeURIComponent(new Date().toISOString())}`, { method: 'POST', headers: getAuthHeaders() });
+            const res = await fetch(serverUrl(`/NotifySync/Clear/${userId}?date=${encodeURIComponent(new Date().toISOString())}`), { method: 'POST', headers: getAuthHeaders() });
             if (!res.ok) return;
         } catch (e) { return; }
 
@@ -500,7 +517,7 @@
             const headers = getAuthHeaders();
             if (lastEtag) headers['If-None-Match'] = lastEtag;
 
-            const res = await fetch(`/NotifySync/Data?userId=${userId}`, { headers: headers });
+            const res = await fetch(serverUrl(`/NotifySync/Data?userId=${userId}`), { headers: headers });
 
             if (res.status === 304 && currentData.length === 0) {
                 // "Nothing changed" only means something if we still hold what it refers to.
@@ -654,12 +671,86 @@
         return se ? `${se} - ${item.Name}` : item.Name;
     };
 
+    // ---- TV remote ----------------------------------------------------------
+    // In Jellyfin's TV mode the remote moves the focus with the arrows, and Jellyfin's own
+    // navigation knows nothing of the open bell: it carries the focus to the page behind, and
+    // Back leaves the page. While the bell is open in TV mode it takes the remote itself: up
+    // and down through the list, left and right along the categories or to a card's ✕, OK to
+    // open, Back to close. Outside TV mode none of this runs.
+    const isTvLayout = () => document.documentElement.classList.contains('layout-tv');
+    const TV_BACK_KEYS = [10009, 461, 27]; // Tizen, webOS, Escape
+
+    // One row per stop, top to bottom: the categories when there is a choice, the large card,
+    // each card, the footer.
+    const tvRows = (drop) => {
+        const rows = [];
+        const pills = Array.from(drop.querySelectorAll('.filter-pill'));
+        if (pills.length > 1) rows.push(pills);
+        drop.querySelectorAll('.hero-section, .dropdown-item, .footer-tools').forEach(el => rows.push([el]));
+        return rows;
+    };
+    let tvFocusRow = null; // null = the first card, where the bell opens
+    const focusTv = (el) => {
+        if (!el) return;
+        try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
+        el.scrollIntoView({ block: 'nearest' });
+    };
+
+    // A redraw replaces the elements under the focus: put it back on the same row, or the
+    // nearest one left.
+    const restoreTvFocus = (drop) => {
+        if (!drop || drop.style.display !== 'flex' || !isTvLayout() || drop.contains(document.activeElement)) return;
+        const rows = tvRows(drop);
+        if (!rows.length) return;
+        const first = rows.length > 1 && rows[0].length > 1 ? 1 : 0;
+        const row = rows[Math.min(tvFocusRow === null ? first : tvFocusRow, rows.length - 1)];
+        focusTv(row.find(p => p.classList.contains('active')) || row[0]);
+    };
+
+    window.addEventListener('keydown', (e) => {
+        const drop = document.getElementById('notification-dropdown');
+        if (!drop || drop.style.display !== 'flex' || !isTvLayout()) return;
+        const key = e.keyCode;
+        const back = TV_BACK_KEYS.indexOf(key) !== -1;
+        if (!back && [13, 37, 38, 39, 40].indexOf(key) === -1) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        if (back) {
+            closeDropdown();
+            const bell = document.getElementById('netflix-bell');
+            if (bell) bell.focus();
+            return;
+        }
+        const active = document.activeElement;
+        if (key === 13) {
+            if (active && drop.contains(active)) active.click();
+            return;
+        }
+        const rows = tvRows(drop);
+        const r = rows.findIndex(row => row.some(el => el === active || el.contains(active)));
+        if (r === -1) { restoreTvFocus(drop); return; }
+        const row = rows[r];
+        const onDismiss = active.classList.contains('dismiss-btn');
+        if (key === 37 || key === 39) {
+            if (row.length > 1) focusTv(row[row.indexOf(active) + (key === 39 ? 1 : -1)]);
+            else if (key === 39 && !onDismiss) focusTv(row[0].querySelector('.dismiss-btn'));
+            else if (key === 37 && onDismiss) focusTv(row[0]);
+            return;
+        }
+        const to = r + (key === 40 ? 1 : -1);
+        if (!rows[to]) return;
+        tvFocusRow = to;
+        focusTv(rows[to].find(p => p.classList.contains('active')) || rows[to][0]);
+    }, true);
+
     // syncOnly: recompute and record what the list *should* look like without touching the
     // DOM. Used after a card is taken out in place, so the next refresh recognises the DOM
     // as current instead of rebuilding it.
     const updateList = (drop, syncOnly) => {
         if (!drop) return;
         const container = drop.querySelector('.list-container');
+        // In TV mode the cards and the footer take the focus, so the remote can reach them.
+        const tvStop = isTvLayout() ? ' tabindex="0"' : '';
         let filtered = groupedData || [];
         if (activeFilter === '__fav') filtered = filtered.filter(i => i.IsFavorite);
         else if (activeFilter !== 'All') filtered = filtered.filter(i => i.Category === activeFilter);
@@ -726,7 +817,7 @@
             const safeHeroId = escapeHtml(hero.CardId || hero.Id);
             const heroNavId = escapeHtml(hero.NavId || hero.RealItemId || hero.Id);
             const heroFallbackImg = client.getUrl(`Items/${encodeURIComponent(hero.SeriesId || heroItemId)}/Images/Primary?quality=70&fillWidth=380&fillHeight=160&format=webp`);
-            htmlParts.push(`<div class="hero-section" onclick="document.dispatchEvent(new CustomEvent('ns-navigate', {detail: '${heroNavId}'}))"><div class="hero-bg"><img src="${escapeHtml(heroImg)}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="if(this.dataset.fb){this.src=this.dataset.fb;this.removeAttribute('data-fb')}else{this.style.display='none'}" data-fb="${escapeHtml(heroFallbackImg)}"></div><div class="hero-overlay"></div><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('ns-dismiss', {detail: '${safeHeroId}'}))">close</button><div class="hero-content">${hero.IsUpgrade ? `<span class="hero-badge-upgrade">${escapeHtml(upgradeBadgeText(hero))}</span>` : `<span class="hero-badge">${T.badgeNew}</span>`}<div style="font-size:18px;font-weight:700;text-shadow:0 2px 4px #000;line-height:1.2;">${heroTitle}${hero.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div style="font-size:12px;opacity:0.8;margin-top:4px">${timeAgo(hero.DateCreated)} &bull; ${heroSub}</div></div></div>`);
+            htmlParts.push(`<div class="hero-section"${tvStop} onclick="document.dispatchEvent(new CustomEvent('ns-navigate', {detail: '${heroNavId}'}))"><div class="hero-bg"><img src="${escapeHtml(heroImg)}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="if(this.dataset.fb){this.src=this.dataset.fb;this.removeAttribute('data-fb')}else{this.style.display='none'}" data-fb="${escapeHtml(heroFallbackImg)}"></div><div class="hero-overlay"></div><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('ns-dismiss', {detail: '${safeHeroId}'}))">close</button><div class="hero-content">${hero.IsUpgrade ? `<span class="hero-badge-upgrade">${escapeHtml(upgradeBadgeText(hero))}</span>` : `<span class="hero-badge">${T.badgeNew}</span>`}<div style="font-size:18px;font-weight:700;text-shadow:0 2px 4px #000;line-height:1.2;">${heroTitle}${hero.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div style="font-size:12px;opacity:0.8;margin-top:4px">${timeAgo(hero.DateCreated)} &bull; ${heroSub}</div></div></div>`);
         }
 
         let curSection = null;
@@ -749,14 +840,14 @@
             const safeId = escapeHtml(item.CardId || item.Id);
             const navId = escapeHtml(item.NavId || item.RealItemId || item.Id);
             const badgeHtml = `<span class="item-badge">${escapeHtml(upgradeBadgeText(item))}</span>`;
-            htmlParts.push(`<div class="dropdown-item ${item.IsUpgrade ? 'style-upgrade' : 'style-new'}" data-item-id="${safeId}" onclick="document.dispatchEvent(new CustomEvent('ns-navigate', {detail: '${navId}'}))"><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('ns-dismiss', {detail: '${safeId}'}))">close</button><div class="swipe-delete">${T.dismiss}</div><div class="thumb-wrapper"><img data-src="${imgUrl}" decoding="async" class="dropdown-thumb ${isMusic ? 'music' : ''}" loading="lazy" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.removeAttribute('data-fallback')}else{this.style.display='none'}" data-fallback="${fallbackUrl}"><span class="material-icons" style="color:#555;font-size:24px;">${isMusic ? 'album' : 'movie'}</span></div><div class="dropdown-info">${badgeHtml}<div class="dropdown-title" title="${title}">${title}${item.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div class="dropdown-subtitle" title="${sub}"><span class="sub-time">${timeAgo(item.DateCreated)} &bull;</span><span class="sub-text">${sub}</span></div></div></div>`);
+            htmlParts.push(`<div class="dropdown-item ${item.IsUpgrade ? 'style-upgrade' : 'style-new'}" data-item-id="${safeId}"${tvStop} onclick="document.dispatchEvent(new CustomEvent('ns-navigate', {detail: '${navId}'}))"><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('ns-dismiss', {detail: '${safeId}'}))">close</button><div class="swipe-delete">${T.dismiss}</div><div class="thumb-wrapper"><img data-src="${imgUrl}" decoding="async" class="dropdown-thumb ${isMusic ? 'music' : ''}" loading="lazy" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.removeAttribute('data-fallback')}else{this.style.display='none'}" data-fallback="${fallbackUrl}"><span class="material-icons" style="color:#555;font-size:24px;">${isMusic ? 'album' : 'movie'}</span></div><div class="dropdown-info">${badgeHtml}<div class="dropdown-title" title="${title}">${title}${item.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div class="dropdown-subtitle" title="${sub}"><span class="sub-time">${timeAgo(item.DateCreated)} &bull;</span><span class="sub-text">${sub}</span></div></div></div>`);
         });
 
         if (activeFilter === 'All') {
-            htmlParts.push(`<div class="footer-tools" data-action="clearall">${T.clearAll}</div>`);
+            htmlParts.push(`<div class="footer-tools"${tvStop} data-action="clearall">${T.clearAll}</div>`);
         } else {
             const catLabel = activeFilter === '__fav' ? T.filterFav : (T['filter' + activeFilter] || escapeHtml(activeFilter));
-            htmlParts.push(`<div class="footer-tools" data-action="clearcat" data-category="${escapeHtml(activeFilter)}">${T.clearCat} ${catLabel}</div>`);
+            htmlParts.push(`<div class="footer-tools"${tvStop} data-action="clearcat" data-category="${escapeHtml(activeFilter)}">${T.clearCat} ${catLabel}</div>`);
         }
         const finalHtml = htmlParts.join('');
 
@@ -790,6 +881,7 @@
                 }
             };
         }
+        if (!syncOnly) restoreTvFocus(drop);
     };
 
     let _swipeHandlers = null;
@@ -936,7 +1028,7 @@
                             // The DOM is now one card ahead of what we recorded. Bring the
                             // record in line without redrawing, so the next refresh sees the
                             // list as current instead of rebuilding it.
-                            if (d) updateList(d, true);
+                            if (d) { updateList(d, true); restoreTvFocus(d); }
                             return;
                         }
 
@@ -989,6 +1081,8 @@
             positionDropdown(drop);
             document.getElementById('notify-backdrop').style.display = 'block';
             drop.style.display = 'flex';
+            tvFocusRow = null;
+            restoreTvFocus(drop);
         } else { closeDropdown(); }
     };
 
