@@ -2,8 +2,8 @@
 
 <p align="center">
   <img src="https://img.shields.io/github/v/release/peterdu1109/NotifySync?label=version&color=blue&cacheSeconds=3600" alt="Version">
-  <img src="https://img.shields.io/badge/.NET-9.0%20%7C%2010.0-purple" alt=".NET Framework">
-  <img src="https://img.shields.io/badge/Jellyfin-10.11.x%20%7C%2012.x-blueviolet" alt="Jellyfin">
+  <img src="https://img.shields.io/badge/.NET-10.0%20%7C%209.0-purple" alt=".NET Framework">
+  <img src="https://img.shields.io/badge/Jellyfin-12.x%20%7C%2010.11.x-blueviolet" alt="Jellyfin">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
   <img src="https://img.shields.io/github/stars/peterdu1109/NotifySync?style=flat&color=yellow&cacheSeconds=3600" alt="GitHub stars">
   <img src="https://img.shields.io/github/downloads/peterdu1109/NotifySync/total?color=brightgreen&cacheSeconds=3600" alt="Downloads">
@@ -43,7 +43,7 @@ NotifySync transforms the Jellyfin interface by adding a native notification bel
 
 ## 🚀 Quick Start
 
-1. Add the repository for **your** Jellyfin version, 10.11.x or 12.x — see [Installation](#-installation).
+1. Add the repository for **your** Jellyfin version, 12.x or 10.11.x — see [Installation](#-installation).
 2. Install **NotifySync** from the Catalog → restart Jellyfin.
 3. Install the **File Transformation** plugin to inject the bell automatically (see [Enable the Bell](#-enable-the-bell)).
 4. In **Dashboard → Plugins → NotifySync**, check the libraries to monitor, **Save**, then click **Regenerate history** — nothing is announced until at least one library is checked.
@@ -71,19 +71,19 @@ That's it. The bell appears in the top-right header with your latest additions, 
 
 > [!IMPORTANT]
 > **Prerequisites:**
-> * Jellyfin **10.11.x** or **12.x**
-> * A web client — browser on desktop, tablet or phone, or the mobile app. TV apps render natively and cannot display the bell.
+> * Jellyfin **12.x** — or **10.11.x**, which stays on NotifySync 5.8.4.0
+> * A web client — browser on desktop, tablet or phone, or the mobile app. A TV app shows the bell only if it loads NotifySync's script (see the TV note below).
 
 ### Steps
 1.  Open your Jellyfin dashboard > **Plugins** > **Repositories**.
 2.  Add the repository **for your Jellyfin version** — one build cannot target both:
-    *   Jellyfin **10.11.x**
-        ```
-        https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
-        ```
     *   Jellyfin **12.x**
         ```
         https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/jellyfin-12/repository-12.json
+        ```
+    *   Jellyfin **10.11.x** — stays on version 5.8.4.0
+        ```
+        https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
         ```
 3.  Go to the **Catalog** and install **NotifySync**.
 4.  Restart your Jellyfin server.
@@ -162,7 +162,7 @@ Go to **Dashboard > Plugins > NotifySync**.
 | **A moved series still shows as NEW** | Move detection needs **Deleted Items Tracking** enabled, and it only recognises a folder that kept its name — moving *and* renaming in one go is indistinguishable from a deletion followed by an addition. |
 | **Unauthorized content visible** | Plugin respects Jellyfin permissions — check user restrictions in the dashboard. |
 | **429 Error** | Wait 30 seconds between "Regenerate history" clicks (anti-spam). |
-| **Incompatible** | Use the repository that matches your Jellyfin version, 10.11.x or 12.x — see [Installation](#-installation). |
+| **Incompatible** | Use the repository that matches your Jellyfin version, 12.x or 10.11.x — see [Installation](#-installation). |
 
 ## 🎨 Recommended Theme
 
@@ -172,7 +172,7 @@ Both projects work flawlessly together on **PC (browser)** and **mobile (Jellyfi
 
 > ⭐ Install once, get a complete cinematic Jellyfin experience with real-time notifications.
 >
-> ⚠️ **TV note**: NotifySync currently doesn't render on TV apps (Samsung Tizen, Android TV, LG webOS). The notification bell is a web client feature and TV apps use native rendering.
+> ⚠️ **TV note**: TV apps ship their own interface, so the bell appears there only if the app loads NotifySync's script. When it does, the bell works with the remote: arrows to browse, OK to open or dismiss, Back to close. Native apps such as Android TV cannot show it.
 
 ## 👥 Authors & Credits
 
@@ -208,7 +208,7 @@ NotifySync transforme l'interface Jellyfin en y ajoutant une cloche de notificat
 
 ## 🚀 Démarrage Rapide
 
-1. Ajoutez le dépôt correspondant à **votre** version de Jellyfin, 10.11.x ou 12.x — voir [Installation](#-installation-1).
+1. Ajoutez le dépôt correspondant à **votre** version de Jellyfin, 12.x ou 10.11.x — voir [Installation](#-installation-1).
 2. Installez **NotifySync** depuis le Catalogue → redémarrez Jellyfin.
 3. Installez le plugin **File Transformation** pour injecter la cloche automatiquement (voir [Activer la Cloche](#-activer-la-cloche)).
 4. Dans **Tableau de bord → Extensions → NotifySync**, cochez les bibliothèques à surveiller, **Sauvegardez**, puis cliquez sur **Régénérer l'historique** — rien n'est annoncé tant qu'aucune bibliothèque n'est cochée.
@@ -236,19 +236,19 @@ C'est tout. La cloche apparaît en haut à droite de l'interface avec vos dernie
 
 > [!IMPORTANT]
 > **Pré-requis :**
-> * Jellyfin **10.11.x** ou **12.x**
-> * Un client web — navigateur sur ordinateur, tablette ou téléphone, ou l'application mobile. Les applications TV ont un rendu natif et ne peuvent pas afficher la cloche.
+> * Jellyfin **12.x** — ou **10.11.x**, qui reste en NotifySync 5.8.4.0
+> * Un client web — navigateur sur ordinateur, tablette ou téléphone, ou l'application mobile. Une application TV n'affiche la cloche que si elle charge le script de NotifySync (voir la note TV plus bas).
 
 ### Étapes
 1.  Tableau de bord Jellyfin > **Extensions** > **Dépôts**.
 2.  Ajoutez le dépôt **correspondant à votre version de Jellyfin** — un même binaire ne peut pas viser les deux :
-    *   Jellyfin **10.11.x**
-        ```
-        https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
-        ```
     *   Jellyfin **12.x**
         ```
         https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/jellyfin-12/repository-12.json
+        ```
+    *   Jellyfin **10.11.x** — reste en version 5.8.4.0
+        ```
+        https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
         ```
 3.  Allez dans le **Catalogue** et installez **NotifySync**.
 4.  Redémarrez votre serveur Jellyfin.
@@ -327,7 +327,7 @@ Allez dans **Tableau de bord > Extensions > NotifySync**.
 | **Une série déplacée apparaît quand même en NOUVEAU** | La détection nécessite le **Suivi des Suppressions** activé, et elle ne reconnaît qu'un dossier ayant conservé son nom — déplacer *et* renommer en une fois est indistinguable d'une suppression suivie d'un ajout. |
 | **Contenu non autorisé visible** | Le plugin respecte les permissions Jellyfin — vérifiez les restrictions utilisateur. |
 | **Erreur 429** | Attendez 30 secondes entre chaque clic sur "Régénérer l'historique" (anti-spam). |
-| **Incompatible** | Utilisez le dépôt qui correspond à votre version de Jellyfin, 10.11.x ou 12.x — voir [Installation](#-installation-1). |
+| **Incompatible** | Utilisez le dépôt qui correspond à votre version de Jellyfin, 12.x ou 10.11.x — voir [Installation](#-installation-1). |
 
 ## 🎨 Thème recommandé
 
@@ -337,7 +337,7 @@ Les deux projets fonctionnent ensemble sur **PC (navigateur)** et **mobile (app 
 
 > ⭐ Installation unique, expérience Jellyfin cinéma complète avec notifications temps réel.
 >
-> ⚠️ **Note TV** : NotifySync ne s'affiche actuellement pas sur les apps TV (Samsung Tizen, Android TV, LG webOS). La cloche est une fonctionnalité du client web et les apps TV utilisent un rendu natif.
+> ⚠️ **Note TV** : les applications TV embarquent leur propre interface : la cloche n'y apparaît que si l'application charge le script de NotifySync. Dans ce cas, elle se pilote à la télécommande : flèches pour parcourir, OK pour ouvrir ou retirer, Retour pour fermer. Les applications natives comme Android TV ne peuvent pas l'afficher.
 
 ## 👥 Auteurs & Crédits
 
