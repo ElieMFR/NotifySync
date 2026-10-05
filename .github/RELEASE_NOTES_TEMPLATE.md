@@ -29,11 +29,11 @@ Once it ships, that banner becomes:
 A Jellyfin 12 release opens with:
 
 ```markdown
-> 🚀 **For Jellyfin 12.0 and newer.** On Jellyfin 10.11.x, use the stable release — this build will not load there.
-> *Pour Jellyfin 12.0 et plus récent. En 10.11.x, utilisez la version stable — ce build ne s'y chargera pas.*
+> 🚀 **For Jellyfin 12.0 and newer.** On Jellyfin 10.11.x, keep version [5.8.4.0](https://github.com/peterdu1109/NotifySync/releases/tag/v5.8.4.0) — this build will not load there.
+> *Pour Jellyfin 12.0 et plus récent. En 10.11.x, gardez la version [5.8.4.0](https://github.com/peterdu1109/NotifySync/releases/tag/v5.8.4.0) — ce build ne s'y chargera pas.*
 ```
 
-A Jellyfin 12 beta opens with the beta banner, then the 🚀 one; once it ships, its link goes to `vX.Y.Z.0-jf12`. A stable release has no banner.
+A Jellyfin 12 beta opens with the beta banner, then the 🚀 one; once it ships, its link goes to `vX.Y.Z.0-jf12`. A 10.11 release has no banner.
 
 ## Shape
 
@@ -65,7 +65,6 @@ In French the sections are `🛡️ Sécurité`, `✨ Nouveauté` or `✨ Améli
 
 ## Titles
 
-- Stable: `🔔 NotifySync vX.Y.Z.0`
-- Beta: `🔔 NotifySync vX.Y.Z.W — Beta`
 - Jellyfin 12: `🔔 NotifySync vX.Y.Z.0 — Jellyfin 12`
 - Jellyfin 12 beta: `🔔 NotifySync vX.Y.Z.W — Jellyfin 12 — Beta`
+- Jellyfin 10.11 (frozen at 5.8.4.0): `🔔 NotifySync vX.Y.Z.0 — Jellyfin 10.11`
