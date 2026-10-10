@@ -242,9 +242,12 @@
             .ns-section { font-size: 11px; color: #999; letter-spacing: 1.1px; text-transform: uppercase; padding: 12px 20px 4px; display: flex; align-items: center; gap: 8px; user-select: none; }
             .ns-section::after { content: ''; flex: 1; height: 1px; background: var(--ns-border); }
             .ns-fav { color: #f0a92d; font-size: 11px; vertical-align: 1px; }
+            .layout-tv #netflix-bell { width: auto; height: auto; }
+            .layout-tv #netflix-bell .ns-badge { top: calc(50% - 1.2em); right: calc(50% - 1.2em); font-size: 0.6em; line-height: 1.3; min-width: 1.3em; padding: 0 0.4em; box-sizing: border-box; text-align: center; border-radius: 1em; }
             .layout-tv #notification-dropdown { transform: scale(1.5); transform-origin: top right; max-height: calc(80vh / 1.5); animation-name: nsSlideDownTv; }
             @keyframes nsSlideDownTv { from { opacity:0; transform:translateY(-10px) scale(1.5); } to { opacity:1; transform:scale(1.5); } }
             .layout-tv #notification-dropdown .filter-pill:focus, .layout-tv #notification-dropdown .footer-tools:focus { outline: 3px solid #fff; outline-offset: -3px; }
+            .layout-tv #notification-dropdown .filter-pill.active:focus { outline-offset: 2px; }
             .layout-tv #notification-dropdown .hero-section:focus, .layout-tv #notification-dropdown .dropdown-item:focus { outline: none; }
             .layout-tv #notification-dropdown .hero-section:focus::after, .layout-tv #notification-dropdown .dropdown-item:focus::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; border: 3px solid #fff; pointer-events: none; z-index: 4; }
             .layout-tv #notification-dropdown .dropdown-item:focus, .layout-tv #notification-dropdown .footer-tools:focus { background: rgba(255,255,255,0.12); color: #fff; }
