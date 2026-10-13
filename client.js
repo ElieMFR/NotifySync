@@ -1342,8 +1342,9 @@
     // apiclient's own websocket is REFUSED by the server (observed
     // NS_ERROR_WEBSOCKET_CONNECTION_REFUSED), while the modern SDK connects fine
     // with the `ApiKey` parameter (observed HTTP 101). On <=10.11 the legacy
-    // socket opens by itself and feeds window.Events — nothing to do there. When
-    // it isn't open (12), open OUR OWN socket with the accepted parameter and
+    // socket opens by itself and feeds window.Events — nothing to do there. A 12
+    // client that offers subscribe() is listened to instead (see ensureWs). Only
+    // when neither exists, open OUR OWN socket with the accepted parameter and
     // feed the same handler — including the KeepAlive protocol (the server
     // closes clients that don't answer ForceKeepAlive).
     let nsWs = null;
@@ -1379,9 +1380,27 @@
         } catch (e) { nsWs = null; }
     };
 
+    // The 12 web client receives server messages on its own socket and hands them out
+    // through apiClient.subscribe(). Listen there whenever it exists, and never open a
+    // second socket next to it: the server sends a session's messages to ONE socket only,
+    // the most recently active (WebSocketController.SendMessage in 12.2), so with ours
+    // open, SyncPlay updates and remote commands kept landing on the bell's socket and
+    // were lost — the app never learned it had joined a group (seen on a 12.2 server).
+    const subscribedClients = new WeakSet();
     const ensureWs = () => {
         try {
-            if (window.ApiClient && typeof window.ApiClient.isWebSocketOpen === 'function' && window.ApiClient.isWebSocketOpen()) return;
+            const client = window.ApiClient;
+            if (client && typeof client.subscribe === 'function') {
+                if (!subscribedClients.has(client)) {
+                    subscribedClients.add(client);
+                    ['LibraryChanged', 'UserDataChanged'].forEach(type => {
+                        client.subscribe([type], (msg) => onWebSocketMessage(null, { MessageType: type, Data: msg && msg.Data }));
+                    });
+                }
+                if (nsWs) nsWs.close();
+                return;
+            }
+            if (client && typeof client.isWebSocketOpen === 'function' && client.isWebSocketOpen()) return;
             openOwnWebSocket();
         } catch (e) { /* non-critical */ }
     };
