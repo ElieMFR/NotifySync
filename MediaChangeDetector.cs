@@ -38,11 +38,14 @@ namespace NotifySync
 
         // Audio-track-added tokens: when any of these appears in the new filename but not
         // in the old one, we flag MAJ • Audio. Covers FR variants (priority for the French
-        // audience), multi-language markers, and generic "dubbed" markers. VOSTFR is NOT
-        // here — it's subtitles-only, not an audio change.
+        // audience), the English and Brazilian dub markers, multi-language markers, and
+        // generic "dubbed" markers. VOSTFR is NOT here — it's subtitles-only, not an audio
+        // change.
         internal static readonly string[] AudioAddedTokens =
         {
             "vff", "vfq", "vfi", "vf", "truefrench", "french",
+            "english", "eng",
+            "dublado", "nacional", "ptbr", "pt-br",
             "multi", "dual",
             "dubbed", "dub"
         };
