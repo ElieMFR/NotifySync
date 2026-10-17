@@ -4,7 +4,7 @@ Four channels, one version number per build. Since 6.0.0.0 Jellyfin 12 is the ma
 
 | Channel | Branch | Tag | GitHub release | Catalog | Audience |
 |---|---|---|---|---|---|
-| **Jellyfin 12** | `jellyfin-12` | `vX.Y.Z.0-jf12` | normal — becomes *Latest* | `repository-12.json` on `jellyfin-12` | Jellyfin 12.x |
+| **Jellyfin 12** | `jellyfin-12` | `vX.Y.Z.0-jf12` | normal — becomes *Latest* | `repository.json` on `main` **and** `repository-12.json` on `jellyfin-12` | Jellyfin 12.x |
 | **Jellyfin 12 beta** | `jellyfin-12` | `vX.Y.Z.W-jf12-beta`, W ≥ 1 | pre-release | `repository-12-beta.json` on `jellyfin-12` | testers on 12.x |
 | **Jellyfin 10.11** | `main` | `vX.Y.Z.0` | normal, never *Latest* | `repository.json` on `main` | Jellyfin 10.11.x — frozen at 5.8.4.0 |
 | **Jellyfin 10.11 beta** | `main` | `vX.Y.Z.W-beta`, W ≥ 1 | pre-release | `repository-beta.json` on `main` | closed |
@@ -41,7 +41,9 @@ dotnet build -c Release
 1. Commit on `jellyfin-12` and build with 0 errors and 0 warnings.
 2. Bump the version in the places above.
 3. Tag `vX.Y.Z.0-jf12` and publish it as a **normal release marked *Latest*** (`gh release create … --latest`), titled `🔔 NotifySync vX.Y.Z.0 — Jellyfin 12`. Its notes open with the 🚀 banner and gather the betas of the cycle.
-4. Add the entry to `repository-12.json` on `jellyfin-12` — `targetAbi` `12.0.0.0` — and point `repository-12-beta.json` at the same build.
+4. Add the entry on top of `repository.json` on `main` **and** of `repository-12.json` on `jellyfin-12` — `targetAbi` `12.0.0.0` — and point `repository-12-beta.json` at the same build.
+
+   `repository.json` on `main` is the one link the README gives, for 10.11 and 12 alike: Jellyfin never offers a version whose `targetAbi` is above the server's, so a 10.11 server keeps 5.8.4.0 and a 12 server gets the newest 6.x — including one that installed 5.8.4.0 from this catalog by mistake, which then sees the update. `repository-12.json` is no longer advertised but stays up to date for the servers that already use it.
 5. On every beta of the cycle, swap the beta banner for the *shipped as stable* one.
 
 A Jellyfin 12 beta takes steps 1 and 2 with a beta number, then:

@@ -43,7 +43,7 @@ NotifySync transforms the Jellyfin interface by adding a native notification bel
 
 ## 🚀 Quick Start
 
-1. Add the repository for **your** Jellyfin version, 12.x or 10.11.x — see [Installation](#-installation).
+1. Add the NotifySync repository — one link for Jellyfin 12.x and 10.11.x, see [Installation](#-installation).
 2. Install **NotifySync** from the Catalog → restart Jellyfin.
 3. Install the **File Transformation** plugin to inject the bell automatically (see [Enable the Bell](#-enable-the-bell)).
 4. In **Dashboard → Plugins → NotifySync**, check the libraries to monitor, **Save**, then click **Regenerate history** — nothing is announced until at least one library is checked.
@@ -77,15 +77,10 @@ That's it. The bell appears in the top-right header with your latest additions, 
 
 ### Steps
 1.  Open your Jellyfin dashboard > **Plugins** > **Repositories**.
-2.  Add the repository **for your Jellyfin version** — one build cannot target both:
-    *   Jellyfin **12.x**
-        ```
-        https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/jellyfin-12/repository-12.json
-        ```
-    *   Jellyfin **10.11.x** — stays on version 5.8.4.0
-        ```
-        https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
-        ```
+2.  Add this repository — the same for Jellyfin 12.x and 10.11.x; Jellyfin picks the build made for your version:
+    ```
+    https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
+    ```
 3.  Go to the **Catalog** and install **NotifySync**.
 4.  Restart your Jellyfin server.
 
@@ -163,7 +158,7 @@ Go to **Dashboard > Plugins > NotifySync**.
 | **A moved series still shows as NEW** | Move detection needs **Deleted Items Tracking** enabled, and it only recognises a folder that kept its name — moving *and* renaming in one go is indistinguishable from a deletion followed by an addition. |
 | **Unauthorized content visible** | Plugin respects Jellyfin permissions — check user restrictions in the dashboard. |
 | **429 Error** | Wait 30 seconds between "Regenerate history" clicks (anti-spam). |
-| **Incompatible** | Use the repository that matches your Jellyfin version, 12.x or 10.11.x — see [Installation](#-installation). |
+| **Incompatible** | Use the repository from [Installation](#-installation) and update NotifySync from the Catalog — Jellyfin 12.x needs version 6.x or later. |
 
 ## 🎨 Recommended Theme
 
@@ -211,7 +206,7 @@ NotifySync transforme l'interface Jellyfin en y ajoutant une cloche de notificat
 
 ## 🚀 Démarrage Rapide
 
-1. Ajoutez le dépôt correspondant à **votre** version de Jellyfin, 12.x ou 10.11.x — voir [Installation](#-installation-1).
+1. Ajoutez le dépôt NotifySync — un seul lien pour Jellyfin 12.x et 10.11.x, voir [Installation](#-installation-1).
 2. Installez **NotifySync** depuis le Catalogue → redémarrez Jellyfin.
 3. Installez le plugin **File Transformation** pour injecter la cloche automatiquement (voir [Activer la Cloche](#-activer-la-cloche)).
 4. Dans **Tableau de bord → Extensions → NotifySync**, cochez les bibliothèques à surveiller, **Sauvegardez**, puis cliquez sur **Régénérer l'historique** — rien n'est annoncé tant qu'aucune bibliothèque n'est cochée.
@@ -245,15 +240,10 @@ C'est tout. La cloche apparaît en haut à droite de l'interface avec vos dernie
 
 ### Étapes
 1.  Tableau de bord Jellyfin > **Extensions** > **Dépôts**.
-2.  Ajoutez le dépôt **correspondant à votre version de Jellyfin** — un même binaire ne peut pas viser les deux :
-    *   Jellyfin **12.x**
-        ```
-        https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/jellyfin-12/repository-12.json
-        ```
-    *   Jellyfin **10.11.x** — reste en version 5.8.4.0
-        ```
-        https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
-        ```
+2.  Ajoutez ce dépôt — le même pour Jellyfin 12.x et 10.11.x ; Jellyfin choisit la version faite pour la vôtre :
+    ```
+    https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
+    ```
 3.  Allez dans le **Catalogue** et installez **NotifySync**.
 4.  Redémarrez votre serveur Jellyfin.
 
@@ -331,7 +321,7 @@ Allez dans **Tableau de bord > Extensions > NotifySync**.
 | **Une série déplacée apparaît quand même en NOUVEAU** | La détection nécessite le **Suivi des Suppressions** activé, et elle ne reconnaît qu'un dossier ayant conservé son nom — déplacer *et* renommer en une fois est indistinguable d'une suppression suivie d'un ajout. |
 | **Contenu non autorisé visible** | Le plugin respecte les permissions Jellyfin — vérifiez les restrictions utilisateur. |
 | **Erreur 429** | Attendez 30 secondes entre chaque clic sur "Régénérer l'historique" (anti-spam). |
-| **Incompatible** | Utilisez le dépôt qui correspond à votre version de Jellyfin, 12.x ou 10.11.x — voir [Installation](#-installation-1). |
+| **Incompatible** | Utilisez le dépôt de l'[Installation](#-installation-1) et mettez NotifySync à jour depuis le Catalogue — Jellyfin 12.x demande la version 6.x ou plus. |
 
 ## 🎨 Thème recommandé
 
