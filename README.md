@@ -184,11 +184,7 @@ NotifySync is maintained by:
 
 ### 🙏 Contributors
 
-Thanks to everyone whose reports and ideas shaped NotifySync:
-
-- **[@muisje](https://github.com/muisje)** — upgrade badges, collection notifications, deleted-media tracking, quota fix (#4–#9)
-- **[@Wernouxe](https://github.com/Wernouxe)** — File Transformation support, "mark all as read" fix (#2, #3)
-- **[@hstark16](https://github.com/hstark16)** — SyncPlay fix (#11)
+<p><a href="https://github.com/muisje" title="@muisje"><img src="https://github.com/muisje.png?size=96" width="48" height="48" alt="@muisje" /></a> <a href="https://github.com/Wernouxe" title="@Wernouxe"><img src="https://github.com/Wernouxe.png?size=96" width="48" height="48" alt="@Wernouxe" /></a> <a href="https://github.com/hstark16" title="@hstark16"><img src="https://github.com/hstark16.png?size=96" width="48" height="48" alt="@hstark16" /></a> <a href="https://github.com/Shillooh" title="@Shillooh"><img src="https://github.com/Shillooh.png?size=96" width="48" height="48" alt="@Shillooh" /></a></p>
 
 Contributions, bug reports, and feature requests are welcome on [GitHub](https://github.com/peterdu1109/NotifySync).
 
@@ -356,11 +352,7 @@ NotifySync est maintenu par :
 
 ### 🙏 Contributeurs
 
-Merci à toutes les personnes dont les signalements et les idées ont façonné NotifySync :
-
-- **[@muisje](https://github.com/muisje)** — badges de mise à jour, notifications de collections, suivi des suppressions, correction du quota (#4 à #9)
-- **[@Wernouxe](https://github.com/Wernouxe)** — prise en charge de File Transformation, correction de « tout marquer comme lu » (#2, #3)
-- **[@hstark16](https://github.com/hstark16)** — correction SyncPlay (#11)
+<p><a href="https://github.com/muisje" title="@muisje"><img src="https://github.com/muisje.png?size=96" width="48" height="48" alt="@muisje" /></a> <a href="https://github.com/Wernouxe" title="@Wernouxe"><img src="https://github.com/Wernouxe.png?size=96" width="48" height="48" alt="@Wernouxe" /></a> <a href="https://github.com/hstark16" title="@hstark16"><img src="https://github.com/hstark16.png?size=96" width="48" height="48" alt="@hstark16" /></a> <a href="https://github.com/Shillooh" title="@Shillooh"><img src="https://github.com/Shillooh.png?size=96" width="48" height="48" alt="@Shillooh" /></a></p>
 
 Contributions, rapports de bugs et demandes de fonctionnalités sont les bienvenus sur [GitHub](https://github.com/peterdu1109/NotifySync).
 
