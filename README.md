@@ -182,7 +182,13 @@ NotifySync is maintained by:
 - **[ElieMFR](https://github.com/ElieMFR)** — Original author & project lead
 - **[Peterdu1109](https://github.com/peterdu1109)** — Co-maintainer
 
-Thanks to **[@muisje](https://github.com/muisje)** and **[@Wernouxe](https://github.com/Wernouxe)** for their feature requests and bug reports that shaped this plugin.
+### 🙏 Contributors
+
+Thanks to everyone whose reports and ideas shaped NotifySync:
+
+- **[@muisje](https://github.com/muisje)** — upgrade badges, collection notifications, deleted-media tracking, quota fix (#4–#9)
+- **[@Wernouxe](https://github.com/Wernouxe)** — File Transformation support, "mark all as read" fix (#2, #3)
+- **[@hstark16](https://github.com/hstark16)** — SyncPlay fix (#11)
 
 Contributions, bug reports, and feature requests are welcome on [GitHub](https://github.com/peterdu1109/NotifySync).
 
@@ -348,7 +354,13 @@ NotifySync est maintenu par :
 - **[ElieMFR](https://github.com/ElieMFR)** — Auteur original & lead du projet
 - **[Peterdu1109](https://github.com/peterdu1109)** — Co-mainteneur
 
-Merci à **[@muisje](https://github.com/muisje)** et **[@Wernouxe](https://github.com/Wernouxe)** pour leurs demandes de fonctionnalités et rapports de bugs qui ont façonné ce plugin.
+### 🙏 Contributeurs
+
+Merci à toutes les personnes dont les signalements et les idées ont façonné NotifySync :
+
+- **[@muisje](https://github.com/muisje)** — badges de mise à jour, notifications de collections, suivi des suppressions, correction du quota (#4 à #9)
+- **[@Wernouxe](https://github.com/Wernouxe)** — prise en charge de File Transformation, correction de « tout marquer comme lu » (#2, #3)
+- **[@hstark16](https://github.com/hstark16)** — correction SyncPlay (#11)
 
 Contributions, rapports de bugs et demandes de fonctionnalités sont les bienvenus sur [GitHub](https://github.com/peterdu1109/NotifySync).
 
