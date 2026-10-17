@@ -777,10 +777,75 @@
                     cancel: "Cancel", confirm: "Confirm",
                     pageInfo: "Page {page} of {total}",
                     prevPage: "Previous", nextPage: "Next"
+                },
+                pt: {
+                    tabSettings: "Configurações", tabLibraries: "Bibliotecas", tabCollections: "Coleções",
+                    tabCategories: "Categorias", tabDeletions: "Exclusões",
+                    quotaTitle: "Cota por categoria",
+                    quotaDesc: "Número máximo de entradas por categoria (Filmes, Séries, Música…). Uma série inteira conta como uma única entrada, independentemente do número de episódios (até 500 por série).",
+                    libTitle: "Bibliotecas monitoradas",
+                    libDesc: "Marque as bibliotecas que devem aparecer no sino de notificações.",
+                    colTitle: "Coleções monitoradas",
+                    colDesc: "Selecione as coleções do Jellyfin (BoxSets) a acompanhar. Verificação a cada 15 min.",
+                    mapTitle: "Mapeamento de categorias",
+                    mapDesc: "Crie categorias para renomear ou agrupar suas bibliotecas (ex.: Documentários, Animes). Sem categoria, a biblioteca aparece com o próprio nome. As setas definem a ordem dos filtros no sino.",
+                    mapLibLabel: "Biblioteca de origem",
+                    mapCatLabel: "Nome da categoria de destino",
+                    mapPlaceholder: "ex.: Animes",
+                    addBtn: "Adicionar",
+                    manualTitle: "Seleção manual (IDs ou nomes)",
+                    manualDesc: "Para configurações avançadas (Canais, XFusion). Separe os valores por vírgulas.",
+                    manualPlaceholder: "ID ou nome da biblioteca, separados por vírgula",
+                    saveBtn: "Salvar",
+                    maintTitle: "Manutenção",
+                    maintDesc: "Força uma varredura completa do histórico após alterar bibliotecas ou categorias, ou para ressincronizar as músicas.",
+                    refreshBtn: "Regenerar histórico",
+                    scanColBtn: "Verificar coleções agora",
+                    successMsg: "Configuração salva.",
+                    refreshSuccessMsg: "Regeneração do histórico iniciada. O sino será atualizado em breve.",
+                    scanColSuccessMsg: "Verificação das coleções iniciada. Novas notificações aparecerão em breve.",
+                    scanColEmptyMsg: "Nenhuma coleção monitorada — marque ao menos uma na aba Coleções.",
+                    rateLimitMsg: "Aguarde 30 segundos entre cada regeneração.",
+                    errorMsg: "Erro. Tente novamente.",
+                    fetching: "Carregando…",
+                    selectLib: "-- Escolha uma biblioteca --",
+                    noLibs: "Nenhuma biblioteca encontrada via API.",
+                    noCollections: "Nenhuma coleção encontrada.",
+                    noMappings: "Nenhuma categoria personalizada definida.",
+                    selectAll: "Marcar tudo", clearAll: "Desmarcar tudo",
+                    counter: "{checked} / {total} selecionadas",
+                    delTitle: "Histórico de exclusões",
+                    delDesc: "Veja os filmes, episódios e faixas de música excluídos recentemente das suas bibliotecas. Necessário para a detecção de atualizações (selo ATUALIZADO): um arquivo substituído é relacionado à sua exclusão nos últimos 7 dias. A retenção (abaixo) só estende por quanto tempo este registro os exibe.",
+                    delEnable: "Ativar o registro de exclusões",
+                    delRetLabel: "Retenção (dias)",
+                    delEmpty: "Nenhuma exclusão registrada.",
+                    delSearchPlaceholder: "Filtrar exclusões…",
+                    libSearchPlaceholder: "Filtrar bibliotecas…",
+                    colSearchPlaceholder: "Filtrar coleções…",
+                    delColName: "Nome", delColType: "Tipo", delColSeries: "Série",
+                    delColYear: "Ano", delColDate: "Excluído em",
+                    delColPath: "Caminho", delColStatus: "Status",
+                    delStatusMatched: "Substituído", delStatusOrphan: "Órfão",
+                    delStatusMatchedTitle: "Um novo item substituiu este arquivo excluído",
+                    delStatusOrphanTitle: "Nenhuma substituição detectada em 7 dias",
+                    versionLinkTitle: "Ver as notas de versão no GitHub",
+                    confirmDeleteMappingTitle: "Excluir este mapeamento?",
+                    confirmDeleteMappingMsg: "A categoria \"{cat}\" desta biblioteca será removida.",
+                    cancel: "Cancelar", confirm: "Confirmar",
+                    pageInfo: "Página {page} de {total}",
+                    prevPage: "Anterior", nextPage: "Próxima"
                 }
             };
 
-            let CT = cfgStrings[(navigator.language || 'en').startsWith('fr') ? 'fr' : 'en'];
+            // A locale ("pt-BR", "fr-FR", "en-US"…) to a table above; English otherwise.
+            const cfgLangKey = (lang) => {
+                const l = (lang || '').toLowerCase();
+                if (l.startsWith('pt')) return 'pt';
+                if (l.startsWith('fr')) return 'fr';
+                return 'en';
+            };
+
+            let CT = cfgStrings[cfgLangKey(navigator.language)];
 
             function applyTranslations(page) {
                 const ids = ['tabSettings', 'tabLibraries', 'tabCollections', 'tabCategories', 'tabDeletions',
@@ -885,7 +950,7 @@
                     try {
                         const userId = ApiClient.getCurrentUserId();
                         const jfLang = userId ? (localStorage.getItem(userId + '-language') || navigator.language || 'en') : (navigator.language || 'en');
-                        const newCT = cfgStrings[jfLang.startsWith('fr') ? 'fr' : 'en'];
+                        const newCT = cfgStrings[cfgLangKey(jfLang)];
                         if (newCT !== CT) {
                             CT = newCT;
                             applyTranslations(page);

@@ -69,9 +69,17 @@
     let userLang = navigator.language || 'en';
     const strings = {
         fr: { header: "Quoi de neuf ?", empty: "Vous êtes à jour !", loading: "Chargement…", clearAll: "Vider la liste", clearCat: "Vider", dismiss: "Retirer", badgeNew: "NOUVEAU", badgeUpgrade: "MAJ", eps: "épisodes", eps1: "épisode", epPrefix: "Ép.", tracks: "pistes", tracks1: "piste", filterAll: "Tout", filterMovie: "Films", filterSeries: "Séries", filterMusic: "Musique", filterOther: "Autre", filterFav: "Favoris", kindQuality: "Qualité", kindCodec: "Codec", kindAudio: "Audio", kindAll: "Tout", season: "Saison", secToday: "Aujourd'hui", secWeek: "Cette semaine", secOlder: "Plus ancien" },
-        en: { header: "What's New?", empty: "You're all caught up!", loading: "Loading…", clearAll: "Clear list", clearCat: "Clear", dismiss: "Dismiss", badgeNew: "NEW", badgeUpgrade: "UPD", eps: "episodes", eps1: "episode", epPrefix: "Ep.", tracks: "tracks", tracks1: "track", filterAll: "All", filterMovie: "Movies", filterSeries: "Series", filterMusic: "Music", filterOther: "Other", filterFav: "Favorites", kindQuality: "Quality", kindCodec: "Codec", kindAudio: "Audio", kindAll: "All", season: "Season", secToday: "Today", secWeek: "This week", secOlder: "Earlier" }
+        en: { header: "What's New?", empty: "You're all caught up!", loading: "Loading…", clearAll: "Clear list", clearCat: "Clear", dismiss: "Dismiss", badgeNew: "NEW", badgeUpgrade: "UPD", eps: "episodes", eps1: "episode", epPrefix: "Ep.", tracks: "tracks", tracks1: "track", filterAll: "All", filterMovie: "Movies", filterSeries: "Series", filterMusic: "Music", filterOther: "Other", filterFav: "Favorites", kindQuality: "Quality", kindCodec: "Codec", kindAudio: "Audio", kindAll: "All", season: "Season", secToday: "Today", secWeek: "This week", secOlder: "Earlier" },
+        pt: { header: "Novidades", empty: "Você está em dia!", loading: "Carregando…", clearAll: "Limpar lista", clearCat: "Limpar", dismiss: "Dispensar", badgeNew: "NOVO", badgeUpgrade: "ATUALIZADO", eps: "episódios", eps1: "episódio", epPrefix: "Ep.", tracks: "faixas", tracks1: "faixa", filterAll: "Tudo", filterMovie: "Filmes", filterSeries: "Séries", filterMusic: "Música", filterOther: "Outros", filterFav: "Favoritos", kindQuality: "Qualidade", kindCodec: "Codec", kindAudio: "Áudio", kindAll: "Tudo", season: "Temporada", secToday: "Hoje", secWeek: "Esta semana", secOlder: "Mais antigos" }
     };
-    let T = strings[userLang.startsWith('fr') ? 'fr' : 'en'];
+    // A locale ("pt-BR", "fr-FR", "en-US"…) to a table above; English otherwise.
+    const langKey = (lang) => {
+        const l = (lang || '').toLowerCase();
+        if (l.startsWith('pt')) return 'pt';
+        if (l.startsWith('fr')) return 'fr';
+        return 'en';
+    };
+    let T = strings[langKey(userLang)];
 
     // Locale-aware date/time formatters, rebuilt when the Jellyfin language changes.
     // Intl picks the right convention per locale (FR → "14:30" 24h, EN → "2:30 PM").
@@ -88,7 +96,7 @@
             const userId = getUserId();
             if (!userId) return;
             const jfLang = localStorage.getItem(userId + '-language') || userLang;
-            const key = jfLang.startsWith('fr') ? 'fr' : 'en';
+            const key = langKey(jfLang);
             if (T !== strings[key]) {
                 T = strings[key];
                 userLang = jfLang;
@@ -781,6 +789,16 @@
         filterBar.querySelectorAll('.filter-pill').forEach(pill => {
             pill.onclick = () => document.dispatchEvent(new CustomEvent('ns-filter', { detail: pill.dataset.category }));
         });
+        // The chosen filter stays in view when the bar overflows.
+        const activePill = filterBar.querySelector('.filter-pill.active');
+        if (activePill && filterBar.scrollWidth > filterBar.clientWidth) {
+            const bar = filterBar.getBoundingClientRect(), pill = activePill.getBoundingClientRect();
+            // The TV layout scales the dropdown: screen pixels back to the bar's own pixels.
+            const scale = bar.width / filterBar.offsetWidth || 1;
+            if (pill.left < bar.left || pill.right > bar.right) {
+                filterBar.scrollLeft += ((pill.left - bar.left) - (bar.width - pill.width) / 2) / scale;
+            }
+        }
 
         if (filtered.length === 0) {
             const emptyHtml = `<div style="padding:60px 20px;text-align:center;color:#666;font-style:italic;">${firstLoadDone ? T.empty : T.loading}</div>`;
@@ -1060,6 +1078,14 @@
 
             drop.innerHTML = `<div class="dropdown-header"><span class="header-title">${T.header}</span></div><div class="filter-bar"></div><div class="list-container"></div>`;
             lastRenderedHtml = null; // the list container is brand new — nothing drawn yet
+            // A mouse wheel only scrolls up and down: with many categories the filter bar
+            // overflows sideways, and a mouse alone could not reach the last ones.
+            const filterBarEl = drop.querySelector('.filter-bar');
+            filterBarEl.addEventListener('wheel', (e) => {
+                if (Math.abs(e.deltaY) <= Math.abs(e.deltaX) || filterBarEl.scrollWidth <= filterBarEl.clientWidth) return;
+                e.preventDefault();
+                filterBarEl.scrollLeft += e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+            }, { passive: false });
         }
         if (!backdrop) { const b = document.createElement('div'); b.id = 'notify-backdrop'; b.onclick = closeDropdown; document.body.appendChild(b); }
 
