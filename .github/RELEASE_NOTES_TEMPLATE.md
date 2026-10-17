@@ -15,8 +15,9 @@ Every GitHub release has the same shape: English, then French.
 A beta opens with:
 
 ```markdown
-> 🧪 **Beta channel.** To be validated before it reaches stable.
-> *Canal beta — à valider avant passage en stable.*
+> 🧪 **Beta channel.** To be validated before it reaches stable. To test it, add this repository in Dashboard → Plugins → Repositories:
+> `https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/jellyfin-12/repository-12-beta.json`
+> *Canal beta — à valider avant passage en stable. Pour la tester, ajoutez ce dépôt dans Tableau de bord → Extensions → Dépôts (lien ci-dessus).*
 ```
 
 Once it ships, that banner becomes:
