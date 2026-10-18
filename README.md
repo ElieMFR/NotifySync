@@ -67,7 +67,7 @@ NotifySync adds a notification bell to Jellyfin, like on streaming platforms. Yo
 > * Jellyfin **10.11.x** (with NotifySync 5.8.4.0)
 > * The **File Transformation** plugin, or a manual edit (see [Enable the Bell](#-enable-the-bell))
 >
-> 📺 **On TV:** the bell only shows if the TV app loads NotifySync's script. Samsung TVs installed with [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung) do. Native apps, such as Android TV, don't show it.
+> 📺 **On TV:** the bell only shows if the TV app loads NotifySync's script. Samsung TVs installed with [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung) do.
 
 ### Steps
 1.  Open **Dashboard → Plugins → Repositories**.
@@ -214,7 +214,7 @@ NotifySync ajoute à Jellyfin une cloche de notifications, comme sur les platefo
 > * Jellyfin **10.11.x** (avec NotifySync 5.8.4.0)
 > * L'extension **File Transformation**, ou une modification manuelle (voir [Activer la cloche](#-activer-la-cloche))
 >
-> 📺 **Sur TV :** la cloche s'affiche seulement si l'application TV charge le script de NotifySync. C'est le cas des TV Samsung installées avec [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung). Les applications natives, comme Android TV, ne l'affichent pas.
+> 📺 **Sur TV :** la cloche s'affiche seulement si l'application TV charge le script de NotifySync. C'est le cas des TV Samsung installées avec [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung).
 
 ### Étapes
 1.  Ouvrez **Tableau de bord → Extensions → Dépôts**.
