@@ -15,6 +15,10 @@
   <i>Le centre de notifications moderne que Jellyfin attendait.</i>
 </p>
 
+<p align="center">
+  <img src="docs/bell.png" width="345" alt="The NotifySync bell open on the home page / La cloche NotifySync ouverte sur l'accueil">
+</p>
+
 ---
 
 <p align="center">
@@ -66,14 +70,17 @@ That's it. The bell appears in the top-right header with your latest additions, 
 *   **Synced across devices** — Read and cleared states live on the server: phone and desktop always agree.
 *   **Respects permissions** — Every user only ever sees content from libraries they can access, with strict per-user isolation.
 *   **Bilingual & responsive** — French / English following your Jellyfin language, on desktop, tablet, and mobile.
-*   **Remote-friendly on TV** — When your TV app shows the bell, the remote drives it: arrows to browse, OK to open, Back to close.
+*   **Remote-friendly on TV** — When your TV app shows the bell, the remote drives it: arrows to browse, OK to open or dismiss, Back to close.
 
 ## 📦 Installation
 
 > [!IMPORTANT]
 > **Prerequisites:**
 > * Jellyfin **12.x** — or **10.11.x**, which stays on NotifySync 5.8.4.0
-> * A web client — browser on desktop, tablet or phone, or the mobile app. A TV app shows the bell only if it loads NotifySync's script (see the TV note below).
+> * A web client — browser on desktop, tablet or phone, or the mobile app.
+> * The **File Transformation** plugin, which adds the bell to the web client — or a manual edit of `index.html` (see [Enable the Bell](#-enable-the-bell)).
+>
+> 📺 **On TV:** TV apps ship their own interface, so the bell appears there only if the app loads NotifySync's script — Samsung TVs installed with [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung) do. The remote then drives it: arrows to browse, OK to open or dismiss, Back to close. Native apps such as Android TV cannot show it.
 
 ### Steps
 1.  Open your Jellyfin dashboard > **Plugins** > **Repositories**.
@@ -133,42 +140,41 @@ Go to **Dashboard > Plugins > NotifySync**.
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| **Quotas** | `10` | Maximum number of **entries** per category (1–50). A whole series counts as one entry regardless of episode count (up to 500 episodes stored per series). |
-| **Monitored Libraries** | *(none)* | Check the folders you want to appear in notifications. |
+| **Quota per Category** | `10` | Maximum number of **entries** per category (1–50). A whole series counts as one entry regardless of episode count (up to 500 episodes stored per series). |
+| **Monitored Libraries** | *(none)* | Check the libraries you want to appear in the bell. |
 | **Monitored Collections** | *(none)* | Select Jellyfin collections (BoxSets) to track for new additions. Scanned every 15 minutes. |
 | **Category Mapping** | *(empty)* | Rename or group your libraries in the bell (e.g. *"My Movies"* → *"Movies"*). A library without a mapping shows under its own name. The arrows set the order of the bell's filters. |
-| **Manual Library IDs** | *(empty)* | Add library IDs or names manually for advanced setups (Channels, XFusion). |
-| **Deleted Items Tracking** | `enabled` | Enable/disable the deletion history log. **Required for full UPD detection** on Sonarr/Radarr replacements (delete+re-import scenario). Replacements are correlated within a 7-day window. |
-| **Deletion Retention** | `30 days` | Number of days to keep deleted item records (7–365). The lower bound is 7 days so the detection window always has data — retention only controls how long the deletions stay visible in the admin log. |
-| **Regenerate History** | — | Force a full rescan after changing libraries or categories. |
-| **Scan Collections Now** | — | Force an immediate scan of monitored Collections instead of waiting for the automatic interval. |
+| **Manual Selection (IDs or Names)** | *(empty)* | Add library IDs or names manually for advanced setups (Channels, XFusion). |
+| **Enable deletion tracking** | `enabled` | Enable/disable the deletion history log. **Required for full UPD detection** on Sonarr/Radarr replacements (deleted, then re-imported). Replacements are correlated within a 7-day window. |
+| **Retention (days)** | `30` | Number of days to keep deleted item records (7–365). The lower bound is 7 days so the detection window always has data — retention only controls how long the deletions stay visible in the admin log. |
+| **Regenerate history** | — | Force a full rescan after changing libraries or categories. |
+| **Scan collections now** | — | Force an immediate scan of monitored Collections instead of waiting for the automatic interval. |
 
 ## ❓ Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
-| **Bell doesn't appear** | Check **File Transformation** is installed. Restart Jellyfin. Clear browser cache (`Ctrl+Shift+R`). |
+| **Bell doesn't appear** | Check **File Transformation** is installed. Restart Jellyfin. Hard refresh the browser (`Ctrl+F5`). |
+| **No bell and `401 Unauthorized` errors in the browser console** | Your server runs Jellyfin 12 with the 10.11 build of NotifySync (5.x). Update NotifySync from the Catalog to 6.x, restart Jellyfin, then `Ctrl+F5`. |
 | **Bell appeared then disappeared after Jellyfin update** | You're using Method 2 (manual injection) — re-apply the `sed` command. Switch to Method 1 (File Transformation) to avoid this. |
 | **Badge count is wrong** | Click "Regenerate history" in config. Clear browser localStorage. |
 | **Music not synced** | Use "Regenerate history" to rescan audio tracks. |
-| **Content missing** | Ensure the library is checked in "Monitored Libraries". |
-| **New TV episode missing** | Make sure the **Series-type library** containing the episode is checked in "Monitored Libraries". |
-| **Replaced file shows NEW instead of UPD** | Enable **Deleted Items Tracking** in config — required for the delete+re-import detection path. |
+| **Content missing** | Make sure the library is checked in **Monitored Libraries**. |
+| **New TV episode missing** | Make sure the **Series-type library** containing the episode is checked in **Monitored Libraries**. |
+| **Replaced file shows NEW instead of UPD** | Turn on **Enable deletion tracking** in the settings — needed when a file is deleted, then re-imported. |
 | **A renamed file shows a false UPD badge** | Renaming alone is recognised and stays silent. A badge can still slip through if the rename changed the file itself — dismiss it, and it will not come back. |
-| **A moved series still shows as NEW** | Move detection needs **Deleted Items Tracking** enabled, and it only recognises a folder that kept its name — moving *and* renaming in one go is indistinguishable from a deletion followed by an addition. |
+| **A moved series still shows as NEW** | Move detection needs **Enable deletion tracking** turned on, and it only recognises a folder that kept its name — moving *and* renaming in one go is indistinguishable from a deletion followed by an addition. |
 | **Unauthorized content visible** | Plugin respects Jellyfin permissions — check user restrictions in the dashboard. |
 | **429 Error** | Wait 30 seconds between "Regenerate history" clicks (anti-spam). |
 | **Incompatible** | Use the repository from [Installation](#-installation) and update NotifySync from the Catalog — Jellyfin 12.x needs version 6.x or later. |
 
 ## 🎨 Recommended Theme
 
-NotifySync integrates beautifully with the [**ElegantFin Cinema Edition**](https://github.com/peterdu1109/ElegantFin) theme — a streaming-inspired CSS theme for Jellyfin with a full suite of cinematic modules.
+NotifySync pairs well with the [**ElegantFin Cinema Edition**](https://github.com/peterdu1109/ElegantFin) theme — a streaming-inspired CSS theme for Jellyfin with a full suite of cinematic modules.
 
-Both projects work flawlessly together on **PC (browser)** and **mobile (Jellyfin app + browser)**.
+Both work together on **PC (browser)**, **mobile (Jellyfin app + browser)** and **TV**.
 
 > ⭐ Install once, get a complete cinematic Jellyfin experience with real-time notifications.
->
-> ⚠️ **TV note**: TV apps ship their own interface, so the bell appears there only if the app loads NotifySync's script. When it does, the bell works with the remote: arrows to browse, OK to open or dismiss, Back to close. Native apps such as Android TV cannot show it.
 
 ## 👥 Authors & Credits
 
@@ -192,11 +198,11 @@ Released under the [MIT License](./LICENSE).
 
 NotifySync transforme l'interface Jellyfin en y ajoutant une cloche de notifications native, inspirée des grandes plateformes de streaming. Vos utilisateurs voient les derniers ajouts — Films, Séries, Musique — sans jamais quitter leur page, via un menu déroulant en verre dépoli qui s'intègre naturellement dans Jellyfin.
 
-> 📖 **Changelog & historique des versions :** voir les [Releases GitHub](https://github.com/peterdu1109/NotifySync/releases) pour les nouveautés de chaque version.
+> 📖 **Journal des versions :** voir les [Releases GitHub](https://github.com/peterdu1109/NotifySync/releases) pour les nouveautés de chaque version.
 
 ## 📑 Sommaire
 
-- [🚀 Démarrage Rapide](#-démarrage-rapide)
+- [🚀 Démarrage rapide](#-démarrage-rapide)
 - [✨ Fonctionnalités](#-fonctionnalités)
 - [📦 Installation](#-installation-1)
 - [⚙️ Configuration](#️-configuration-1)
@@ -204,11 +210,11 @@ NotifySync transforme l'interface Jellyfin en y ajoutant une cloche de notificat
 - [🎨 Thème recommandé](#-thème-recommandé)
 - [👥 Auteurs & Crédits](#-auteurs--crédits)
 
-## 🚀 Démarrage Rapide
+## 🚀 Démarrage rapide
 
 1. Ajoutez le dépôt NotifySync — un seul lien pour Jellyfin 12.x et 10.11.x, voir [Installation](#-installation-1).
 2. Installez **NotifySync** depuis le Catalogue → redémarrez Jellyfin.
-3. Installez le plugin **File Transformation** pour injecter la cloche automatiquement (voir [Activer la Cloche](#-activer-la-cloche)).
+3. Installez le plugin **File Transformation** pour injecter la cloche automatiquement (voir [Activer la cloche](#-activer-la-cloche)).
 4. Dans **Tableau de bord → Extensions → NotifySync**, cochez les bibliothèques à surveiller, **Sauvegardez**, puis cliquez sur **Régénérer l'historique** — rien n'est annoncé tant qu'aucune bibliothèque n'est cochée.
 
 C'est tout. La cloche apparaît en haut à droite de l'interface avec vos derniers ajouts, et suit les nouveautés au fil de l'eau.
@@ -223,20 +229,23 @@ C'est tout. La cloche apparaît en haut à droite de l'interface avec vos dernie
 *   **Un déplacement n'est pas une nouveauté** — Réorganiser vos bibliothèques n'annonce rien de neuf ; un titre déjà dans la cloche passe simplement dans sa nouvelle catégorie.
 *   **Rien d'à moitié affiché** — Un titre n'apparaît qu'une fois identifié par Jellyfin. Plus de carte portant le nom de son dossier, plus d'affiche manquante, plus d'épisodes en attente de regroupement.
 *   **Filtre Favoris** — Mettez une série en favori dans Jellyfin et filtrez la cloche sur les seuls contenus qui vous intéressent.
-*   **Filtres & suppression** — Pills de catégories, suppression à l'unité ou par groupe, swipe gauche sur mobile. Vider la liste ne marque jamais rien comme « Vu ».
+*   **Filtres & suppression** — Boutons de catégorie, suppression à l'unité ou par groupe, glisser vers la gauche sur mobile. Vider la liste ne marque jamais rien comme « Vu ».
 *   **Collections** — Les collections Jellyfin surveillées (BoxSets) vous notifient des nouveaux ajouts.
 *   **Historique des suppressions** — Les admins disposent d'un journal des médias récemment supprimés, avec rétention paramétrable.
 *   **Synchronisé entre appareils** — États lu / vidé stockés côté serveur : téléphone et bureau toujours d'accord.
 *   **Respecte les permissions** — Chaque utilisateur ne voit que le contenu des bibliothèques auxquelles il a accès, avec une isolation stricte par utilisateur.
-*   **Bilingue & responsive** — Français / Anglais selon la langue de votre Jellyfin, sur bureau, tablette et mobile.
-*   **À la télécommande sur télé** — Quand votre application TV affiche la cloche, la télécommande la pilote : flèches pour parcourir, OK pour ouvrir, Retour pour fermer.
+*   **Bilingue & adaptée à tous les écrans** — Français / Anglais selon la langue de votre Jellyfin, sur ordinateur, tablette et mobile.
+*   **À la télécommande sur télé** — Quand votre application TV affiche la cloche, la télécommande la pilote : flèches pour parcourir, OK pour ouvrir ou retirer, Retour pour fermer.
 
 ## 📦 Installation
 
 > [!IMPORTANT]
 > **Pré-requis :**
 > * Jellyfin **12.x** — ou **10.11.x**, qui reste en NotifySync 5.8.4.0
-> * Un client web — navigateur sur ordinateur, tablette ou téléphone, ou l'application mobile. Une application TV n'affiche la cloche que si elle charge le script de NotifySync (voir la note TV plus bas).
+> * Un client web — navigateur sur ordinateur, tablette ou téléphone, ou l'application mobile.
+> * L'extension **File Transformation**, qui ajoute la cloche au client web — ou une modification manuelle de `index.html` (voir [Activer la cloche](#-activer-la-cloche)).
+>
+> 📺 **Sur TV :** les applications TV embarquent leur propre interface : la cloche n'y apparaît que si l'application charge le script de NotifySync — c'est le cas des TV Samsung installées avec [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung). Elle se pilote alors à la télécommande : flèches pour parcourir, OK pour ouvrir ou retirer, Retour pour fermer. Les applications natives comme Android TV ne peuvent pas l'afficher.
 
 ### Étapes
 1.  Tableau de bord Jellyfin > **Extensions** > **Dépôts**.
@@ -247,7 +256,7 @@ C'est tout. La cloche apparaît en haut à droite de l'interface avec vos dernie
 3.  Allez dans le **Catalogue** et installez **NotifySync**.
 4.  Redémarrez votre serveur Jellyfin.
 
-### 🔔 Activer la Cloche
+### 🔔 Activer la cloche
 
 #### Méthode 1 : File Transformation — recommandée ✅
 
@@ -260,7 +269,7 @@ Injection automatique, aucun fichier à modifier, et ça **survit aux mises à j
 2.  Installez **File Transformation** depuis le catalogue.
 3.  Redémarrez Jellyfin, puis `Ctrl+F5` dans votre navigateur.
 
-#### Méthode 2 : Injection Manuelle
+#### Méthode 2 : Injection manuelle
 
 > [!WARNING]
 > Cette méthode nécessite de **ré-appliquer le patch après chaque mise à jour Jellyfin**, car Jellyfin écrase `index.html`. La Méthode 1 est fortement recommandée.
@@ -296,48 +305,47 @@ Allez dans **Tableau de bord > Extensions > NotifySync**.
 
 | Paramètre | Défaut | Description |
 |-----------|--------|-------------|
-| **Quotas** | `10` | Nombre maximum d'**entrées** par catégorie (1–50). Une série entière compte pour une seule entrée, quel que soit le nombre d'épisodes (jusqu'à 500 épisodes stockés par série). |
-| **Bibliothèques Surveillées** | *(aucune)* | Cochez les dossiers que vous souhaitez voir apparaître dans la cloche. |
-| **Collections Surveillées** | *(aucune)* | Sélectionnez les collections Jellyfin (BoxSets) à surveiller pour les nouveaux ajouts. Scannées toutes les 15 minutes. |
-| **Mappage des Catégories** | *(vide)* | Renommez ou regroupez vos bibliothèques dans la cloche (ex. *"Mes Films"* → *"Films"*). Une bibliothèque sans mappage garde son propre nom. Les flèches fixent l'ordre des filtres de la cloche. |
-| **IDs Manuels** | *(vide)* | Ajoutez des IDs ou noms de bibliothèques manuellement pour les configurations avancées (Channels, XFusion). |
-| **Suivi des Suppressions** | `activé` | Activer/désactiver le journal des suppressions. **Requis pour la détection MAJ complète** sur les remplacements Sonarr/Radarr (scénario delete+ré-import). Les remplacements sont corrélés dans une fenêtre de 7 jours. |
-| **Rétention des Suppressions** | `30 jours` | Nombre de jours de conservation des éléments supprimés (7–365). La borne basse est de 7 jours pour que la fenêtre de détection ait toujours des données — la rétention ne fait que prolonger l'affichage dans le journal admin. |
-| **Régénérer l'Historique** | — | Force un scan complet après modification des bibliothèques ou des catégories. |
-| **Scanner les Collections** | — | Force un scan immédiat des Collections surveillées au lieu d'attendre l'intervalle automatique. |
+| **Quota par catégorie** | `10` | Nombre maximum d'**entrées** par catégorie (1–50). Une série entière compte pour une seule entrée, quel que soit le nombre d'épisodes (jusqu'à 500 épisodes stockés par série). |
+| **Bibliothèques surveillées** | *(aucune)* | Cochez les bibliothèques que vous souhaitez voir apparaître dans la cloche. |
+| **Collections surveillées** | *(aucune)* | Sélectionnez les collections Jellyfin (BoxSets) à surveiller pour les nouveaux ajouts. Scannées toutes les 15 minutes. |
+| **Mappage des catégories** | *(vide)* | Renommez ou regroupez vos bibliothèques dans la cloche (ex. *"Mes Films"* → *"Films"*). Une bibliothèque sans mappage garde son propre nom. Les flèches fixent l'ordre des filtres de la cloche. |
+| **Sélection manuelle (IDs ou noms)** | *(vide)* | Ajoutez des IDs ou noms de bibliothèques manuellement pour les configurations avancées (Channels, XFusion). |
+| **Activer le suivi des suppressions** | `activé` | Activer/désactiver le journal des suppressions. **Requis pour la détection MAJ complète** sur les remplacements Sonarr/Radarr (suppression puis réimport). Les remplacements sont corrélés dans une fenêtre de 7 jours. |
+| **Rétention (jours)** | `30` | Nombre de jours de conservation des éléments supprimés (7–365). La borne basse est de 7 jours pour que la fenêtre de détection ait toujours des données — la rétention ne fait que prolonger l'affichage dans le journal admin. |
+| **Régénérer l'historique** | — | Force un scan complet après modification des bibliothèques ou des catégories. |
+| **Scanner les collections** | — | Force un scan immédiat des Collections surveillées au lieu d'attendre l'intervalle automatique. |
 
 ## ❓ Dépannage
 
 | Problème | Solution |
 |----------|----------|
-| **La cloche n'apparaît pas** | Vérifiez que **File Transformation** est installé. Redémarrez Jellyfin. Videz le cache (`Ctrl+Shift+R`). |
+| **La cloche n'apparaît pas** | Vérifiez que **File Transformation** est installé. Redémarrez Jellyfin. Rechargez le navigateur sans cache (`Ctrl+F5`). |
+| **Pas de cloche et des erreurs `401 Unauthorized` dans la console du navigateur** | Votre serveur est en Jellyfin 12 avec la version 10.11 de NotifySync (5.x). Mettez NotifySync à jour en 6.x depuis le Catalogue, redémarrez Jellyfin, puis `Ctrl+F5`. |
 | **La cloche a disparu après mise à jour Jellyfin** | Vous utilisez la Méthode 2 (injection manuelle) — ré-appliquez la commande `sed`. Passez à la Méthode 1 (File Transformation) pour éviter ça. |
 | **Le badge est incorrect** | Cliquez sur "Régénérer l'historique". Videz le localStorage du navigateur. |
 | **Musique non synchronisée** | Utilisez "Régénérer l'historique" pour rescanner les pistes audio. |
-| **Contenu manquant** | Vérifiez que la bibliothèque est cochée dans "Bibliothèques Surveillées". |
-| **Nouvel épisode TV manquant** | Vérifiez que la **bibliothèque de type Série** contenant l'épisode est cochée dans "Bibliothèques Surveillées". |
-| **Fichier remplacé apparaît en NOUVEAU au lieu de MAJ** | Activez le **Suivi des Suppressions** dans la config — nécessaire pour la détection du scénario delete+ré-import. |
+| **Contenu manquant** | Vérifiez que la bibliothèque est cochée dans **Bibliothèques surveillées**. |
+| **Nouvel épisode TV manquant** | Vérifiez que la **bibliothèque de type Série** contenant l'épisode est cochée dans **Bibliothèques surveillées**. |
+| **Un fichier remplacé apparaît en NOUVEAU au lieu de MAJ** | Cochez **Activer le suivi des suppressions** dans les réglages — nécessaire quand un fichier est supprimé puis réimporté. |
 | **Un fichier renommé affiche un faux badge MAJ** | Un simple renommage est reconnu et reste silencieux. Un badge ne peut subsister que si le renommage a aussi modifié le fichier — retirez la notification, elle ne reviendra pas. |
-| **Une série déplacée apparaît quand même en NOUVEAU** | La détection nécessite le **Suivi des Suppressions** activé, et elle ne reconnaît qu'un dossier ayant conservé son nom — déplacer *et* renommer en une fois est indistinguable d'une suppression suivie d'un ajout. |
+| **Une série déplacée apparaît quand même en NOUVEAU** | La détection nécessite **Activer le suivi des suppressions**, et elle ne reconnaît qu'un dossier ayant conservé son nom — déplacer *et* renommer en une fois est indistinguable d'une suppression suivie d'un ajout. |
 | **Contenu non autorisé visible** | Le plugin respecte les permissions Jellyfin — vérifiez les restrictions utilisateur. |
 | **Erreur 429** | Attendez 30 secondes entre chaque clic sur "Régénérer l'historique" (anti-spam). |
 | **Incompatible** | Utilisez le dépôt de l'[Installation](#-installation-1) et mettez NotifySync à jour depuis le Catalogue — Jellyfin 12.x demande la version 6.x ou plus. |
 
 ## 🎨 Thème recommandé
 
-NotifySync s'intègre parfaitement avec le thème [**ElegantFin Cinema Edition**](https://github.com/peterdu1109/ElegantFin) — un thème CSS inspiré des plateformes de streaming pour Jellyfin avec une suite complète de modules cinématographiques.
+NotifySync se marie bien avec le thème [**ElegantFin Cinema Edition**](https://github.com/peterdu1109/ElegantFin) — un thème CSS inspiré des plateformes de streaming pour Jellyfin avec une suite complète de modules cinématographiques.
 
-Les deux projets fonctionnent ensemble sur **PC (navigateur)** et **mobile (app Jellyfin + navigateur)**.
+Les deux fonctionnent ensemble sur **PC (navigateur)**, **mobile (app Jellyfin + navigateur)** et **TV**.
 
 > ⭐ Installation unique, expérience Jellyfin cinéma complète avec notifications temps réel.
->
-> ⚠️ **Note TV** : les applications TV embarquent leur propre interface : la cloche n'y apparaît que si l'application charge le script de NotifySync. Dans ce cas, elle se pilote à la télécommande : flèches pour parcourir, OK pour ouvrir ou retirer, Retour pour fermer. Les applications natives comme Android TV ne peuvent pas l'afficher.
 
 ## 👥 Auteurs & Crédits
 
 NotifySync est maintenu par :
 
-- **[ElieMFR](https://github.com/ElieMFR)** — Auteur original & lead du projet
+- **[ElieMFR](https://github.com/ElieMFR)** — Auteur original & responsable du projet
 - **[Peterdu1109](https://github.com/peterdu1109)** — Co-mainteneur
 
 ### 🙏 Contributeurs
