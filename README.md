@@ -15,9 +15,6 @@
   <i>Le centre de notifications moderne que Jellyfin attendait.</i>
 </p>
 
-<p align="center">
-  <img src="docs/bell.png" width="345" alt="The NotifySync bell open on the home page / La cloche NotifySync ouverte sur l'accueil">
-</p>
 
 ---
 
