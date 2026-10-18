@@ -404,6 +404,7 @@ namespace NotifySync
 
                 // Clone only the filtered items and apply per-user read state
                 var categoryOrder = BuildCategoryOrder(Plugin.Instance?.Configuration);
+                int maxItems = Plugin.Instance?.Configuration?.MaxItems ?? 10;
                 var filteredClones = new List<NotificationItem>(filtered.Count);
                 foreach (var n in filtered)
                 {
@@ -412,11 +413,11 @@ namespace NotifySync
                     clone.IsRead = readState.IsRead && !IsBumpedSinceRead(n, readState.ReadAt);
                     clone.IsFavorite = favoriteIds.Contains(clone.Id);
                     clone.CategoryOrder = categoryOrder.TryGetValue(clone.Category, out var rank) ? rank : null;
+                    clone.CardQuota = maxItems;
                     filteredClones.Add(clone);
                 }
 
                 var filteredList = filteredClones.OrderByDescending(n => n.DateCreated).ToList();
-                int maxItems = Plugin.Instance?.Configuration?.MaxItems ?? 10;
                 var quotaResult = CategoryQuotaService.ApplyCategoryQuotas(filteredList, maxItems);
                 filteredList = quotaResult.Kept.ToList();
 

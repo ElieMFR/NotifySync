@@ -112,6 +112,15 @@ namespace NotifySync
         public int? CategoryOrder { get; set; }
 
         /// <summary>
+        /// Gets or sets how many cards the bell shows per category — the admin's "Quota per
+        /// Category". The server keeps that many titles; the bell splits a series into one card
+        /// per arrival, so it is the bell that cuts the cards down to the same number.
+        /// Transient per-response property set during API response building, not persisted.
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? CardQuota { get; set; }
+
+        /// <summary>
         /// Gets or sets the real Jellyfin item ID for synthetic notifications (e.g. collection items).
         /// When <see cref="Id"/> is a synthetic key like "col:{collectionId}:{itemId}", this stores
         /// the actual Jellyfin item ID so permission and played-status checks can resolve the real item.

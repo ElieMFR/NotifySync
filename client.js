@@ -1,4 +1,4 @@
-/* NOTIFYSYNC V6.0.1.3 (Jellyfin 12) */
+/* NOTIFYSYNC V6.0.1.4 (Jellyfin 12) */
 (function () {
     let currentData = [];
     let groupedData = [];
@@ -407,6 +407,21 @@
         return result.sort((a, b) => new Date(b.DateCreated) - new Date(a.DateCreated));
     };
 
+    // "Quota per Category" reads as what the bell shows: that many cards per category. The
+    // server keeps that many titles, and a series split into one card per arrival can hold
+    // several, so 10 titles drew 14 cards. The newest cards stay; the rest wait on the server
+    // and come back as cards are dismissed. A server that sends no quota cuts nothing.
+    const capCardsPerCategory = (cards) => {
+        const quota = cards.length > 0 ? cards[0].CardQuota : null;
+        if (!Number.isInteger(quota) || quota < 1) return cards;
+        const shown = new Map();
+        return cards.filter(c => {
+            const n = (shown.get(c.Category) || 0) + 1;
+            shown.set(c.Category, n);
+            return n <= quota;
+        });
+    };
+
     // The categories present, in the order the bell shows its filters: first the ones the
     // admin listed, in the order set with the arrows of the Categories tab — the server sends
     // each item's position as CategoryOrder — then the rest (a library without a mapping, a
@@ -451,7 +466,9 @@
         // instead of the raw episode list — which for a big category (long-running
         // anime: maxItems series × up to 500 episodes) blows past the server's
         // 500-item bulk cap and makes the whole clear silently fail.
-        const idsToDismiss = (groupedData || []).filter(matches).map(i => i.Id);
+        // Every card of the category, not only the ones on screen: the quota hides the older
+        // ones, and clearing must take them too or they would step up into the emptied tab.
+        const idsToDismiss = processGrouping(currentData).filter(matches).map(i => i.Id);
         if (idsToDismiss.length === 0) return;
 
         // Dismiss all items in a single bulk request
@@ -503,7 +520,7 @@
         // Today/This week/Earlier sections and the timestamp — so it's a pure type
         // marker shown on every item, no per-item flag needed.
         currentData.forEach(item => { item.IsNew = !item.IsRead; });
-        groupedData = processGrouping(currentData);
+        groupedData = capCardsPerCategory(processGrouping(currentData));
         updateBadge();
     };
 
