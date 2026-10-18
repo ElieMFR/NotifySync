@@ -73,7 +73,8 @@ That's it. The bell appears in the top-right header with your latest additions, 
 
 > [!IMPORTANT]
 > **Prerequisites:**
-> * Jellyfin **12.x** — or **10.11.x**, which stays on NotifySync 5.8.4.0
+> * Jellyfin **12.x**
+> * Jellyfin **10.11.x**: stays on NotifySync 5.8.4.0
 > * A web client — browser on desktop, tablet or phone, or the mobile app.
 > * The **File Transformation** plugin, which adds the bell to the web client — or a manual edit of `index.html` (see [Enable the Bell](#-enable-the-bell)).
 >
@@ -238,7 +239,8 @@ C'est tout. La cloche apparaît en haut à droite de l'interface avec vos dernie
 
 > [!IMPORTANT]
 > **Pré-requis :**
-> * Jellyfin **12.x** — ou **10.11.x**, qui reste en NotifySync 5.8.4.0
+> * Jellyfin **12.x**
+> * Jellyfin **10.11.x** : reste en NotifySync 5.8.4.0
 > * Un client web — navigateur sur ordinateur, tablette ou téléphone, ou l'application mobile.
 > * L'extension **File Transformation**, qui ajoute la cloche au client web — ou une modification manuelle de `index.html` (voir [Activer la cloche](#-activer-la-cloche)).
 >
