@@ -70,12 +70,12 @@ NotifySync adds a notification bell to Jellyfin, like on streaming platforms. Yo
 > 📺 **On TV:** the bell only shows if the TV app loads NotifySync's script. Samsung TVs installed with [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung) do.
 
 ### Steps
-1.  Open **Dashboard → Plugins → Repositories**.
+1.  Open **Dashboard → Plugins → Manage Repositories**.
 2.  Add this repository, the same for 12.x and 10.11.x:
     ```
     https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
     ```
-3.  Go to the **Catalog** and install **NotifySync**.
+3.  In **Plugins**, pick the **Available** filter and install **NotifySync**.
 4.  Restart Jellyfin.
 5.  Enable the bell (see below).
 6.  In **Dashboard → Plugins → NotifySync**, check the libraries to monitor, click **Save**, then **Regenerate history**. The bell stays empty until a library is checked.
@@ -86,11 +86,11 @@ NotifySync adds a notification bell to Jellyfin, like on streaming platforms. Yo
 
 Automatic, no file to edit, and it **survives Jellyfin updates**.
 
-1.  In **Dashboard → Plugins → Repositories**, add:
+1.  In **Dashboard → Plugins → Manage Repositories**, add:
     ```
     https://www.iamparadox.dev/jellyfin/plugins/manifest.json
     ```
-2.  Install **File Transformation** from the Catalog.
+2.  In **Plugins**, filter **Available**, install **File Transformation**.
 3.  Restart Jellyfin, then `Ctrl+F5` in your browser.
 
 #### Method 2: Manual Injection
@@ -126,7 +126,7 @@ Go to **Dashboard → Plugins → NotifySync**.
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| **Quota per Category** | `10` | Maximum number of entries per category (1 to 50). A series counts as one entry. |
+| **Quota per Category** | `10` | Maximum number of cards shown per category (1 to 50). |
 | **Monitored Libraries** | *(none)* | Check the libraries you want to appear in the bell. |
 | **Monitored Collections** | *(none)* | Collections (BoxSets) to watch for new additions. Scanned every 15 minutes. |
 | **Category Mapping** | *(empty)* | Rename or group your libraries in the bell (e.g. *"My Movies"* → *"Movies"*). The arrows set the order of the filters. |
@@ -141,7 +141,7 @@ Go to **Dashboard → Plugins → NotifySync**.
 | Issue | Solution |
 |-------|----------|
 | **Bell doesn't appear** | Check that **File Transformation** is installed. Restart Jellyfin, then `Ctrl+F5`. |
-| **No bell and `401 Unauthorized` errors in the browser console** | Your server runs Jellyfin 12 with the old 5.x version. Update NotifySync to 6.x from the Catalog, restart Jellyfin, then `Ctrl+F5`. |
+| **No bell and `401 Unauthorized` errors in the browser console** | Your server runs Jellyfin 12 with the old 5.x version. Update NotifySync to 6.x from **Plugins**, restart Jellyfin, then `Ctrl+F5`. |
 | **Bell gone after a Jellyfin update** | With Method 2, each update overwrites the edit. Redo it, or switch to Method 1. |
 | **Content or music missing, wrong counter** | Check the library in **Monitored Libraries**, then click **Regenerate history**. |
 | **Replaced file shows NEW instead of UPD** | Turn on **Enable deletion tracking**. It is needed when a file is deleted, then re-imported. |
@@ -217,12 +217,12 @@ NotifySync ajoute à Jellyfin une cloche de notifications, comme sur les platefo
 > 📺 **Sur TV :** la cloche s'affiche seulement si l'application TV charge le script de NotifySync. C'est le cas des TV Samsung installées avec [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung).
 
 ### Étapes
-1.  Ouvrez **Tableau de bord → Extensions → Dépôts**.
+1.  Ouvrez **Tableau de bord → Extensions → Gérer les dépôts**.
 2.  Ajoutez ce dépôt, le même pour 12.x et 10.11.x :
     ```
     https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
     ```
-3.  Allez dans le **Catalogue** et installez **NotifySync**.
+3.  Dans **Extensions**, choisissez le filtre **Disponible** et installez **NotifySync**.
 4.  Redémarrez Jellyfin.
 5.  Activez la cloche (voir ci-dessous).
 6.  Dans **Tableau de bord → Extensions → NotifySync**, cochez les bibliothèques à surveiller, cliquez sur **Sauvegarder** puis **Régénérer l'historique**. La cloche reste vide tant qu'aucune bibliothèque n'est cochée.
@@ -233,11 +233,11 @@ NotifySync ajoute à Jellyfin une cloche de notifications, comme sur les platefo
 
 Automatique, aucun fichier à modifier, et ça **survit aux mises à jour de Jellyfin**.
 
-1.  Dans **Tableau de bord → Extensions → Dépôts**, ajoutez :
+1.  Dans **Tableau de bord → Extensions → Gérer les dépôts**, ajoutez :
     ```
     https://www.iamparadox.dev/jellyfin/plugins/manifest.json
     ```
-2.  Installez **File Transformation** depuis le Catalogue.
+2.  Dans **Extensions**, filtre **Disponible**, installez **File Transformation**.
 3.  Redémarrez Jellyfin, puis `Ctrl+F5` dans votre navigateur.
 
 #### Méthode 2 : Injection manuelle
@@ -273,7 +273,7 @@ Allez dans **Tableau de bord → Extensions → NotifySync**.
 
 | Paramètre | Défaut | Description |
 |-----------|--------|-------------|
-| **Quota par catégorie** | `10` | Nombre maximum d'entrées par catégorie (1 à 50). Une série compte pour une seule entrée. |
+| **Quota par catégorie** | `10` | Nombre maximum de cartes affichées par catégorie (1 à 50). |
 | **Bibliothèques surveillées** | *(aucune)* | Cochez les bibliothèques que vous souhaitez voir apparaître dans la cloche. |
 | **Collections surveillées** | *(aucune)* | Collections (BoxSets) à surveiller pour les nouveaux ajouts. Scannées toutes les 15 minutes. |
 | **Mappage des catégories** | *(vide)* | Renommez ou regroupez vos bibliothèques dans la cloche (ex. *"Mes Films"* → *"Films"*). Les flèches fixent l'ordre des filtres. |
@@ -288,7 +288,7 @@ Allez dans **Tableau de bord → Extensions → NotifySync**.
 | Problème | Solution |
 |----------|----------|
 | **La cloche n'apparaît pas** | Vérifiez que **File Transformation** est installé. Redémarrez Jellyfin, puis `Ctrl+F5`. |
-| **Pas de cloche et des erreurs `401 Unauthorized` dans la console du navigateur** | Votre serveur est en Jellyfin 12 avec l'ancienne version 5.x. Mettez NotifySync à jour en 6.x depuis le Catalogue, redémarrez Jellyfin, puis `Ctrl+F5`. |
+| **Pas de cloche et des erreurs `401 Unauthorized` dans la console du navigateur** | Votre serveur est en Jellyfin 12 avec l'ancienne version 5.x. Mettez NotifySync à jour en 6.x depuis **Extensions**, redémarrez Jellyfin, puis `Ctrl+F5`. |
 | **La cloche a disparu après une mise à jour de Jellyfin** | Avec la Méthode 2, chaque mise à jour écrase la modification. Refaites-la, ou passez à la Méthode 1. |
 | **Contenu ou musique manquant, compteur faux** | Cochez la bibliothèque dans **Bibliothèques surveillées**, puis cliquez sur **Régénérer l'historique**. |
 | **Un fichier remplacé apparaît en NOUVEAU au lieu de MAJ** | Cochez **Activer le suivi des suppressions**. Il est nécessaire quand un fichier est supprimé puis réimporté. |
