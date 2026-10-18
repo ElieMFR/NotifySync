@@ -336,6 +336,7 @@
         return seasonsLabel ? `${seasonsLabel} • ${detail}` : detail;
     };
 
+    const BATCH_GAP_MS = 60 * 60 * 1000;
     const processGrouping = (items) => {
         const seriesMap = new Map();
         const result = [];
@@ -364,8 +365,24 @@
             // plus one per upgrade reason). Each card needs an identity of its own — they
             // used to share the series id, so removing one took the others down with it and
             // only one of them left the screen.
-            const subsets = [['new', newEps], ...Array.from(upgradesByKind.entries())];
-            subsets.forEach(([subsetKey, subset]) => {
+            // Only what arrived together shares a card: a gap of more than an hour starts a new
+            // one. A weekly show left unwatched for three weeks read "Ep. 1-3" at the time of
+            // the third, as if three episodes had just landed (seen on a 12.2 server); a whole
+            // season imported at once still makes a single card.
+            const batches = [];
+            [['new', newEps], ...Array.from(upgradesByKind.entries())].forEach(([kindKey, list]) => {
+                let batch = null;
+                list.forEach(e => {
+                    const t = new Date(e.DateCreated).getTime();
+                    if (!batch || batch.oldest - t > BATCH_GAP_MS) {
+                        batch = { key: kindKey + '#' + e.Id, items: [], oldest: t };
+                        batches.push([batch.key, batch.items]);
+                    }
+                    batch.items.push(e);
+                    batch.oldest = t;
+                });
+            });
+            batches.forEach(([subsetKey, subset]) => {
                 if (subset.length === 0) return;
                 const latest = subset[0];
                 const hasNew = subset.some(e => e.IsNew);
