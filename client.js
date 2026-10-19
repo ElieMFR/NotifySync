@@ -1,7 +1,9 @@
-/* NOTIFYSYNC V6.0.1.4 (Jellyfin 12) */
+/* NOTIFYSYNC V6.0.1.5 (Jellyfin 12) */
 (function () {
     let currentData = [];
     let groupedData = [];
+    // Every card, before the quota: what clearing, dismissing and the Favorites filter work on.
+    let allCards = [];
     let firstLoadDone = false;
     let isFetching = false;
     let retryDelay = 2000;
@@ -447,6 +449,7 @@
 
         currentData = [];
         groupedData = [];
+        allCards = [];
         previousDataIds = new Set();
         lastFetchTime = 0;
         localStorage.removeItem(nsKey('etag'));
@@ -468,7 +471,7 @@
         // 500-item bulk cap and makes the whole clear silently fail.
         // Every card of the category, not only the ones on screen: the quota hides the older
         // ones, and clearing must take them too or they would step up into the emptied tab.
-        const idsToDismiss = processGrouping(currentData).filter(matches).map(i => i.Id);
+        const idsToDismiss = allCards.filter(matches).map(i => i.Id);
         if (idsToDismiss.length === 0) return;
 
         // Dismiss all items in a single bulk request
@@ -520,7 +523,8 @@
         // Today/This week/Earlier sections and the timestamp — so it's a pure type
         // marker shown on every item, no per-item flag needed.
         currentData.forEach(item => { item.IsNew = !item.IsRead; });
-        groupedData = capCardsPerCategory(processGrouping(currentData));
+        allCards = processGrouping(currentData);
+        groupedData = capCardsPerCategory(allCards);
         updateBadge();
     };
 
@@ -797,7 +801,9 @@
         // In TV mode the cards and the footer take the focus, so the remote can reach them.
         const tvStop = isTvLayout() ? ' tabindex="0"' : '';
         let filtered = groupedData || [];
-        if (activeFilter === '__fav') filtered = filtered.filter(i => i.IsFavorite);
+        // Favorites are picked from every card, not from those the quota left on screen: an
+        // older favorite pushed out of its category by newer titles still belongs here.
+        if (activeFilter === '__fav') filtered = capCardsPerCategory(allCards.filter(i => i.IsFavorite));
         else if (activeFilter !== 'All') filtered = filtered.filter(i => i.Category === activeFilter);
         const filterBar = drop.querySelector('.filter-bar');
         // Category pills only earn their place when they add a distinction:
@@ -813,7 +819,7 @@
         let pillsHtml = catList.map(c => `<div class="filter-pill ${activeFilter === c ? 'active' : ''}" data-category="${escapeHtml(c)}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">${T['filter' + c] || escapeHtml(c)}</div>`).join('');
         // Favorites pill — only rendered when the list actually contains favorites,
         // so users who never favorite anything don't get a dead filter.
-        if (groupedData.some(i => i.IsFavorite)) {
+        if (allCards.some(i => i.IsFavorite)) {
             pillsHtml += `<div class="filter-pill ${activeFilter === '__fav' ? 'active' : ''}" data-category="__fav" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">${T.filterFav}</div>`;
         }
         filterBar.innerHTML = pillsHtml;
@@ -872,7 +878,7 @@
             const safeHeroId = escapeHtml(hero.CardId || hero.Id);
             const heroNavId = escapeHtml(hero.NavId || hero.RealItemId || hero.Id);
             const heroFallbackImg = client.getUrl(`Items/${encodeURIComponent(hero.SeriesId || heroItemId)}/Images/Primary?quality=70&fillWidth=380&fillHeight=160&format=webp`);
-            htmlParts.push(`<div class="hero-section"${tvStop} onclick="document.dispatchEvent(new CustomEvent('ns-navigate', {detail: '${heroNavId}'}))"><div class="hero-bg"><img src="${escapeHtml(heroImg)}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="if(this.dataset.fb){this.src=this.dataset.fb;this.removeAttribute('data-fb')}else{this.style.display='none'}" data-fb="${escapeHtml(heroFallbackImg)}"></div><div class="hero-overlay"></div><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('ns-dismiss', {detail: '${safeHeroId}'}))">close</button><div class="hero-content">${hero.IsUpgrade ? `<span class="hero-badge-upgrade">${escapeHtml(upgradeBadgeText(hero))}</span>` : `<span class="hero-badge">${T.badgeNew}</span>`}<div style="font-size:18px;font-weight:700;text-shadow:0 2px 4px #000;line-height:1.2;">${heroTitle}${hero.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div style="font-size:12px;opacity:0.8;margin-top:4px">${timeAgo(hero.DateCreated)} &bull; ${heroSub}</div></div></div>`);
+            htmlParts.push(`<div class="hero-section"${tvStop} data-nav="${heroNavId}"><div class="hero-bg"><img src="${escapeHtml(heroImg)}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="if(this.dataset.fb){this.src=this.dataset.fb;this.removeAttribute('data-fb')}else{this.style.display='none'}" data-fb="${escapeHtml(heroFallbackImg)}"></div><div class="hero-overlay"></div><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" data-dismiss="${safeHeroId}">close</button><div class="hero-content">${hero.IsUpgrade ? `<span class="hero-badge-upgrade">${escapeHtml(upgradeBadgeText(hero))}</span>` : `<span class="hero-badge">${T.badgeNew}</span>`}<div style="font-size:18px;font-weight:700;text-shadow:0 2px 4px #000;line-height:1.2;">${heroTitle}${hero.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div style="font-size:12px;opacity:0.8;margin-top:4px">${timeAgo(hero.DateCreated)} &bull; ${heroSub}</div></div></div>`);
         }
 
         let curSection = null;
@@ -895,7 +901,7 @@
             const safeId = escapeHtml(item.CardId || item.Id);
             const navId = escapeHtml(item.NavId || item.RealItemId || item.Id);
             const badgeHtml = `<span class="item-badge">${escapeHtml(upgradeBadgeText(item))}</span>`;
-            htmlParts.push(`<div class="dropdown-item ${item.IsUpgrade ? 'style-upgrade' : 'style-new'}" data-item-id="${safeId}"${tvStop} onclick="document.dispatchEvent(new CustomEvent('ns-navigate', {detail: '${navId}'}))"><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('ns-dismiss', {detail: '${safeId}'}))">close</button><div class="swipe-delete">${T.dismiss}</div><div class="thumb-wrapper"><img data-src="${imgUrl}" decoding="async" class="dropdown-thumb ${isMusic ? 'music' : ''}" loading="lazy" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.removeAttribute('data-fallback')}else{this.style.display='none'}" data-fallback="${fallbackUrl}"><span class="material-icons" style="color:#555;font-size:24px;">${isMusic ? 'album' : 'movie'}</span></div><div class="dropdown-info">${badgeHtml}<div class="dropdown-title" title="${title}">${title}${item.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div class="dropdown-subtitle" title="${sub}"><span class="sub-time">${timeAgo(item.DateCreated)} &bull;</span><span class="sub-text">${sub}</span></div></div></div>`);
+            htmlParts.push(`<div class="dropdown-item ${item.IsUpgrade ? 'style-upgrade' : 'style-new'}" data-item-id="${safeId}"${tvStop} data-nav="${navId}"><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" data-dismiss="${safeId}">close</button><div class="swipe-delete">${T.dismiss}</div><div class="thumb-wrapper"><img data-src="${imgUrl}" decoding="async" class="dropdown-thumb ${isMusic ? 'music' : ''}" loading="lazy" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.removeAttribute('data-fallback')}else{this.style.display='none'}" data-fallback="${fallbackUrl}"><span class="material-icons" style="color:#555;font-size:24px;">${isMusic ? 'album' : 'movie'}</span></div><div class="dropdown-info">${badgeHtml}<div class="dropdown-title" title="${title}">${title}${item.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div class="dropdown-subtitle" title="${sub}"><span class="sub-time">${timeAgo(item.DateCreated)} &bull;</span><span class="sub-text">${sub}</span></div></div></div>`);
         });
 
         if (activeFilter === 'All') {
@@ -1065,7 +1071,7 @@
                     // is what this did — also removed the OTHER cards of the same series,
                     // on the server as well: dismissing a batch of new episodes silently
                     // took away the upgrade card the user had deliberately left alone.
-                    const card = (groupedData || []).find(c => (c.CardId || c.Id) === cardId);
+                    const card = (allCards || []).find(c => (c.CardId || c.Id) === cardId);
                     const memberIds = (card && card.MemberIds && card.MemberIds.length) ? card.MemberIds : [cardId];
 
                     // Drop it from local state now instead of after the round-trip, so the
@@ -1077,9 +1083,14 @@
                     currentData = currentData.filter(i => memberIds.indexOf(i.Id) === -1);
                     recalculateNewStatus();
 
+                    // A card the quota kept back steps into the freed place, and only a real
+                    // redraw shows it: taking the card out in place left the list one short
+                    // until the next refresh.
+                    const stepsUp = allCards.length > groupedData.length;
+
                     setTimeout(() => {
                         const d = document.getElementById('notification-dropdown');
-                        if (removeCardInPlace(cardId)) {
+                        if (!stepsUp && removeCardInPlace(cardId)) {
                             // The DOM is now one card ahead of what we recorded. Bring the
                             // record in line without redrawing, so the next refresh sees the
                             // list as current instead of rebuilding it.
@@ -1114,6 +1125,23 @@
             lastRenderedHtml = null; // the list container is brand new — nothing drawn yet
             // A mouse wheel only scrolls up and down: with many categories the filter bar
             // overflows sideways, and a mouse alone could not reach the last ones.
+            // One listener for every card. The ids used to sit inside onclick="…'id'…"
+            // strings: HTML-escaping does not protect a JavaScript string there, since the
+            // browser decodes &#039; back into a quote before running it. Data attributes
+            // carry them as plain text.
+            const listEl = drop.querySelector('.list-container');
+            listEl.addEventListener('click', (e) => {
+                const dismissBtn = e.target.closest('[data-dismiss]');
+                if (dismissBtn && listEl.contains(dismissBtn)) {
+                    e.stopPropagation();
+                    document.dispatchEvent(new CustomEvent('ns-dismiss', { detail: dismissBtn.dataset.dismiss }));
+                    return;
+                }
+                const card = e.target.closest('[data-nav]');
+                if (card && listEl.contains(card)) {
+                    document.dispatchEvent(new CustomEvent('ns-navigate', { detail: card.dataset.nav }));
+                }
+            });
             const filterBarEl = drop.querySelector('.filter-bar');
             filterBarEl.addEventListener('wheel', (e) => {
                 if (Math.abs(e.deltaY) <= Math.abs(e.deltaX) || filterBarEl.scrollWidth <= filterBarEl.clientWidth) return;

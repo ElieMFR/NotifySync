@@ -621,6 +621,15 @@ namespace NotifySync
 
         private void OnUserDataSaved(object? sender, UserDataSaveEventArgs e)
         {
+            // A playback position saved every few seconds changes nothing the bell shows —
+            // played, unplayed and favorites arrive under their own reasons. Reacting to it
+            // threw the user's view away throughout playback, and the next request rebuilt it
+            // from the library.
+            if (e.SaveReason == UserDataSaveReason.PlaybackProgress)
+            {
+                return;
+            }
+
             // A played/unplayed/favorite change only affects THIS user's view of the
             // bell (played items drop out, favorites light up). Bump only this user's
             // state version — NOT the global counter — so we don't invalidate every
@@ -1424,6 +1433,21 @@ namespace NotifySync
             finally
             {
                 Interlocked.Exchange(ref _isProcessingBuffer, 0);
+
+                // An item queued while this pass was running had its timer fire into the
+                // guard above and return: without a new pass it waited for the next library
+                // event, however long that took.
+                if (!_eventBuffer.IsEmpty && !_disposeCts.IsCancellationRequested)
+                {
+                    try
+                    {
+                        _bufferProcessTimer.Change(500, Timeout.Infinite);
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        // Timer already disposed during plugin shutdown — safe to ignore
+                    }
+                }
             }
         }
 

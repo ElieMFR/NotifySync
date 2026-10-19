@@ -71,6 +71,7 @@ namespace NotifySync
         });
 
         private static long _lastRefreshTime;
+        private static long _lastCollectionScanTime;
         private static ILogger<NotifyController>? _staticLogger;
 
         private readonly IUserManager _userManager;
@@ -183,6 +184,15 @@ namespace NotifySync
             if (NotificationManager.Instance == null)
             {
                 return StatusCode(StatusCodes.Status503ServiceUnavailable, "Manager not initialized.");
+            }
+
+            var nowTicks = DateTime.UtcNow.Ticks;
+            var last = Interlocked.Read(ref _lastCollectionScanTime);
+            if (new TimeSpan(nowTicks - last).TotalSeconds < 30
+                || Interlocked.CompareExchange(ref _lastCollectionScanTime, nowTicks, last) != last)
+            {
+                _logger.LogWarning("NotifySync: Collection scan rate-limited.");
+                return StatusCode(429, "Please wait 30 seconds.");
             }
 
             // Tell the caller upfront when no collection is monitored, so the UI can
@@ -530,7 +540,7 @@ namespace NotifySync
                 }
 
                 var normalizedUserId = NormalizeId(userId);
-                if (IsUserThrottled(normalizedUserId))
+                if (IsUserThrottled(normalizedUserId + ":read"))
                 {
                     return StatusCode(429, "Too many requests.");
                 }
@@ -572,18 +582,22 @@ namespace NotifySync
                 return StatusCode(StatusCodes.Status503ServiceUnavailable, "Manager not initialized.");
             }
 
+            // Each action has its own clock, and dismissing allows a quick succession. Sharing
+            // one 500 ms window with MarkRead turned two swipes in a row — or a swipe right
+            // after opening the bell, which marks everything read — into a 429, and the card
+            // the user had just swiped away came back.
             var normalizedUserId = NormalizeId(userId);
-            if (IsUserThrottled(normalizedUserId))
+            if (IsUserThrottled(normalizedUserId + ":dismiss", 150))
             {
                 return StatusCode(429, "Too many requests.");
             }
 
-            // Resolve group dismiss: if itemId is a SeriesId, find all episode IDs (no clone overhead)
+            // Resolve group dismiss: if itemId is a SeriesId, find all episode IDs (no clone overhead).
+            // One transaction for the lot rather than a connection per episode.
             var idsToDismiss = NotificationManager.Instance.ResolveNotificationIds(itemId);
-
-            foreach (var id in idsToDismiss)
+            if (idsToDismiss.Count > 0)
             {
-                NotificationManager.Instance.Db.SetItemDismissed(normalizedUserId, id);
+                NotificationManager.Instance.Db.BulkSetDismissed(normalizedUserId, idsToDismiss);
             }
 
             NotificationManager.Instance.IncrementUserStateVersion(normalizedUserId);
