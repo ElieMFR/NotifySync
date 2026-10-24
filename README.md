@@ -44,21 +44,22 @@ NotifySync adds a notification bell to Jellyfin, like on streaming platforms. Yo
 
 ## ✨ Key Features
 
-*   **Streaming-style bell**: the latest addition is shown large, the others in a list. The red counter clears when you open the bell.
-*   **NEW / UPD badges**: each item keeps its badge until you dismiss it or watch it.
+*   **Streaming-style bell**: the latest addition is shown large, the others in a list.
+*   **Badges and counter**: the red counter clears when you open the bell. Each item keeps its NEW / UPD badge until you dismiss it or watch it.
 *   **Real-time**: additions show up as soon as Jellyfin announces them, without reloading the page.
 *   **Sorted by date**: Today, This week, Earlier.
 *   **Grouping**: episodes that arrived together share one card (`Season 4 • Ep. 1-12`). Tracks are grouped by album.
 *   **Upgrades detected**: a replaced file comes back with a blue **UPD** badge that says what changed (Quality, Codec or Audio). Subtitles and metadata trigger nothing.
 *   **Moves ignored**: reorganising your libraries announces nothing new.
 *   **Nothing incomplete**: a title waits, up to 5 minutes, until Jellyfin has identified it, with its artwork.
-*   **Filters**: by category or by favorites. Dismiss an item or a group, or swipe left on mobile. Dismissing an item does not mark it as played.
+*   **Filters**: by category or by favorites.
+*   **Dismiss**: an item or a group, or swipe left on mobile. Dismissing does not mark it as played.
 *   **Collections**: monitored collections announce their new additions.
 *   **Deletion history**: a log for admins.
 *   **Synced**: what you read or dismiss on one device is read or dismissed on all of them.
 *   **Permissions respected**: everyone only sees the libraries they can access.
-*   **Bilingual**: French or English, following your Jellyfin language. Works on desktop, tablet and mobile.
-*   **Remote control**: on TV, arrows to browse, OK to open or dismiss, Back to close.
+*   **Bilingual**: French or English, following your Jellyfin language.
+*   **On every screen**: desktop, tablet and mobile. On TV, when the app loads NotifySync's script (Samsung TVs installed with [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung) do), the remote drives it: arrows to browse, OK to open or dismiss, Back to close.
 
 ## 📦 Installation
 
@@ -67,8 +68,6 @@ NotifySync adds a notification bell to Jellyfin, like on streaming platforms. Yo
 > * Jellyfin **12.x**
 > * Jellyfin **10.11.x** (with NotifySync 5.8.4.0)
 > * The **File Transformation** plugin, or a manual edit (see [Without File Transformation](#without-file-transformation))
->
-> 📺 **On TV:** the bell only shows if the TV app loads NotifySync's script. Samsung TVs installed with [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung) do.
 
 ### Steps
 1.  Open **Dashboard → Plugins → Manage Repositories** and add these two repositories:
@@ -146,7 +145,7 @@ NotifySync goes well with [**ElegantFin Cinema Edition**](https://github.com/pet
 
 ## 💬 Support
 
-Open an issue on [GitHub](https://github.com/peterdu1109/NotifySync/issues) with your Jellyfin version, your NotifySync version, the app or browser you use, and the server log if you can.
+Open an issue on [GitHub](https://github.com/peterdu1109/NotifySync/issues) with your Jellyfin version, your NotifySync version, the app or browser you use, and the server log if you can. Contributions and feature ideas are welcome there too.
 
 ## 👥 Authors & Credits
 
@@ -158,8 +157,6 @@ NotifySync is maintained by:
 ### 🙏 Contributors
 
 <p><a href="https://github.com/muisje" title="@muisje"><img src="https://github.com/muisje.png?size=96" width="48" height="48" alt="@muisje" /></a> <a href="https://github.com/Wernouxe" title="@Wernouxe"><img src="https://github.com/Wernouxe.png?size=96" width="48" height="48" alt="@Wernouxe" /></a> <a href="https://github.com/hstark16" title="@hstark16"><img src="https://github.com/hstark16.png?size=96" width="48" height="48" alt="@hstark16" /></a> <a href="https://github.com/Shillooh" title="@Shillooh"><img src="https://github.com/Shillooh.png?size=96" width="48" height="48" alt="@Shillooh" /></a></p>
-
-Contributions, bug reports and feature requests are welcome on [GitHub](https://github.com/peterdu1109/NotifySync).
 
 Released under the [MIT License](./LICENSE).
 
@@ -184,21 +181,22 @@ NotifySync ajoute à Jellyfin une cloche de notifications, comme sur les platefo
 
 ## ✨ Fonctionnalités
 
-*   **Cloche style streaming** : le dernier ajout est affiché en grand, les autres en liste. Le compteur rouge s'efface quand vous ouvrez la cloche.
-*   **Badges NOUVEAU / MAJ** : chaque élément garde son badge jusqu'à ce que vous le retiriez ou le regardiez.
+*   **Cloche style streaming** : le dernier ajout est affiché en grand, les autres en liste.
+*   **Badges et compteur** : le compteur rouge s'efface à l'ouverture de la cloche. Chaque élément garde son badge NOUVEAU / MAJ jusqu'à ce que vous le retiriez ou le regardiez.
 *   **Temps réel** : les ajouts apparaissent dès que Jellyfin les annonce, sans recharger la page.
 *   **Classé par date** : Aujourd'hui, Cette semaine, Plus ancien.
 *   **Regroupement** : les épisodes arrivés ensemble forment une seule carte (`Saison 4 • Ép. 1-12`). Les pistes sont groupées par album.
 *   **Mises à jour détectées** : un fichier remplacé revient avec un badge bleu **MAJ** qui précise ce qui a changé (Qualité, Codec ou Audio). Les sous-titres et les métadonnées ne déclenchent rien.
 *   **Déplacements ignorés** : réorganiser vos bibliothèques n'annonce rien de nouveau.
 *   **Rien d'incomplet** : un titre attend, jusqu'à 5 minutes, que Jellyfin l'ait identifié, avec son affiche.
-*   **Filtres** : par catégorie ou par favoris. Vous pouvez retirer un élément ou un groupe, ou glisser vers la gauche sur mobile. Retirer un élément ne le marque pas comme vu.
+*   **Filtres** : par catégorie ou par favoris.
+*   **Retrait** : un élément ou un groupe, ou en glissant vers la gauche sur mobile. Retirer ne marque pas comme vu.
 *   **Collections** : les collections surveillées signalent leurs nouveaux ajouts.
 *   **Historique des suppressions** : un journal réservé aux admins.
 *   **Synchronisé** : ce que vous lisez ou retirez sur un appareil l'est sur tous les autres.
 *   **Permissions respectées** : chacun ne voit que les bibliothèques auxquelles il a accès.
-*   **Bilingue** : français ou anglais, selon la langue de Jellyfin. Fonctionne sur ordinateur, tablette et mobile.
-*   **Télécommande** : sur TV, les flèches pour parcourir, OK pour ouvrir ou retirer, Retour pour fermer.
+*   **Bilingue** : français ou anglais, selon la langue de Jellyfin.
+*   **Sur tous les écrans** : ordinateur, tablette et mobile. Sur TV, si l'appli charge le script de NotifySync (c'est le cas des TV Samsung installées avec [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung)), la télécommande la pilote : flèches pour parcourir, OK pour ouvrir ou retirer, Retour pour fermer.
 
 ## 📦 Installation
 
@@ -207,8 +205,6 @@ NotifySync ajoute à Jellyfin une cloche de notifications, comme sur les platefo
 > * Jellyfin **12.x**
 > * Jellyfin **10.11.x** (avec NotifySync 5.8.4.0)
 > * L'extension **File Transformation**, ou une modification manuelle (voir [Sans File Transformation](#sans-file-transformation))
->
-> 📺 **Sur TV :** la cloche s'affiche seulement si l'application TV charge le script de NotifySync. C'est le cas des TV Samsung installées avec [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung).
 
 ### Étapes
 1.  Ouvrez **Tableau de bord → Extensions → Gérer les dépôts** et ajoutez ces deux dépôts :
@@ -286,7 +282,7 @@ NotifySync va bien avec [**ElegantFin Cinema Edition**](https://github.com/peter
 
 ## 💬 Support
 
-Ouvrez une issue sur [GitHub](https://github.com/peterdu1109/NotifySync/issues) en indiquant votre version de Jellyfin, celle de NotifySync, l'appli ou le navigateur utilisé, et le journal du serveur si possible.
+Ouvrez une issue sur [GitHub](https://github.com/peterdu1109/NotifySync/issues) en indiquant votre version de Jellyfin, celle de NotifySync, l'appli ou le navigateur utilisé, et le journal du serveur si possible. Les contributions et idées de fonctionnalités y sont aussi les bienvenues.
 
 ## 👥 Auteurs & Crédits
 
@@ -298,7 +294,5 @@ NotifySync est maintenu par :
 ### 🙏 Contributeurs
 
 <p><a href="https://github.com/muisje" title="@muisje"><img src="https://github.com/muisje.png?size=96" width="48" height="48" alt="@muisje" /></a> <a href="https://github.com/Wernouxe" title="@Wernouxe"><img src="https://github.com/Wernouxe.png?size=96" width="48" height="48" alt="@Wernouxe" /></a> <a href="https://github.com/hstark16" title="@hstark16"><img src="https://github.com/hstark16.png?size=96" width="48" height="48" alt="@hstark16" /></a> <a href="https://github.com/Shillooh" title="@Shillooh"><img src="https://github.com/Shillooh.png?size=96" width="48" height="48" alt="@Shillooh" /></a></p>
-
-Contributions, rapports de bugs et demandes de fonctionnalités sont les bienvenus sur [GitHub](https://github.com/peterdu1109/NotifySync).
 
 Distribué sous [Licence MIT](./LICENSE).
