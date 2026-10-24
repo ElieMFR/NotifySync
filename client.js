@@ -1,4 +1,4 @@
-/* NOTIFYSYNC V6.0.1.6 (Jellyfin 12) */
+/* NOTIFYSYNC V6.0.1.7 (Jellyfin 12) */
 (function () {
     let currentData = [];
     let groupedData = [];
@@ -800,6 +800,13 @@
         const container = drop.querySelector('.list-container');
         // In TV mode the cards and the footer take the focus, so the remote can reach them.
         const tvStop = isTvLayout() ? ' tabindex="0"' : '';
+        // The chosen filter outlives its cards: once the last one of the category, or the last
+        // favorite, is watched or dismissed, its button leaves the bar but the bell went on
+        // filtering on it and read "You're all caught up!" over other categories' cards.
+        if (activeFilter === '__fav' ? !allCards.some(i => i.IsFavorite)
+            : activeFilter !== 'All' && !groupedData.some(i => i.Category === activeFilter)) {
+            activeFilter = 'All';
+        }
         let filtered = groupedData || [];
         // Favorites are picked from every card, not from those the quota left on screen: an
         // older favorite pushed out of its category by newer titles still belongs here.
