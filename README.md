@@ -86,8 +86,7 @@ NotifySync adds a notification bell to Jellyfin, like on streaming platforms. Yo
 
 ### Without File Transformation
 
-> [!WARNING]
-> To redo after every Jellyfin update, which overwrites `index.html`.
+Skip File Transformation in steps 1 and 2: add and install **NotifySync** only. Before step 3, add the bell to Jellyfin's page yourself with the command for your system:
 
 **Linux**
 ```bash
@@ -110,6 +109,9 @@ and paste this line just before `</body>`:
 ```html
 <script src="/NotifySync/client.js"></script>
 ```
+
+> [!WARNING]
+> To redo after every Jellyfin update, which overwrites `index.html`.
 
 ## ⚙️ Configuration
 
@@ -227,8 +229,7 @@ NotifySync ajoute à Jellyfin une cloche de notifications, comme sur les platefo
 
 ### Sans File Transformation
 
-> [!WARNING]
-> À refaire après chaque mise à jour de Jellyfin, qui écrase `index.html`.
+Aux étapes 1 et 2, n'ajoutez et n'installez que **NotifySync**. Avant l'étape 3, ajoutez vous-même la cloche à la page de Jellyfin avec la commande de votre système :
 
 **Linux**
 ```bash
@@ -251,6 +252,9 @@ et collez cette ligne juste avant `</body>` :
 ```html
 <script src="/NotifySync/client.js"></script>
 ```
+
+> [!WARNING]
+> À refaire après chaque mise à jour de Jellyfin, qui écrase `index.html`.
 
 ## ⚙️ Configuration
 
