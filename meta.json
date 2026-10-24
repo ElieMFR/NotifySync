@@ -1,7 +1,7 @@
 {
   "guid": "95655672-2342-4321-8291-321312312312",
   "name": "NotifySync",
-  "version": "6.0.1.5",
+  "version": "6.0.1.6",
   "description": "Ajoute une cloche de notifications à Jellyfin : les derniers films, séries et musiques ajoutés, sans quitter la page.\n\nAdds a notification bell to Jellyfin: the latest movies, series and music added, without leaving the page.",
   "owner": "ElieM & Peterdu1109",
   "category": "UI",
