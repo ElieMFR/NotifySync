@@ -71,11 +71,15 @@ NotifySync adds a notification bell to Jellyfin, like on streaming platforms. Yo
 
 ### Steps
 1.  Open **Dashboard → Plugins → Manage Repositories** and add these two repositories:
+
+    **NotifySync** (the same for 12.x and 10.11.x):
     ```
     https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
+    ```
+    **File Transformation** (adds the bell to Jellyfin and survives its updates):
+    ```
     https://www.iamparadox.dev/jellyfin/plugins/manifest.json
     ```
-    The first is NotifySync, the same for 12.x and 10.11.x. The second is File Transformation, which adds the bell and survives Jellyfin updates.
 2.  In **Plugins**, filter **Available**, install **NotifySync** and **File Transformation**.
 3.  Restart Jellyfin, then `Ctrl+F5` in your browser.
 4.  In **Dashboard → Plugins → NotifySync**, check the libraries to monitor, click **Save**, then **Regenerate history**. The bell stays empty until a library is checked.
@@ -208,11 +212,15 @@ NotifySync ajoute à Jellyfin une cloche de notifications, comme sur les platefo
 
 ### Étapes
 1.  Ouvrez **Tableau de bord → Extensions → Gérer les dépôts** et ajoutez ces deux dépôts :
+
+    **NotifySync** (le même pour 12.x et 10.11.x) :
     ```
     https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
+    ```
+    **File Transformation** (ajoute la cloche à Jellyfin et résiste à ses mises à jour) :
+    ```
     https://www.iamparadox.dev/jellyfin/plugins/manifest.json
     ```
-    Le premier est NotifySync, le même pour 12.x et 10.11.x. Le second est File Transformation, qui ajoute la cloche et résiste aux mises à jour de Jellyfin.
 2.  Dans **Extensions**, filtre **Disponible**, installez **NotifySync** et **File Transformation**.
 3.  Redémarrez Jellyfin, puis `Ctrl+F5` dans votre navigateur.
 4.  Dans **Tableau de bord → Extensions → NotifySync**, cochez les bibliothèques à surveiller, cliquez sur **Sauvegarder** puis **Régénérer l'historique**. La cloche reste vide tant qu'aucune bibliothèque n'est cochée.
