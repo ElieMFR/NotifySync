@@ -942,7 +942,7 @@ namespace NotifySync
             // Periodic purge: remove stale entries older than 60 seconds
             if (UserActionThrottle.Count > 100)
             {
-                foreach (var kvp in UserActionThrottle.ToList())
+                foreach (var kvp in UserActionThrottle)
                 {
                     if ((now - kvp.Value) > 60_000)
                     {
@@ -961,7 +961,11 @@ namespace NotifySync
         internal static void InvalidateUserCache(string userId)
         {
             var prefix = userId + "_";
-            foreach (var kvp in UserViewCache.ToList())
+            // Enumerate the dictionary itself, never a ToList() copy: ToList sizes its array from
+            // Count, then copies, and another request writing in between made the copy fail —
+            // ArgumentException or NullReferenceException, and the bell got a 500 (three times in
+            // three days on a 12.2 server). The enumerator is safe while others add and remove.
+            foreach (var kvp in UserViewCache)
             {
                 if (kvp.Key.StartsWith(prefix, StringComparison.Ordinal))
                 {
