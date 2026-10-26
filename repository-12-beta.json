@@ -6,14 +6,14 @@
     "description": "Ajoute une cloche de notifications à Jellyfin : les derniers films, séries et musiques ajoutés, sans quitter la page.\n\nAdds a notification bell to Jellyfin: the latest movies, series and music added, without leaving the page.",
     "owner": "ElieM & Peterdu1109",
     "overview": "Une cloche de notifications pour Jellyfin 12 — canal beta.\nA notification bell for Jellyfin 12 — beta channel.",
-    "supportUrl": "https://github.com/peterdu1109/NotifySync",
-    "imageUrl": "https://raw.githubusercontent.com/peterdu1109/NotifySync/main/icon.svg",
+    "supportUrl": "https://github.com/ElieMFR/NotifySync",
+    "imageUrl": "https://raw.githubusercontent.com/ElieMFR/NotifySync/main/icon.svg",
     "versions": [
       {
         "version": "6.0.1.7",
-        "changelog": "<a style='color:white;text-decoration:none' href=\"https://github.com/peterdu1109/NotifySync/releases/tag/v6.0.1.7-jf12-beta\">🧪 <span style='text-decoration:underline'>Beta — Release Notes</span></a>",
+        "changelog": "<a style='color:white;text-decoration:none' href=\"https://github.com/ElieMFR/NotifySync/releases/tag/v6.0.1.7-jf12-beta\">🧪 <span style='text-decoration:underline'>Beta — Release Notes</span></a>",
         "targetAbi": "12.0.0.0",
-        "sourceUrl": "https://github.com/peterdu1109/NotifySync/releases/download/v6.0.1.7-jf12-beta/NotifySync.zip",
+        "sourceUrl": "https://github.com/ElieMFR/NotifySync/releases/download/v6.0.1.7-jf12-beta/NotifySync.zip",
         "checksum": "EE68BE91889D4071197109CEC0B906A5",
         "timestamp": "2026-10-24T21:20:18Z"
       }
