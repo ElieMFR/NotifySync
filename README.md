@@ -1,13 +1,13 @@
 <h1 align="center">🔔 NotifySync</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/peterdu1109/NotifySync?label=version&color=blue&cacheSeconds=3600" alt="Version">
+  <img src="https://img.shields.io/github/v/release/ElieMFR/NotifySync?label=version&color=blue&cacheSeconds=3600" alt="Version">
   <img src="https://img.shields.io/badge/.NET-10.0%20%7C%209.0-purple" alt=".NET Framework">
   <img src="https://img.shields.io/badge/Jellyfin-12.x%20%7C%2010.11.x-blueviolet" alt="Jellyfin">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
-  <img src="https://img.shields.io/github/stars/peterdu1109/NotifySync?style=flat&color=yellow&cacheSeconds=3600" alt="GitHub stars">
-  <img src="https://img.shields.io/github/downloads/peterdu1109/NotifySync/total?color=brightgreen&cacheSeconds=3600" alt="Downloads">
-  <img src="https://img.shields.io/github/release-date/peterdu1109/NotifySync?color=orange&cacheSeconds=3600" alt="Last release">
+  <img src="https://img.shields.io/github/stars/ElieMFR/NotifySync?style=flat&color=yellow&cacheSeconds=3600" alt="GitHub stars">
+  <img src="https://img.shields.io/github/downloads/ElieMFR/NotifySync/total?color=brightgreen&cacheSeconds=3600" alt="Downloads">
+  <img src="https://img.shields.io/github/release-date/ElieMFR/NotifySync?color=orange&cacheSeconds=3600" alt="Last release">
 </p>
 
 <p align="center">
@@ -30,7 +30,7 @@
 
 NotifySync adds a notification bell to Jellyfin, like on streaming platforms. Your users see the latest movies, series and music added without leaving their page.
 
-> 📖 **Version history:** see [GitHub Releases](https://github.com/peterdu1109/NotifySync/releases) for what's new in each version.
+> 📖 **Version history:** see [GitHub Releases](https://github.com/ElieMFR/NotifySync/releases) for what's new in each version.
 
 ## 📑 Table of Contents
 
@@ -74,7 +74,7 @@ NotifySync adds a notification bell to Jellyfin, like on streaming platforms. Yo
 
     **NotifySync** (the same for 12.x and 10.11.x):
     ```
-    https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
+    https://raw.githubusercontent.com/ElieMFR/NotifySync/refs/heads/main/repository.json
     ```
     **File Transformation** (adds the bell to Jellyfin and survives its updates):
     ```
@@ -147,11 +147,11 @@ Go to **Dashboard → Plugins → NotifySync**.
 
 ## 🎨 Recommended Theme
 
-NotifySync goes well with [**ElegantFin Cinema Edition**](https://github.com/peterdu1109/ElegantFin), a streaming-inspired Jellyfin theme. Both work together on PC, mobile and TV.
+NotifySync goes well with [**ElegantFin Cinema Edition**](https://github.com/ElieMFR/ElegantFin), a streaming-inspired Jellyfin theme. Both work together on PC, mobile and TV.
 
 ## 💬 Support
 
-Open an issue on [GitHub](https://github.com/peterdu1109/NotifySync/issues) with your Jellyfin version, your NotifySync version, the app or browser you use, and the server log if you can. Contributions and feature ideas are welcome there too.
+Open an issue on [GitHub](https://github.com/ElieMFR/NotifySync/issues) with your Jellyfin version, your NotifySync version, the app or browser you use, and the server log if you can. Contributions and feature ideas are welcome there too.
 
 ## 👥 Authors & Credits
 
@@ -173,7 +173,7 @@ Released under the [MIT License](./LICENSE).
 
 NotifySync ajoute à Jellyfin une cloche de notifications, comme sur les plateformes de streaming. Vos utilisateurs voient les derniers films, séries et musiques ajoutés sans quitter leur page.
 
-> 📖 **Journal des versions :** voir les [Releases GitHub](https://github.com/peterdu1109/NotifySync/releases) pour les nouveautés de chaque version.
+> 📖 **Journal des versions :** voir les [Releases GitHub](https://github.com/ElieMFR/NotifySync/releases) pour les nouveautés de chaque version.
 
 ## 📑 Sommaire
 
@@ -217,7 +217,7 @@ NotifySync ajoute à Jellyfin une cloche de notifications, comme sur les platefo
 
     **NotifySync** (le même pour 12.x et 10.11.x) :
     ```
-    https://raw.githubusercontent.com/peterdu1109/NotifySync/refs/heads/main/repository.json
+    https://raw.githubusercontent.com/ElieMFR/NotifySync/refs/heads/main/repository.json
     ```
     **File Transformation** (ajoute la cloche à Jellyfin et résiste à ses mises à jour) :
     ```
@@ -290,11 +290,11 @@ Allez dans **Tableau de bord → Extensions → NotifySync**.
 
 ## 🎨 Thème recommandé
 
-NotifySync va bien avec [**ElegantFin Cinema Edition**](https://github.com/peterdu1109/ElegantFin), un thème Jellyfin inspiré des plateformes de streaming. Les deux fonctionnent ensemble sur PC, mobile et TV.
+NotifySync va bien avec [**ElegantFin Cinema Edition**](https://github.com/ElieMFR/ElegantFin), un thème Jellyfin inspiré des plateformes de streaming. Les deux fonctionnent ensemble sur PC, mobile et TV.
 
 ## 💬 Support
 
-Ouvrez une issue sur [GitHub](https://github.com/peterdu1109/NotifySync/issues) en indiquant votre version de Jellyfin, celle de NotifySync, l'appli ou le navigateur utilisé, et le journal du serveur si possible. Les contributions et idées de fonctionnalités y sont aussi les bienvenues.
+Ouvrez une issue sur [GitHub](https://github.com/ElieMFR/NotifySync/issues) en indiquant votre version de Jellyfin, celle de NotifySync, l'appli ou le navigateur utilisé, et le journal du serveur si possible. Les contributions et idées de fonctionnalités y sont aussi les bienvenues.
 
 ## 👥 Auteurs & Crédits
 

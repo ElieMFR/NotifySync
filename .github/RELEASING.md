@@ -7,7 +7,6 @@ Four channels, one version number per build. Since 6.0.0.0 Jellyfin 12 is the ma
 | **Jellyfin 12** | `jellyfin-12` | `vX.Y.Z.0-jf12` | normal — becomes *Latest* | `repository.json` on `main` **and** `repository-12.json` on `jellyfin-12` | Jellyfin 12.x |
 | **Jellyfin 12 beta** | `jellyfin-12` | `vX.Y.Z.W-jf12-beta`, W ≥ 1 | pre-release | `repository-12-beta.json` on `jellyfin-12` | testers on 12.x |
 | **Jellyfin 10.11** | `main` | `vX.Y.Z.0` | normal, never *Latest* | `repository.json` on `main` | Jellyfin 10.11.x — frozen at 5.8.4.0 |
-| **Jellyfin 10.11 beta** | `main` | `vX.Y.Z.W-beta`, W ≥ 1 | pre-release | `repository-beta.json` on `main` | closed |
 
 - A stable number always ends in `.0`, a beta's never does. The admin page relies on it: its version link adds `-jf12` on a 12.x server, then `-beta` when the last number is not 0.
 - The Jellyfin 12 stable is the one release that takes *Latest*: from 6.0.0.0 on, the default download is the Jellyfin 12 build, and 6.x builds are for Jellyfin 12 only. Should 10.11 ever need another build, publish it with `--latest=false`, so that *Latest* never goes back to a 10.11 build. Betas stay pre-releases.
