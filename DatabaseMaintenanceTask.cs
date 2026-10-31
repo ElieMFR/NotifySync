@@ -41,12 +41,15 @@ namespace NotifySync
         /// <inheritdoc />
         public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
         {
+            // A fixed weekly slot rather than a 7-day interval: Jellyfin restarts an interval
+            // from scratch at every server start, so a server restarted once a week never ran it.
             return new[]
             {
                 new TaskTriggerInfo
                 {
-                    Type = TaskTriggerInfoType.IntervalTrigger,
-                    IntervalTicks = TimeSpan.FromDays(7).Ticks
+                    Type = TaskTriggerInfoType.WeeklyTrigger,
+                    DayOfWeek = DayOfWeek.Sunday,
+                    TimeOfDayTicks = TimeSpan.FromHours(4).Ticks
                 }
             };
         }
