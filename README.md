@@ -58,7 +58,7 @@ NotifySync adds a notification bell to Jellyfin, like on streaming platforms. Yo
 *   **Deletion history**: a log for admins.
 *   **Synced**: what you read or dismiss on one device is read or dismissed on all of them.
 *   **Permissions respected**: everyone only sees the libraries they can access.
-*   **Bilingual**: French or English, following your Jellyfin language.
+*   **Three languages**: French, English or Brazilian Portuguese, following your Jellyfin language.
 *   **On every screen**: desktop, tablet and mobile. On TV, when the app loads NotifySync's script (Samsung TVs installed with [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung) do), the remote drives it: arrows to browse, OK to open or dismiss, Back to close.
 
 ## 📦 Installation
@@ -142,7 +142,7 @@ Go to **Dashboard → Plugins → NotifySync**.
 | **A moved series still shows as NEW** | Turn on **Enable deletion tracking**. Detection only works if the folder keeps its name. |
 | **Unauthorized content visible** | The plugin follows Jellyfin permissions. Check the user's restrictions. |
 | **No bell on the admin pages** | Normal: the bell only shows on the user pages. |
-| **429 Error** | Wait 30 seconds between two clicks on **Regenerate history**. |
+| **"Please wait 30 seconds"** | **Regenerate history** and **Scan collections now** each run once every 30 seconds at most. Wait, then click again. |
 | **Incompatible** | Use the repository from [Installation](#-installation). Jellyfin 12.x needs NotifySync 6.x. |
 
 ## 🎨 Recommended Theme
@@ -201,7 +201,7 @@ NotifySync ajoute à Jellyfin une cloche de notifications, comme sur les platefo
 *   **Historique des suppressions** : un journal réservé aux admins.
 *   **Synchronisé** : ce que vous lisez ou retirez sur un appareil l'est sur tous les autres.
 *   **Permissions respectées** : chacun ne voit que les bibliothèques auxquelles il a accès.
-*   **Bilingue** : français ou anglais, selon la langue de Jellyfin.
+*   **Trois langues** : français, anglais ou portugais du Brésil, selon la langue de Jellyfin.
 *   **Sur tous les écrans** : ordinateur, tablette et mobile. Sur TV, si l'appli charge le script de NotifySync (c'est le cas des TV Samsung installées avec [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung)), la télécommande la pilote : flèches pour parcourir, OK pour ouvrir ou retirer, Retour pour fermer.
 
 ## 📦 Installation
@@ -285,7 +285,7 @@ Allez dans **Tableau de bord → Extensions → NotifySync**.
 | **Une série déplacée apparaît en NOUVEAU** | Cochez **Activer le suivi des suppressions**. La détection ne marche que si le dossier garde son nom. |
 | **Contenu non autorisé visible** | Le plugin suit les droits Jellyfin. Vérifiez les restrictions de l'utilisateur. |
 | **Pas de cloche sur les pages d'administration** | C'est normal : la cloche n'apparaît que sur les pages des utilisateurs. |
-| **Erreur 429** | Attendez 30 secondes entre deux clics sur **Régénérer l'historique**. |
+| **« Patientez 30 secondes »** | **Régénérer l'historique** et **Scanner les collections** se lancent chacun au plus une fois toutes les 30 secondes. Attendez, puis cliquez de nouveau. |
 | **Incompatible** | Utilisez le dépôt de l'[Installation](#-installation-1). Jellyfin 12.x demande NotifySync 6.x. |
 
 ## 🎨 Thème recommandé
