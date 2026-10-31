@@ -280,7 +280,17 @@ namespace NotifySync
                 }
 
                 // ETag 304 support: if client already has this version, skip serialization
-                var ifNoneMatch = Request.Headers["If-None-Match"].ToString();
+                // Sent quoted, as HTTP requires: a proxy compressing on the fly (nginx with gzip)
+                // drops an unquoted ETag, and the bell then never got a 304 behind it. Read back
+                // without the quotes or a weak marker, so a client still holding an old bare
+                // value keeps matching.
+                var ifNoneMatch = Request.Headers["If-None-Match"].ToString().Trim();
+                if (ifNoneMatch.StartsWith("W/", StringComparison.Ordinal))
+                {
+                    ifNoneMatch = ifNoneMatch.Substring(2);
+                }
+
+                ifNoneMatch = ifNoneMatch.Trim('"');
                 if (!string.IsNullOrEmpty(ifNoneMatch) && ifNoneMatch == hash)
                 {
                     return StatusCode(304);
@@ -290,7 +300,7 @@ namespace NotifySync
 
                 if (UserViewCache.TryGetValue(cacheKey, out var cachedData))
                 {
-                    Response.Headers["ETag"] = hash;
+                    Response.Headers["ETag"] = "\"" + hash + "\"";
                     return new FileContentResult(cachedData, "application/json");
                 }
 
@@ -451,7 +461,7 @@ namespace NotifySync
                     UserViewCache[cacheKey] = serialized;
                 }
 
-                Response.Headers["ETag"] = hash;
+                Response.Headers["ETag"] = "\"" + hash + "\"";
                 return new FileContentResult(serialized, "application/json");
             }
             catch (Exception ex)

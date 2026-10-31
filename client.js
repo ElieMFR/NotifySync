@@ -338,6 +338,16 @@
         return seasonsLabel ? `${seasonsLabel} • ${detail}` : detail;
     };
 
+    // Every episode number a file holds: one, or a run for a file named "S01E01-E02",
+    // which Jellyfin keeps as a single episode with an end number.
+    const episodeSpan = (e) => {
+        const a = e.IndexNumber, b = e.IndexNumberEnd;
+        if (!Number.isInteger(a) || !Number.isInteger(b) || b <= a || b - a > 50) return [a];
+        const run = [];
+        for (let n = a; n <= b; n++) run.push(n);
+        return run;
+    };
+
     const BATCH_GAP_MS = 60 * 60 * 1000;
     const processGrouping = (items) => {
         const seriesMap = new Map();
@@ -390,9 +400,11 @@
                 const hasNew = subset.some(e => e.IsNew);
                 if (subset.length > 1) {
                     // Label covers the whole group: badges no longer fade, so every
-                    // member is current and the count == the group size.
+                    // member is current. The count is the episodes the files hold, a
+                    // double-episode file counting for two.
                     const seasons = subset.map(e => e.ParentIndexNumber);
-                    const episodes = subset.map(e => e.IndexNumber);
+                    const episodes = [];
+                    subset.forEach(e => episodes.push(...episodeSpan(e)));
                     const seriesKey = latest.SeriesId || latest.Id;
                     // Open what the card actually announces. "Season 4 • Ep. 1-12" should land
                     // on that season, not on the series — which is what music already did, a
@@ -402,7 +414,7 @@
                     // Id stays the series id — grouping and the favorite lookup key on it.
                     // CardId addresses this card alone, MemberIds says exactly what it stands
                     // for, and NavId is where a click goes.
-                    result.push({ ...latest, IsGroup: true, GroupCount: subset.length, Name: latest.SeriesName || latest.Name, Id: seriesKey, NavId: oneSeason ? latest.SeasonId : seriesKey, CardId: seriesKey + '#' + subsetKey, MemberIds: subset.map(e => e.Id), IsNew: hasNew, Seasons: seasons, Episodes: episodes, IsFavorite: subset.some(e => e.IsFavorite) });
+                    result.push({ ...latest, IsGroup: true, GroupCount: episodes.length, Name: latest.SeriesName || latest.Name, Id: seriesKey, NavId: oneSeason ? latest.SeasonId : seriesKey, CardId: seriesKey + '#' + subsetKey, MemberIds: subset.map(e => e.Id), IsNew: hasNew, Seasons: seasons, Episodes: episodes, IsFavorite: subset.some(e => e.IsFavorite) });
                 } else { result.push(latest); }
             });
         });
@@ -464,19 +476,23 @@
 
         // '__fav' is the virtual favorites filter, not a real category.
         const matches = category === '__fav' ? (i) => i.IsFavorite : (i) => i.Category === category;
-        // Dismiss by CARD id (group id = SeriesId, or the item id for singles): the
-        // server expands each id to all its episodes, so we send a handful of ids
-        // instead of the raw episode list — which for a big category (long-running
-        // anime: maxItems series × up to 500 episodes) blows past the server's
-        // 500-item bulk cap and makes the whole clear silently fail.
+        // Dismiss each card's own members, as dismissing a single card does. A group card's
+        // id is its series id, which the server expands to every notification of that series,
+        // including one filed under another category (a monitored collection): clearing one
+        // tab took cards out of another. Sent in batches, under the server's 500-id cap.
         // Every card of the category, not only the ones on screen: the quota hides the older
         // ones, and clearing must take them too or they would step up into the emptied tab.
-        const idsToDismiss = allCards.filter(matches).map(i => i.Id);
+        const idsToDismiss = [];
+        allCards.filter(matches).forEach(c => {
+            if (c.MemberIds && c.MemberIds.length) idsToDismiss.push(...c.MemberIds);
+            else idsToDismiss.push(c.Id);
+        });
         if (idsToDismiss.length === 0) return;
 
-        // Dismiss all items in a single bulk request
-        const success = await bulkDismissOnServer(idsToDismiss);
-        if (!success) return;
+        for (let at = 0; at < idsToDismiss.length; at += 500) {
+            const success = await bulkDismissOnServer(idsToDismiss.slice(at, at + 500));
+            if (!success) return;
+        }
 
         // Remove from local data
         currentData = currentData.filter(i => !matches(i));
@@ -580,6 +596,9 @@
                 lastFetchTime = 0;
                 if (pollTimeout) clearTimeout(pollTimeout);
                 pollTimeout = setTimeout(fetchData, 50); // isFetching clears in finally first
+                // Leaving now keeps lastFetchTime at 0: stamped below, it made the 3 s throttle
+                // swallow this very retry.
+                return;
             }
             else if (res.status === 304) {
                 // Data unchanged, recalculate with existing state
@@ -714,7 +733,9 @@
 
     const formatEpisodeTitle = (item) => {
         const s = item.ParentIndexNumber ? `S${item.ParentIndexNumber.toString().padStart(2, '0')}` : '';
-        const e = item.IndexNumber ? `E${item.IndexNumber.toString().padStart(2, '0')}` : '';
+        const end = Number.isInteger(item.IndexNumberEnd) && item.IndexNumberEnd > item.IndexNumber
+            ? `-E${item.IndexNumberEnd.toString().padStart(2, '0')}` : '';
+        const e = item.IndexNumber ? `E${item.IndexNumber.toString().padStart(2, '0')}${end}` : '';
         const se = (s || e) ? `${s}${e}` : '';
         if (se && item.Name.indexOf(se) !== -1) return item.Name;
         return se ? `${se} - ${item.Name}` : item.Name;
@@ -1205,7 +1226,7 @@
     };
 
     const findVisibleLegacyHeader = () => {
-        const sels = ['.headerRight', '.headerButtons-right', '.emby-header-right', '.skinHeader-content'];
+        const sels = ['.headerRight'];
         for (const s of sels) {
             const el = document.querySelector(s);
             if (el && el.offsetParent !== null) return el;

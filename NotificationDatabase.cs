@@ -80,6 +80,7 @@ namespace NotifySync
                             BackdropImageTags TEXT,
                             PrimaryImageTag TEXT,
                             IndexNumber INTEGER,
+                            IndexNumberEnd INTEGER,
                             ParentIndexNumber INTEGER,
                             IsUpgrade INTEGER NOT NULL DEFAULT 0,
                             FilePath TEXT,
@@ -145,11 +146,24 @@ namespace NotifySync
                 MigrateAddColumn(connection, "Notifications", "FilePath", "TEXT");
                 MigrateAddColumn(connection, "Notifications", "UpgradeKind", "TEXT");
                 MigrateAddColumn(connection, "Notifications", "Size", "INTEGER");
+                MigrateAddColumn(connection, "Notifications", "IndexNumberEnd", "INTEGER");
                 MigrateAddColumn(connection, "DeletedItems", "IndexNumber", "INTEGER");
                 MigrateAddColumn(connection, "DeletedItems", "ParentIndexNumber", "INTEGER");
                 MigrateAddColumn(connection, "DeletedItems", "FilePath", "TEXT");
                 MigrateAddColumn(connection, "DeletedItems", "MatchedNotificationId", "TEXT");
                 MigrateAddColumn(connection, "DeletedItems", "Size", "INTEGER");
+
+                // After the migrations, which add MatchedNotificationId to older databases.
+                // Dropping a notification clears it by these columns one id at a time, and
+                // without an index each UPDATE walked the whole table (EXPLAIN QUERY PLAN:
+                // SCAN DeletedItems).
+                using (var indexCmd = connection.CreateCommand())
+                {
+                    indexCmd.CommandText = @"
+                        CREATE INDEX IF NOT EXISTS idx_deleted_matched ON DeletedItems(MatchedNotificationId);
+                        CREATE INDEX IF NOT EXISTS idx_deleted_item ON DeletedItems(ItemId);";
+                    indexCmd.ExecuteNonQuery();
+                }
 
                 // Drop columns no longer consumed by the slim classifier. Phase B Lite
                 // (VideoWidth/Height/Container/MediaBitrate) was tried and removed;
@@ -311,12 +325,12 @@ namespace NotifySync
                 INSERT OR REPLACE INTO Notifications (
                     Id, RealItemId, Name, Category, SeriesName, SeriesId, SeasonId, DateCreated,
                     Type, RunTimeTicks, ProductionYear, BackdropImageTags,
-                    PrimaryImageTag, IndexNumber, ParentIndexNumber,
+                    PrimaryImageTag, IndexNumber, IndexNumberEnd, ParentIndexNumber,
                     IsUpgrade, FilePath, UpgradeKind, Size
                 ) VALUES (
                     @Id, @RealItemId, @Name, @Category, @SeriesName, @SeriesId, @SeasonId, @DateCreated,
                     @Type, @RunTimeTicks, @ProductionYear, @Backdrop,
-                    @Primary, @Index, @ParentIndex,
+                    @Primary, @Index, @IndexEnd, @ParentIndex,
                     @IsUpgrade, @FilePath, @UpgradeKind, @Size
                 )";
 
@@ -334,6 +348,7 @@ namespace NotifySync
             var pBack = cmd.Parameters.Add("@Backdrop", SqliteType.Text);
             var pPrim = cmd.Parameters.Add("@Primary", SqliteType.Text);
             var pIdx = cmd.Parameters.Add("@Index", SqliteType.Integer);
+            var pIdxEnd = cmd.Parameters.Add("@IndexEnd", SqliteType.Integer);
             var pPIdx = cmd.Parameters.Add("@ParentIndex", SqliteType.Integer);
             var pUpgrade = cmd.Parameters.Add("@IsUpgrade", SqliteType.Integer);
             var pFilePath = cmd.Parameters.Add("@FilePath", SqliteType.Text);
@@ -356,6 +371,7 @@ namespace NotifySync
                 pBack.Value = JsonSerializer.Serialize(item.BackdropImageTags ?? new List<string>(), PluginJsonContext.Default.ListString);
                 pPrim.Value = (object?)item.PrimaryImageTag ?? DBNull.Value;
                 pIdx.Value = (object?)item.IndexNumber ?? DBNull.Value;
+                pIdxEnd.Value = (object?)item.IndexNumberEnd ?? DBNull.Value;
                 pPIdx.Value = (object?)item.ParentIndexNumber ?? DBNull.Value;
                 pUpgrade.Value = item.IsUpgrade ? 1 : 0;
                 pFilePath.Value = (object?)item.FilePath ?? DBNull.Value;
@@ -590,6 +606,7 @@ namespace NotifySync
                 int oSize = TryGetOrdinal(reader, "Size");
                 int oRealItemId = TryGetOrdinal(reader, "RealItemId");
                 int oSeasonId = TryGetOrdinal(reader, "SeasonId");
+                int oIndexEnd = TryGetOrdinal(reader, "IndexNumberEnd");
 
                 while (reader.Read())
                 {
@@ -609,6 +626,7 @@ namespace NotifySync
                         BackdropImageTags = reader.IsDBNull(oBackdrop) ? new List<string>() : JsonSerializer.Deserialize(reader.GetString(oBackdrop), PluginJsonContext.Default.ListString) ?? new List<string>(),
                         PrimaryImageTag = reader.IsDBNull(oPrimary) ? null : reader.GetString(oPrimary),
                         IndexNumber = reader.IsDBNull(oIndex) ? null : reader.GetInt32(oIndex),
+                        IndexNumberEnd = (oIndexEnd < 0 || reader.IsDBNull(oIndexEnd)) ? null : reader.GetInt32(oIndexEnd),
                         ParentIndexNumber = reader.IsDBNull(oParentIndex) ? null : reader.GetInt32(oParentIndex),
                         IsUpgrade = !reader.IsDBNull(oIsUpgrade) && reader.GetInt32(oIsUpgrade) != 0,
                         FilePath = reader.IsDBNull(oFilePath) ? null : reader.GetString(oFilePath),
@@ -713,34 +731,6 @@ namespace NotifySync
             catch (Exception ex)
             {
                 _logger.LogError(ex, "NotifySync: Error during bulk mark-read for {UserId}.", userId);
-            }
-        }
-
-        /// <summary>
-        /// Marks a single notification as dismissed for a user.
-        /// </summary>
-        /// <param name="userId">The normalized user identifier.</param>
-        /// <param name="notificationId">The notification ID to dismiss.</param>
-        public void SetItemDismissed(string userId, string notificationId)
-        {
-            try
-            {
-                using var connection = new SqliteConnection(_connectionString);
-                connection.Open();
-                using var cmd = connection.CreateCommand();
-                cmd.CommandText = @"
-                    INSERT INTO UserNotificationState (UserId, NotificationId, IsDismissed, DismissedAt)
-                    VALUES (@UserId, @NotifId, 1, @Now)
-                    ON CONFLICT(UserId, NotificationId)
-                    DO UPDATE SET IsDismissed = 1, DismissedAt = @Now";
-                cmd.Parameters.AddWithValue("@UserId", userId);
-                cmd.Parameters.AddWithValue("@NotifId", notificationId);
-                cmd.Parameters.AddWithValue("@Now", DateTime.UtcNow.ToString("O"));
-                cmd.ExecuteNonQuery();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "NotifySync: Error dismissing notification {NotifId} for {UserId}.", notificationId, userId);
             }
         }
 

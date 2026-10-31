@@ -1093,6 +1093,10 @@ namespace NotifySync
                             updatedNotif.UpgradeKind = existing.UpgradeKind;
                         }
 
+                        // A metadata refresh reports every item it touches, most of them
+                        // unchanged for the bell: each one used to rewrite its row and move the
+                        // version on, which threw away every user's cached view.
+                        bool changed = true;
                         if (movedElsewhere)
                         {
                             // Leaving updatedNotif null makes the persistence step below
@@ -1102,6 +1106,7 @@ namespace NotifySync
                         }
                         else
                         {
+                            changed = followedStates != null || !IsSameNotification(existing, updatedNotif);
                             _notifications[existingIndex] = updatedNotif;
                             if (followedStates != null)
                             {
@@ -1109,8 +1114,11 @@ namespace NotifySync
                             }
                         }
 
-                        dbNeedsUpdate = true;
-                        Interlocked.Increment(ref _versionCounter);
+                        if (changed)
+                        {
+                            dbNeedsUpdate = true;
+                            Interlocked.Increment(ref _versionCounter);
+                        }
                     }
                     else
                     {
@@ -1133,7 +1141,10 @@ namespace NotifySync
                 }
             }
 
-            if (isGhostItemRescue)
+            // Only a recent item can be one the add path turned away for missing metadata. A
+            // full metadata refresh touches the whole library, and queueing every old title
+            // it reports only had it saved, then cut straight away by the quota.
+            if (isGhostItemRescue && e.Item.DateCreated.ToUniversalTime() >= DateTime.UtcNow.AddDays(-7))
             {
                 var notifCheck = CreateNotificationFromItem(e.Item);
                 if (notifCheck != null)
@@ -1174,6 +1185,34 @@ namespace NotifySync
                     _db.DeleteStatesForNotification(goneId);
                 }
             }
+        }
+
+        /// <summary>
+        /// True for a collection notification ("col:{collectionId}:{itemId}") whose collection
+        /// is among the given ones.
+        /// </summary>
+        /// <param name="notificationId">The notification id.</param>
+        /// <param name="monitored">The collections monitored now.</param>
+        /// <returns><c>true</c> when its collection is monitored.</returns>
+        private static bool IsFromMonitoredCollection(string notificationId, HashSet<Guid> monitored)
+        {
+            var parts = notificationId.Split(':');
+            return parts.Length >= 3 && Guid.TryParse(parts[1], out var collectionId) && monitored.Contains(collectionId);
+        }
+
+        /// <summary>
+        /// True when two notifications for the same item would read the same in the bell and
+        /// in the database: everything the client receives, plus the file fields kept for
+        /// upgrade detection, which the client never sees.
+        /// </summary>
+        /// <param name="a">The notification held so far.</param>
+        /// <param name="b">The one rebuilt from the library.</param>
+        /// <returns><c>true</c> when nothing worth saving changed.</returns>
+        private static bool IsSameNotification(NotificationItem a, NotificationItem b)
+        {
+            return string.Equals(a.FilePath, b.FilePath, StringComparison.Ordinal)
+                && a.Size == b.Size
+                && string.Equals(JsonSerializer.Serialize(a), JsonSerializer.Serialize(b), StringComparison.Ordinal);
         }
 
         private void ProcessBuffer(object? state)
@@ -1528,6 +1567,9 @@ namespace NotifySync
         {
             _logger.LogInformation("Starting manual NotifySync history scan...");
 
+            // What reaches the list from here on comes from library events, not from this scan.
+            var scanStartUtc = DateTime.UtcNow;
+
             var config = Plugin.Instance?.Configuration;
             int maxItems = config?.MaxItems ?? 10;
 
@@ -1762,14 +1804,37 @@ namespace NotifySync
                 _logger.LogInformation("NotifySync Scan: {Count} UPD badge(s) carried over from the previous state.", carried);
             }
 
-            var quotaResult = CategoryQuotaService.ApplyCategoryQuotas(results, DatabaseCategoryLimit);
-            var newNotifs = quotaResult.Kept.OrderByDescending(n => n.DateCreated).ToList();
+            // The library queries above never return collection notifications, and the collection
+            // snapshot already counts their titles as known: dropped here, they never came back.
+            // Same for an item added while the scan ran, which the queries may have missed.
+            // Only for a collection still monitored: one taken out of the settings loses its
+            // cards here, as every collection card did before.
+            var scanned = new HashSet<string>(results.Select(n => n.Id), StringComparer.Ordinal);
+            var monitored = new HashSet<Guid>();
+            foreach (var id in config?.EnabledCollections ?? new List<string>())
+            {
+                if (Guid.TryParse(id, out var g))
+                {
+                    monitored.Add(g);
+                }
+            }
+
             var oldDbIds = new List<string>();
 
             try
             {
                 _dataLock.EnterReadLock();
                 oldDbIds = _notifications.Select(n => n.Id).ToList();
+                foreach (var n in _notifications)
+                {
+                    if (!scanned.Contains(n.Id)
+                        && (n.RealItemId != null
+                            ? IsFromMonitoredCollection(n.Id, monitored)
+                            : _firstSeen.TryGetValue(n.Id, out var seen) && seen >= scanStartUtc))
+                    {
+                        results.Add(n);
+                    }
+                }
             }
             finally
             {
@@ -1778,6 +1843,9 @@ namespace NotifySync
                     _dataLock.ExitReadLock();
                 }
             }
+
+            var quotaResult = CategoryQuotaService.ApplyCategoryQuotas(results, DatabaseCategoryLimit);
+            var newNotifs = quotaResult.Kept.OrderByDescending(n => n.DateCreated).ToList();
 
             // Discard old, insert new into DB directly
             if (newNotifs.Count == 0 && oldDbIds.Count > 0)
@@ -1792,7 +1860,13 @@ namespace NotifySync
             try
             {
                 _dataLock.EnterWriteLock();
-                _notifications = newNotifs;
+
+                // Added between the read above and now: already saved by their own pass, and
+                // not in the ids just replaced, so only the in-memory list could lose them.
+                var before = new HashSet<string>(oldDbIds, StringComparer.Ordinal);
+                var kept = new HashSet<string>(newNotifs.Select(n => n.Id), StringComparer.Ordinal);
+                newNotifs.AddRange(_notifications.Where(n => !before.Contains(n.Id) && !kept.Contains(n.Id)));
+                _notifications = newNotifs.OrderByDescending(n => n.DateCreated).ToList();
                 Interlocked.Increment(ref _versionCounter);
                 _logger.LogInformation("Scan complete. {Count} items indexed.", _notifications.Count);
             }
@@ -1941,7 +2015,7 @@ namespace NotifySync
 
             _logger.LogInformation("NotifySync: Starting collection scan ({Count} configured).", config.EnabledCollections.Count);
 
-            var newNotifications = new List<NotificationItem>();
+            int created = 0;
             int idx = 0;
 
             foreach (var collectionIdStr in config.EnabledCollections)
@@ -1973,7 +2047,7 @@ namespace NotifySync
                 // Stored with the members so a collection that was empty at its first scan is not
                 // taken for a new one at every scan after: each title added to it later would be
                 // filed as part of the baseline and never announced.
-                var toStore = currentIds.Append(CollectionScannedMarker);
+                var toStore = currentIds.Append(CollectionScannedMarker).ToList();
 
                 if (snapshot.Count == 0)
                 {
@@ -1987,6 +2061,7 @@ namespace NotifySync
                     if (newIds.Count > 0)
                     {
                         var newIdSet = new HashSet<string>(newIds, StringComparer.Ordinal);
+                        var newNotifications = new List<NotificationItem>();
                         foreach (var child in children.Where(c => newIdSet.Contains(c.Id.ToString())))
                         {
                             var notif = CreateNotificationFromCollectionItem(child, boxSet.Name, collectionGuid);
@@ -1996,10 +2071,22 @@ namespace NotifySync
                             }
                         }
 
+                        // Saved before the snapshot that counts these titles as known: the other
+                        // way round, a scan stopped in between lost them for good.
+                        if (newNotifications.Count > 0)
+                        {
+                            MergeAndPersistNotifications(newNotifications);
+                            created += newNotifications.Count;
+                        }
+
                         _logger.LogInformation("NotifySync: {Count} new items detected in collection \"{Name}\".", newIds.Count, boxSet.Name);
                     }
 
-                    _db.UpdateCollectionSnapshot(collectionIdStr, toStore);
+                    // Every 15 minutes, an unchanged collection used to be rewritten row by row.
+                    if (!snapshot.SetEquals(toStore))
+                    {
+                        _db.UpdateCollectionSnapshot(collectionIdStr, toStore);
+                    }
                 }
 
                 idx++;
@@ -2009,12 +2096,7 @@ namespace NotifySync
             // Clean up snapshots for collections removed from configuration
             _db.RemoveStaleCollectionSnapshots(config.EnabledCollections);
 
-            if (newNotifications.Count > 0)
-            {
-                MergeAndPersistNotifications(newNotifications);
-            }
-
-            _logger.LogInformation("NotifySync: Collection scan complete. {Count} new notifications.", newNotifications.Count);
+            _logger.LogInformation("NotifySync: Collection scan complete. {Count} new notifications.", created);
         }
 
         /// <summary>
@@ -2109,6 +2191,7 @@ namespace NotifySync
                     BackdropImageTags = item.ImageInfos.Where(i => i.Type == ImageType.Backdrop).Select(i => i.DateModified.Ticks.ToString(CultureInfo.InvariantCulture)).ToList(),
                     PrimaryImageTag = item.ImageInfos.Where(i => i.Type == ImageType.Primary).Select(i => i.DateModified.Ticks.ToString(CultureInfo.InvariantCulture)).FirstOrDefault(),
                     IndexNumber = item.IndexNumber,
+                    IndexNumberEnd = (item as Episode)?.IndexNumberEnd,
                     ParentIndexNumber = item.ParentIndexNumber,
                     FilePath = item.Path,
                     Size = item.Size
@@ -2225,13 +2308,16 @@ namespace NotifySync
                     SeriesName = (item as Episode)?.SeriesName,
                     SeriesId = UsableIdOrNull((item as Episode)?.SeriesId.ToString()),
                     SeasonId = UsableIdOrNull((item as Episode)?.SeasonId.ToString()),
-                    DateCreated = item.DateCreated.ToUniversalTime(),
+                    // Never later than now: a date in the future, from a server or NAS clock
+                    // set ahead, stayed newer than every read date and kept the badge lit.
+                    DateCreated = item.DateCreated.ToUniversalTime() > DateTime.UtcNow ? DateTime.UtcNow : item.DateCreated.ToUniversalTime(),
                     Type = item.GetType().Name,
                     RunTimeTicks = item.RunTimeTicks,
                     ProductionYear = item.ProductionYear,
                     BackdropImageTags = item.ImageInfos.Where(i => i.Type == ImageType.Backdrop).Select(i => i.DateModified.Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture)).ToList(),
                     PrimaryImageTag = item.ImageInfos.Where(i => i.Type == ImageType.Primary).Select(i => i.DateModified.Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture)).FirstOrDefault(),
                     IndexNumber = item.IndexNumber,
+                    IndexNumberEnd = (item as Episode)?.IndexNumberEnd,
                     ParentIndexNumber = item.ParentIndexNumber,
                     FilePath = item.Path,
                     Size = item.Size

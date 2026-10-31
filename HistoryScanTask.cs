@@ -18,7 +18,7 @@ namespace NotifySync
         public string Key => "NotifySyncHistoryScanTask";
 
         /// <inheritdoc />
-        public string Description => "Scanne la bibliothèque pour générer les notifications initiales (historique).";
+        public string Description => "Scanne la bibliothèque pour générer les notifications initiales, seulement tant qu'aucune notification n'est enregistrée. Pour tout reconstruire, utilisez « Régénérer l'historique » dans les paramètres du plugin.";
 
         /// <inheritdoc />
         public string Category => "NotifySync";

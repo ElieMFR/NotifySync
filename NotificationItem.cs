@@ -82,6 +82,13 @@ namespace NotifySync
         public int? IndexNumber { get; set; }
 
         /// <summary>
+        /// Gets or sets the last episode number of a file holding several episodes
+        /// ("S01E01-E02"), or null for a single one.
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? IndexNumberEnd { get; set; }
+
+        /// <summary>
         /// Gets or sets the parent index number (season number).
         /// </summary>
         public int? ParentIndexNumber { get; set; }

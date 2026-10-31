@@ -663,6 +663,11 @@
         </div>
 
         <script type="text/javascript">
+            // Jellyfin runs this script again each time the page is opened. Its declarations
+            // used to sit at the top level, so the second run stopped at once ("cfgStrings has
+            // already been declared") and the new form never got its submit handler. Kept in
+            // a function now; only NotifySyncConf, which the onclick attributes call, is global.
+            (function () {
             const cfgStrings = {
                 fr: {
                     tabSettings: "Paramètres", tabLibraries: "Bibliothèques", tabCollections: "Collections",
@@ -690,7 +695,7 @@
                     successMsg: "Configuration sauvegardée.",
                     refreshSuccessMsg: "Régénération de l'historique lancée. La cloche sera à jour sous peu.",
                     scanColSuccessMsg: "Scan des collections lancé. Les nouvelles notifications apparaîtront sous peu.",
-                    scanColEmptyMsg: "Aucune collection surveillée — cochez-en au moins une dans l'onglet Collections.",
+                    scanColEmptyMsg: "Aucune collection surveillée. Cochez-en au moins une dans l'onglet Collections.",
                     rateLimitMsg: "Patientez 30 secondes entre chaque régénération.",
                     scanColWaitMsg: "Patientez 30 secondes entre deux scans des collections.",
                     errorMsg: "Erreur. Réessayez.",
@@ -748,7 +753,7 @@
                     successMsg: "Configuration saved.",
                     refreshSuccessMsg: "History regeneration started. The bell will be up to date shortly.",
                     scanColSuccessMsg: "Collection scan started. New notifications will appear shortly.",
-                    scanColEmptyMsg: "No collections monitored — pick at least one in the Collections tab.",
+                    scanColEmptyMsg: "No collections monitored. Pick at least one in the Collections tab.",
                     rateLimitMsg: "Please wait 30 seconds between regenerations.",
                     scanColWaitMsg: "Please wait 30 seconds between two collection scans.",
                     errorMsg: "Error. Please try again.",
@@ -806,7 +811,7 @@
                     successMsg: "Configuração salva.",
                     refreshSuccessMsg: "Regeneração do histórico iniciada. O sino será atualizado em breve.",
                     scanColSuccessMsg: "Verificação das coleções iniciada. Novas notificações aparecerão em breve.",
-                    scanColEmptyMsg: "Nenhuma coleção monitorada — marque ao menos uma na aba Coleções.",
+                    scanColEmptyMsg: "Nenhuma coleção monitorada. Marque ao menos uma na aba Coleções.",
                     rateLimitMsg: "Aguarde 30 segundos entre cada regeneração.",
                     scanColWaitMsg: "Aguarde 30 segundos entre duas verificações das coleções.",
                     errorMsg: "Erro. Tente novamente.",
@@ -1372,7 +1377,7 @@
                         // search could not find the rest. Page through all of them.
                         let all = [];
                         for (let offset = 0; offset < 100000; offset += 500) {
-                            const batch = await ApiClient.ajax({ type: 'GET', url: '/NotifySync/DeletedItems?limit=500&offset=' + offset, dataType: 'json' }) || [];
+                            const batch = await ApiClient.ajax({ type: 'GET', url: ApiClient.getUrl('NotifySync/DeletedItems', { limit: 500, offset: offset }), dataType: 'json' }) || [];
                             all = all.concat(batch);
                             if (batch.length < 500) break;
                         }
@@ -1524,7 +1529,7 @@
                     if (!await this.save({ quiet: true })) return;
                     Dashboard.showLoadingMsg();
                     try {
-                        await ApiClient.ajax({ type: "POST", url: "/NotifySync/Refresh" });
+                        await ApiClient.ajax({ type: "POST", url: ApiClient.getUrl("NotifySync/Refresh") });
                         Dashboard.hideLoadingMsg();
                         showToast(CT.refreshSuccessMsg, 'success');
                     } catch (err) {
@@ -1540,7 +1545,7 @@
                 scanCollectionsNow: async function () {
                     Dashboard.showLoadingMsg();
                     try {
-                        const res = await ApiClient.ajax({ type: "POST", url: "/NotifySync/ScanCollections", dataType: 'json' });
+                        const res = await ApiClient.ajax({ type: "POST", url: ApiClient.getUrl("NotifySync/ScanCollections"), dataType: 'json' });
                         Dashboard.hideLoadingMsg();
                         if (res && res.NoCollections) {
                             showToast(CT.scanColEmptyMsg, 'warn');
@@ -1600,18 +1605,29 @@
                 }
             };
 
-            document.querySelector('#notifySyncConfigForm').addEventListener('submit', (e) => {
-                e.preventDefault();
-                NotifySyncConf.save();
-            });
+            window.NotifySyncConf = NotifySyncConf;
 
-            document.addEventListener('pageshow', (e) => {
-                // This plugin's page only: every plugin page carries .pluginConfigurationPage,
-                // and the settings used to load themselves into whichever one was opened.
-                if (e.target.querySelector && e.target.querySelector('#notifySyncConfigForm')) {
-                    NotifySyncConf.load(e.target);
-                }
-            });
+            // Wired once, on the document, and handed to the latest NotifySyncConf: a listener
+            // added at each run would load the page once more for every earlier visit.
+            if (!window.notifySyncConfWired) {
+                window.notifySyncConfWired = true;
+
+                document.addEventListener('submit', (e) => {
+                    if (e.target && e.target.id === 'notifySyncConfigForm') {
+                        e.preventDefault();
+                        window.NotifySyncConf.save();
+                    }
+                });
+
+                document.addEventListener('pageshow', (e) => {
+                    // This plugin's page only: every plugin page carries .pluginConfigurationPage,
+                    // and the settings used to load themselves into whichever one was opened.
+                    if (e.target.querySelector && e.target.querySelector('#notifySyncConfigForm')) {
+                        window.NotifySyncConf.load(e.target);
+                    }
+                });
+            }
+            })();
         </script>
     </div>
 </body>
