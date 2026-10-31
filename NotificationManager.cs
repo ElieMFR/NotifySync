@@ -1193,6 +1193,10 @@ namespace NotifySync
                 // title replaces the earlier one, with the date and badge the follow gave it.
                 var followedInBatch = new Dictionary<string, NotificationItem>(StringComparer.Ordinal);
 
+                // The same repeated report matches the same deleted file again: it is marked and
+                // logged once per batch.
+                var upgradedInBatch = new Dictionary<string, long>(StringComparer.Ordinal);
+
                 // Notifications left behind in a folder reported gone, taken over in this batch.
                 var leftBehind = new List<string>();
                 int movedIn = 0;
@@ -1323,13 +1327,17 @@ namespace NotifySync
                             {
                                 notif.IsUpgrade = true;
                                 notif.UpgradeKind = kind;
-                                _db.MarkDeletedAsMatched(deletedRecord.Id, notif.Id);
-                                _logger.LogInformation(
-                                    "NotifySync Upgrade Detected (ProcessBuffer): {Name} | kind={Kind} | oldPath={Old} | newPath={New}",
-                                    notif.Name,
-                                    kind,
-                                    deletedRecord.FilePath ?? "NULL",
-                                    notif.FilePath ?? "NULL");
+                                if (!upgradedInBatch.TryGetValue(notif.Id, out var matchedId) || matchedId != deletedRecord.Id)
+                                {
+                                    upgradedInBatch[notif.Id] = deletedRecord.Id;
+                                    _db.MarkDeletedAsMatched(deletedRecord.Id, notif.Id);
+                                    _logger.LogInformation(
+                                        "NotifySync Upgrade Detected (ProcessBuffer): {Name} | kind={Kind} | oldPath={Old} | newPath={New}",
+                                        notif.Name,
+                                        kind,
+                                        deletedRecord.FilePath ?? "NULL",
+                                        notif.FilePath ?? "NULL");
+                                }
                             }
                             else if (MediaChangeDetector.IsSameFileBackAgain(deletedRecord.Size, notif.Size))
                             {
@@ -1420,10 +1428,19 @@ namespace NotifySync
                     // otherwise write thousands of them into everyone's log. The per-item
                     // detail sits a level below, for when someone asks why a title was never
                     // announced.
-                    _logger.LogInformation(
-                        "NotifySync: {Count} item(s) recognised as moved{From} — no notifications created.",
-                        movedIn,
-                        movedInFrom.Length > 0 ? " from \"" + movedInFrom + "\"" : string.Empty);
+                    if (movedInFrom.Length > 0)
+                    {
+                        _logger.LogInformation(
+                            "NotifySync: {Count} item(s) recognised as moved from {From} — no notifications created.",
+                            movedIn,
+                            movedInFrom);
+                    }
+                    else
+                    {
+                        _logger.LogInformation(
+                            "NotifySync: {Count} item(s) recognised as moved — no notifications created.",
+                            movedIn);
+                    }
                 }
             }
             catch (Exception ex)
