@@ -10,12 +10,12 @@
     "imageUrl": "https://raw.githubusercontent.com/ElieMFR/NotifySync/main/icon.svg",
     "versions": [
       {
-        "version": "6.0.1.7",
-        "changelog": "<a style='color:white;text-decoration:none' href=\"https://github.com/ElieMFR/NotifySync/releases/tag/v6.0.1.7-jf12-beta\">🧪 <span style='text-decoration:underline'>Beta — Release Notes</span></a>",
+        "version": "6.0.2.0",
+        "changelog": "<a style='color:white;text-decoration:none' href=\"https://github.com/ElieMFR/NotifySync/releases/tag/v6.0.2.0-jf12\">📋 <span style='text-decoration:underline'>Release Notes v6.0.2.0</span></a>",
         "targetAbi": "12.0.0.0",
-        "sourceUrl": "https://github.com/ElieMFR/NotifySync/releases/download/v6.0.1.7-jf12-beta/NotifySync.zip",
-        "checksum": "EE68BE91889D4071197109CEC0B906A5",
-        "timestamp": "2026-10-24T21:20:18Z"
+        "sourceUrl": "https://github.com/ElieMFR/NotifySync/releases/download/v6.0.2.0-jf12/NotifySync.zip",
+        "checksum": "A229C9767970D4A5E6CE288E3FA14722",
+        "timestamp": "2026-10-31T22:41:36Z"
       }
     ]
   }
