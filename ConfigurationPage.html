@@ -1082,7 +1082,7 @@
                             const badge = page.querySelector('#ns-version-badge');
                             const link = page.querySelector('#ns-version-link');
                             if (badge) badge.textContent = v;
-                            if (link) link.href = 'https://github.com/ElieMFR/NotifySync/releases/tag/' + v + await this.releaseTagSuffix(me.Version);
+                            if (link) link.href = 'https://github.com/ElieMFR/NotifySync/releases/tag/' + await this.releaseTag(me.Version);
                         }
                     } catch (e) {
                         // Badge stays empty rather than showing a number we cannot vouch for.
@@ -1095,21 +1095,31 @@
                     page.querySelectorAll('.ns-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === tabName));
                 },
 
-                // One version number can be published under four tags: vX.Y.Z.W (stable),
+                // After 6.0.2.0 a release is tagged X.Y.Z.W, or X.Y.Z.W-beta for a beta. Up to
+                // 6.0.2.0 one number could be published under four tags: vX.Y.Z.W (stable),
                 // vX.Y.Z.W-beta, vX.Y.Z.W-jf12 and vX.Y.Z.W-jf12-beta. A beta's number never
                 // ends in .0 and a stable's always does — true of every release since 5.6 — and
                 // the Jellyfin 12 builds are the ones running on a 12.x server. Linking the bare
                 // number sent every beta tester to a 404, and Jellyfin 12 users to the other
                 // build's notes.
-                releaseTagSuffix: async function (version) {
+                releaseTag: async function (version) {
                     const parts = String(version).split('.');
                     const beta = parts.length === 4 && parts[3] !== '0' ? '-beta' : '';
+                    const lastOldStyle = [6, 0, 2, 0];
+                    for (let i = 0; i < 4; i++) {
+                        const n = parseInt(parts[i], 10) || 0;
+                        if (n !== lastOldStyle[i]) {
+                            if (n > lastOldStyle[i]) return String(version) + beta;
+                            break;
+                        }
+                    }
+
                     try {
                         const info = await ApiClient.getJSON(ApiClient.getUrl('System/Info/Public'));
                         const major = parseInt(String((info && info.Version) || '').split('.')[0], 10);
-                        if (major >= 12) return '-jf12' + beta;
+                        if (major >= 12) return 'v' + version + '-jf12' + beta;
                     } catch (e) { /* server version unknown: the 10.11 tag is the likelier one */ }
-                    return beta;
+                    return 'v' + version + beta;
                 },
 
                 updateCounters: function (page) {

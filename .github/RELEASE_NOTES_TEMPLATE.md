@@ -23,8 +23,8 @@ A beta opens with:
 Once it ships, that banner becomes:
 
 ```markdown
-> ✅ **Validated and shipped as stable [vX.Y.Z.0](https://github.com/ElieMFR/NotifySync/releases/tag/vX.Y.Z.0).** Nothing left to test here.
-> *Validée et publiée en stable [vX.Y.Z.0](https://github.com/ElieMFR/NotifySync/releases/tag/vX.Y.Z.0). Plus rien à tester ici.*
+> ✅ **Validated and shipped as stable [vX.Y.Z.0](https://github.com/ElieMFR/NotifySync/releases/tag/X.Y.Z.0).** Nothing left to test here.
+> *Validée et publiée en stable [vX.Y.Z.0](https://github.com/ElieMFR/NotifySync/releases/tag/X.Y.Z.0). Plus rien à tester ici.*
 ```
 
 A Jellyfin 12 release opens with:
@@ -34,7 +34,7 @@ A Jellyfin 12 release opens with:
 > *Pour Jellyfin 12.0 et plus récent. En 10.11.x, gardez la version [5.8.4.0](https://github.com/ElieMFR/NotifySync/releases/tag/v5.8.4.0) — ce build ne s'y chargera pas.*
 ```
 
-A Jellyfin 12 beta opens with the beta banner, then the 🚀 one; once it ships, its link goes to `vX.Y.Z.0-jf12`. A 10.11 release has no banner.
+A Jellyfin 12 beta opens with the beta banner, then the 🚀 one; once it ships, its link goes to the stable's tag, `X.Y.Z.0`. A 10.11 release has no banner.
 
 ## Shape
 
