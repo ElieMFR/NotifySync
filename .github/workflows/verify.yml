@@ -35,5 +35,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Bell script syntax
-        run: node --check client.js
+      - name: Bell script
+        run: |
+          node --check client.js
+          node tests/client/bell.test.mjs

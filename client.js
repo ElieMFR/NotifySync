@@ -70,9 +70,9 @@
 
     let userLang = navigator.language || 'en';
     const strings = {
-        fr: { header: "Quoi de neuf ?", empty: "Vous êtes à jour !", loading: "Chargement…", clearAll: "Vider la liste", clearCat: "Vider", dismiss: "Retirer", badgeNew: "NOUVEAU", badgeUpgrade: "MAJ", eps: "épisodes", eps1: "épisode", epPrefix: "Ép.", tracks: "pistes", tracks1: "piste", filterAll: "Tout", filterMovie: "Films", filterSeries: "Séries", filterMusic: "Musique", filterOther: "Autre", filterFav: "Favoris", kindQuality: "Qualité", kindCodec: "Codec", kindAudio: "Audio", kindAll: "Tout", season: "Saison", secToday: "Aujourd'hui", secWeek: "Cette semaine", secOlder: "Plus ancien" },
-        en: { header: "What's New?", empty: "You're all caught up!", loading: "Loading…", clearAll: "Clear list", clearCat: "Clear", dismiss: "Dismiss", badgeNew: "NEW", badgeUpgrade: "UPD", eps: "episodes", eps1: "episode", epPrefix: "Ep.", tracks: "tracks", tracks1: "track", filterAll: "All", filterMovie: "Movies", filterSeries: "Series", filterMusic: "Music", filterOther: "Other", filterFav: "Favorites", kindQuality: "Quality", kindCodec: "Codec", kindAudio: "Audio", kindAll: "All", season: "Season", secToday: "Today", secWeek: "This week", secOlder: "Earlier" },
-        pt: { header: "Novidades", empty: "Você está em dia!", loading: "Carregando…", clearAll: "Limpar lista", clearCat: "Limpar", dismiss: "Dispensar", badgeNew: "NOVO", badgeUpgrade: "ATUALIZADO", eps: "episódios", eps1: "episódio", epPrefix: "Ep.", tracks: "faixas", tracks1: "faixa", filterAll: "Tudo", filterMovie: "Filmes", filterSeries: "Séries", filterMusic: "Música", filterOther: "Outros", filterFav: "Favoritos", kindQuality: "Qualidade", kindCodec: "Codec", kindAudio: "Áudio", kindAll: "Tudo", season: "Temporada", secToday: "Hoje", secWeek: "Esta semana", secOlder: "Mais antigos" }
+        fr: { header: "Quoi de neuf ?", empty: "Vous êtes à jour !", loading: "Chargement…", clearAll: "Vider la liste", clearCat: "Vider", dismiss: "Retirer", badgeNew: "NOUVEAU", badgeAdded: "AJOUTÉ", badgeAddedTo: "AJOUTÉ À", badgeUpgrade: "MAJ", eps: "épisodes", eps1: "épisode", epPrefix: "Ép.", tracks: "pistes", tracks1: "piste", filterAll: "Tout", filterMovie: "Films", filterSeries: "Séries", filterMusic: "Musique", filterOther: "Autre", filterFav: "Favoris", kindQuality: "Qualité", kindCodec: "Codec", kindAudio: "Audio", kindAll: "Tout", season: "Saison", secToday: "Aujourd'hui", secWeek: "Cette semaine", secOlder: "Plus ancien" },
+        en: { header: "What's New?", empty: "You're all caught up!", loading: "Loading…", clearAll: "Clear list", clearCat: "Clear", dismiss: "Dismiss", badgeNew: "NEW", badgeAdded: "ADDED", badgeAddedTo: "ADDED TO", badgeUpgrade: "UPD", eps: "episodes", eps1: "episode", epPrefix: "Ep.", tracks: "tracks", tracks1: "track", filterAll: "All", filterMovie: "Movies", filterSeries: "Series", filterMusic: "Music", filterOther: "Other", filterFav: "Favorites", kindQuality: "Quality", kindCodec: "Codec", kindAudio: "Audio", kindAll: "All", season: "Season", secToday: "Today", secWeek: "This week", secOlder: "Earlier" },
+        pt: { header: "Novidades", empty: "Você está em dia!", loading: "Carregando…", clearAll: "Limpar lista", clearCat: "Limpar", dismiss: "Dispensar", badgeNew: "NOVO", badgeAdded: "ADICIONADO", badgeAddedTo: "ADICIONADO A", badgeUpgrade: "ATUALIZADO", eps: "episódios", eps1: "episódio", epPrefix: "Ep.", tracks: "faixas", tracks1: "faixa", filterAll: "Tudo", filterMovie: "Filmes", filterSeries: "Séries", filterMusic: "Música", filterOther: "Outros", filterFav: "Favoritos", kindQuality: "Qualidade", kindCodec: "Codec", kindAudio: "Áudio", kindAll: "Tudo", season: "Temporada", secToday: "Hoje", secWeek: "Esta semana", secOlder: "Mais antigos" }
     };
     // A locale ("pt-BR", "fr-FR", "en-US"…) to a table above; English otherwise.
     const langKey = (lang) => {
@@ -168,7 +168,7 @@
     const injectStyles = () => {
         if (document.getElementById('notifysync-css')) return;
         const css = `
-            :root { --ns-red: #e50914; --ns-upgrade: #2196F3; --ns-glass: rgba(20, 20, 20, 0.98); --ns-blur: 16px; --ns-border: rgba(255,255,255,0.15); }
+            :root { --ns-red: #e50914; --ns-upgrade: #1976D2; --ns-collection: #7e57c2; --ns-glass: rgba(20, 20, 20, 0.98); --ns-blur: 16px; --ns-border: rgba(255,255,255,0.15); }
             #netflix-bell { background:0 0;border:none;cursor:pointer;color:inherit;position:relative; transition: transform 0.2s; width:35px;height:35px;overflow:visible;display:inline-flex!important;align-items:center;justify-content:center; }
             #netflix-bell:active { transform: scale(0.9); }
             .ns-badge {
@@ -224,11 +224,13 @@
             .list-container { max-height: 500px; overflow-y: auto; -webkit-overflow-scrolling: touch; content-visibility: auto; contain-intrinsic-size: 500px; flex: 1; }
             .dropdown-item { display:flex; padding:12px 20px; border-bottom:1px solid var(--ns-border); cursor:pointer; transition: background .2s; position: relative; overflow: hidden; }
             .dropdown-item:hover { background: rgba(255,255,255,0.08); }
-            .item-badge { display: none; font-size: 9px; font-weight: bold; padding: 2px 5px; border-radius: 3px; color: #fff; line-height: 1; letter-spacing: 0.5px; width: fit-content; margin-bottom: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); text-transform: uppercase; }
+            .item-badge { display: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; font-weight: bold; padding: 2px 5px; border-radius: 3px; color: #fff; line-height: 1; letter-spacing: 0.5px; width: fit-content; margin-bottom: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); text-transform: uppercase; }
             .style-new .item-badge { display: block; background: var(--ns-red); box-shadow: 0 1px 3px rgba(229,9,20,0.5); }
             .style-new { box-shadow: inset 3px 0 0 var(--ns-red); }
-            .style-upgrade .item-badge { display: block; background: var(--ns-upgrade); box-shadow: 0 1px 3px rgba(33,150,243,0.5); }
+            .style-upgrade .item-badge { display: block; background: var(--ns-upgrade); box-shadow: 0 1px 3px rgba(25,118,210,0.5); }
             .style-upgrade { box-shadow: inset 3px 0 0 var(--ns-upgrade); }
+            .style-collection .item-badge { display: block; background: var(--ns-collection); box-shadow: 0 1px 3px rgba(126,87,194,0.5); }
+            .style-collection { box-shadow: inset 3px 0 0 var(--ns-collection); }
             .thumb-wrapper { width:90px; height:50px; margin-right:15px; flex-shrink:0; background:#222; border-radius:6px; overflow:hidden; display:flex; justify-content:center; align-items:center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); position:relative; }
             .dropdown-thumb { width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 0.3s; position:absolute; inset:0; z-index:1; }
             .dropdown-thumb.music { object-fit:contain; }
@@ -245,7 +247,8 @@
             .hero-bg { position: absolute; inset: 0; background-size: cover; background-position: center center; transition: transform 5s ease; background-color: #1a1a2e; }
             .hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, var(--ns-glass) 5%, transparent 100%); }
             .hero-content { position: relative; z-index: 2; padding: 20px; width: 100%; }
-            .hero-badge { background: var(--ns-red); color: #fff; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 3px; display: inline-block; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); text-transform: uppercase; }
+            .hero-badge { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: top; background: var(--ns-red); color: #fff; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 3px; display: inline-block; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); text-transform: uppercase; }
+            .hero-badge.collection { background: var(--ns-collection); }
             .hero-badge-upgrade { background: var(--ns-upgrade); color: #fff; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 3px; display: inline-block; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); text-transform: uppercase; }
             .footer-tools { padding: 10px; text-align: center; border-top: 1px solid var(--ns-border); font-size: 11px; color: #888; cursor: pointer; transition: color 0.2s; flex-shrink: 0; }
             .footer-tools:hover { color: #fff; text-decoration: underline; }
@@ -355,8 +358,11 @@
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
             if ((item.Type === 'Episode' && item.SeriesId) || (item.Type === 'Audio' && item.SeriesId)) {
-                let group = seriesMap.get(item.SeriesId);
-                if (!group) { group = []; seriesMap.set(item.SeriesId, group); }
+                // Keyed by category too: a series a monitored collection holds would otherwise
+                // pour its collection episodes into the library's card for the same series.
+                const key = item.Category + '|' + item.SeriesId;
+                let group = seriesMap.get(key);
+                if (!group) { group = []; seriesMap.set(key, group); }
                 group.push(item);
             } else { result.push(item); }
         }
@@ -551,7 +557,7 @@
     const markVisibleAsRead = () => {
         const unreadIds = [];
         currentData.forEach(i => {
-            if (!i.IsRead) { i.IsRead = true; unreadIds.push(i.Id); }
+            if (!i.IsRead) { i.IsRead = true; unreadSeen.add(i.Id); unreadIds.push(i.Id); }
         });
         if (unreadIds.length > 0) {
             const badge = document.querySelector('.ns-badge');
@@ -723,9 +729,29 @@
         return T.kindAll;
     };
 
+    // Opening the bell marks everything read at once, which would wipe any sign of what was
+    // new before the user had looked. The ids marked read during this opening are kept here
+    // until the panel closes, so their cards keep their NEW badge for as long as they are on screen.
+    const unreadSeen = new Set();
+    const isUnreadCard = (item) => !!item.IsNew || (item.MemberIds || [item.Id]).some(id => unreadSeen.has(id));
+
+    // A title a monitored collection announces carries a synthetic id ("col:{collection}:{item}");
+    // a group card keeps its members' ids in MemberIds.
+    const isCollectionCard = (item) => (item.MemberIds || [String(item.Id)]).some(id => String(id).startsWith('col:'));
+
+    // The NEW badge says "you have not seen this yet" (issue #12), so it goes once the card has
+    // been seen in the bell. The badges that describe an event — an upgrade, an addition to a
+    // collection — stay: they remain true after the look.
+    const showsBadge = (item) => !!item.IsUpgrade || isCollectionCard(item) || isUnreadCard(item);
+
     // Returns the full badge text including the upgrade kind suffix when applicable.
     // Examples: "MAJ Qualité", "UPD Codec", or just "MAJ"/"UPD"/"NOUVEAU"/"NEW".
+    // A collection title is not new to the server, only to the collection: "ADDED TO Marvel"
+    // where the collection is not already the open tab, "ADDED" inside it (issue #12).
     const upgradeBadgeText = (item) => {
+        if (!item.IsUpgrade && isCollectionCard(item)) {
+            return activeFilter === item.Category ? T.badgeAdded : `${T.badgeAddedTo} ${item.Category}`;
+        }
         if (!item.IsUpgrade) return T.badgeNew;
         const kind = upgradeKindLabel(item);
         return kind ? `${T.badgeUpgrade} ${kind}` : T.badgeUpgrade;
@@ -897,7 +923,8 @@
             if (!isGroup && hero.Type === 'Episode') {
                 heroTitle = escapeHtml(formatEpisodeTitle(hero)); heroSub = escapeHtml(hero.SeriesName);
             } else {
-                heroSub = escapeHtml(String(hero.ProductionYear ?? ''));
+                // A lone track names its album: a year alone says nothing of what arrived.
+                heroSub = escapeHtml(hero.Type === 'Audio' && hero.SeriesName ? hero.SeriesName : String(hero.ProductionYear ?? ''));
             }
             if (isGroup) {
                 heroSub = groupSubtitle(hero);
@@ -906,7 +933,7 @@
             const safeHeroId = escapeHtml(hero.CardId || hero.Id);
             const heroNavId = escapeHtml(hero.NavId || hero.RealItemId || hero.Id);
             const heroFallbackImg = client.getUrl(`Items/${encodeURIComponent(hero.SeriesId || heroItemId)}/Images/Primary?quality=70&fillWidth=380&fillHeight=160&format=webp`);
-            htmlParts.push(`<div class="hero-section"${tvStop} data-nav="${heroNavId}"><div class="hero-bg"><img src="${escapeHtml(heroImg)}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="if(this.dataset.fb){this.src=this.dataset.fb;this.removeAttribute('data-fb')}else{this.style.display='none'}" data-fb="${escapeHtml(heroFallbackImg)}"></div><div class="hero-overlay"></div><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" data-dismiss="${safeHeroId}">close</button><div class="hero-content">${hero.IsUpgrade ? `<span class="hero-badge-upgrade">${escapeHtml(upgradeBadgeText(hero))}</span>` : `<span class="hero-badge">${T.badgeNew}</span>`}<div style="font-size:18px;font-weight:700;text-shadow:0 2px 4px #000;line-height:1.2;">${heroTitle}${hero.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div style="font-size:12px;opacity:0.8;margin-top:4px">${timeAgo(hero.DateCreated)} &bull; ${heroSub}</div></div></div>`);
+            htmlParts.push(`<div class="hero-section"${tvStop} data-nav="${heroNavId}"><div class="hero-bg"><img src="${escapeHtml(heroImg)}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="if(this.dataset.fb){this.src=this.dataset.fb;this.removeAttribute('data-fb')}else{this.style.display='none'}" data-fb="${escapeHtml(heroFallbackImg)}"></div><div class="hero-overlay"></div><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" data-dismiss="${safeHeroId}">close</button><div class="hero-content">${showsBadge(hero) ? `<span class="${hero.IsUpgrade ? 'hero-badge-upgrade' : (isCollectionCard(hero) ? 'hero-badge collection' : 'hero-badge')}" title="${escapeHtml(upgradeBadgeText(hero))}">${escapeHtml(upgradeBadgeText(hero))}</span>` : ''}<div style="font-size:18px;font-weight:700;text-shadow:0 2px 4px #000;line-height:1.2;">${heroTitle}${hero.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div style="font-size:12px;opacity:0.8;margin-top:4px">${timeAgo(hero.DateCreated)}${heroSub ? ` &bull; ${heroSub}` : ''}</div></div></div>`);
         }
 
         let curSection = null;
@@ -922,14 +949,15 @@
             const imgUrl = client.getUrl(`Items/${encodeURIComponent(imgItemId)}/Images/Primary?tag=${encodeURIComponent(item.PrimaryImageTag || '')}&${isMusic ? 'fillHeight=100&fillWidth=100' : 'fillHeight=112&fillWidth=200'}&quality=80&format=webp`);
             const fallbackUrl = item.SeriesId ? client.getUrl(`Items/${encodeURIComponent(item.SeriesId)}/Images/Primary?${isMusic ? 'fillHeight=100&fillWidth=100' : 'fillHeight=112&fillWidth=200'}&quality=80&format=webp`) : '';
 
-            let title = escapeHtml(item.Name), sub = escapeHtml(String(item.ProductionYear ?? ''));
+            let title = escapeHtml(item.Name), sub = escapeHtml(isMusic && item.SeriesName ? item.SeriesName : String(item.ProductionYear ?? ''));
             if (!isGroup && item.Type === 'Episode') { title = escapeHtml(formatEpisodeTitle(item)); sub = escapeHtml(item.SeriesName); }
             if (isGroup) { sub = groupSubtitle(item); }
 
             const safeId = escapeHtml(item.CardId || item.Id);
             const navId = escapeHtml(item.NavId || item.RealItemId || item.Id);
-            const badgeHtml = `<span class="item-badge">${escapeHtml(upgradeBadgeText(item))}</span>`;
-            htmlParts.push(`<div class="dropdown-item ${item.IsUpgrade ? 'style-upgrade' : 'style-new'}" data-item-id="${safeId}"${tvStop} data-nav="${navId}"><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" data-dismiss="${safeId}">close</button><div class="swipe-delete">${T.dismiss}</div><div class="thumb-wrapper"><img data-src="${imgUrl}" decoding="async" class="dropdown-thumb ${isMusic ? 'music' : ''}" loading="lazy" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.removeAttribute('data-fallback')}else{this.style.display='none'}" data-fallback="${fallbackUrl}"><span class="material-icons" style="color:#555;font-size:24px;">${isMusic ? 'album' : 'movie'}</span></div><div class="dropdown-info">${badgeHtml}<div class="dropdown-title" title="${title}">${title}${item.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div class="dropdown-subtitle" title="${sub}"><span class="sub-time">${timeAgo(item.DateCreated)} &bull;</span><span class="sub-text">${sub}</span></div></div></div>`);
+            const badgeText = escapeHtml(upgradeBadgeText(item));
+            const badgeHtml = showsBadge(item) ? `<span class="item-badge" title="${badgeText}">${badgeText}</span>` : '';
+            htmlParts.push(`<div class="dropdown-item ${item.IsUpgrade ? 'style-upgrade' : (isCollectionCard(item) ? 'style-collection' : 'style-new')}" data-item-id="${safeId}"${tvStop} data-nav="${navId}"><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" data-dismiss="${safeId}">close</button><div class="swipe-delete">${T.dismiss}</div><div class="thumb-wrapper"><img data-src="${imgUrl}" decoding="async" class="dropdown-thumb ${isMusic ? 'music' : ''}" loading="lazy" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.removeAttribute('data-fallback')}else{this.style.display='none'}" data-fallback="${fallbackUrl}"><span class="material-icons" style="color:#555;font-size:24px;">${isMusic ? 'album' : 'movie'}</span></div><div class="dropdown-info">${badgeHtml}<div class="dropdown-title" title="${title}">${title}${item.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div class="dropdown-subtitle" title="${sub}"><span class="sub-time">${timeAgo(item.DateCreated)}${sub ? ' &bull;' : ''}</span><span class="sub-text">${sub}</span></div></div></div>`);
         });
 
         if (activeFilter === 'All') {
@@ -1061,6 +1089,7 @@
         const back = document.getElementById('notify-backdrop');
         if (drop) drop.style.display = 'none';
         if (back) back.style.display = 'none';
+        unreadSeen.clear();
         recalculateNewStatus(); // Clear badges for next open
     };
 
