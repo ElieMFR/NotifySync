@@ -1,0 +1,83 @@
+using System.Security.Claims;
+using NotifySync;
+
+// Who may read whose bell, and what counts as a real file upgrade. A mistake in the first shows
+// one account another's new titles (measured once in production); in the second, the bell
+// announces a rename as an upgrade or misses a real one (the 5.5.9.2 regressions).
+var failed = 0;
+
+void Check(string name, bool ok)
+{
+    Console.WriteLine((ok ? "OK    " : "FAIL  ") + name);
+    if (!ok)
+    {
+        failed++;
+    }
+}
+
+// Claims as Jellyfin 12.4's CustomAuthenticationHandler sets them (read in Jellyfin.Api.dll).
+static ClaimsPrincipal Caller(string name, string role, Guid userId, bool apiKey) =>
+    new ClaimsPrincipal(new ClaimsIdentity(
+        new[]
+        {
+            new Claim(ClaimTypes.Name, name),
+            new Claim(ClaimTypes.Role, role),
+            new Claim("Jellyfin-UserId", userId.ToString("N")),
+            new Claim("Jellyfin-IsApiKey", apiKey.ToString()),
+        },
+        "Custom"));
+
+var alice = Guid.NewGuid();
+var bob = Guid.NewGuid();
+var admin = Guid.NewGuid();
+Guid? ByName(string name) => name switch
+{
+    "alice" => alice,
+    "bob" => bob,
+    "admin" => admin,
+    _ => null,
+};
+
+UserAccess Access(ClaimsPrincipal caller, Guid requested)
+    => AccessRules.CheckUserAccess(caller, requested.ToString("N"), ByName, out _);
+
+var aliceCaller = Caller("alice", "User", alice, false);
+var adminCaller = Caller("admin", "Administrator", admin, false);
+var apiKeyCaller = Caller(string.Empty, "Administrator", Guid.Empty, true);
+
+// EXG-012: a bell route answers for the caller's own account, or for any as an administrator.
+Check("EXG-012 account reads its own bell", Access(aliceCaller, alice) == UserAccess.Allowed);
+Check("EXG-012 account reads its own bell, id with dashes", AccessRules.CheckUserAccess(aliceCaller, alice.ToString("D"), ByName, out _) == UserAccess.Allowed);
+Check("EXG-012 account cannot read another account's bell", Access(aliceCaller, bob) == UserAccess.Denied);
+Check("EXG-012 administrator reads any bell", Access(adminCaller, bob) == UserAccess.Allowed);
+Check("EXG-012 API keys are not supported", Access(apiKeyCaller, alice) == UserAccess.NoIdentity);
+Check("EXG-012 unknown name is refused", Access(Caller("ghost", "User", Guid.NewGuid(), false), bob) == UserAccess.UnknownUser);
+
+// EXG-013: the admin routes (Refresh, ScanCollections, DeletedItems).
+Check("EXG-013 account is not an administrator", !AccessRules.IsAdministrator(aliceCaller));
+Check("EXG-013 administrator passes", AccessRules.IsAdministrator(adminCaller));
+Check("EXG-013 API key passes", AccessRules.IsAdministrator(apiKeyCaller));
+Check("EXG-013 anonymous is refused", !AccessRules.IsAdministrator(new ClaimsPrincipal(new ClaimsIdentity())));
+
+// Upgrade detection: what changed between the deleted file and the one that replaced it.
+static NotificationItem File(string path, long? size = null) => new NotificationItem { FilePath = path, Size = size };
+string? Kind(string oldPath, string newPath, long? oldSize = null, long? newSize = null)
+    => MediaChangeDetector.ClassifyUpgrade(File(oldPath, oldSize), File(newPath, newSize));
+
+Check("upgrade 1080p to 2160p is quality", Kind("/m/Film (2020) [WEBDL-1080p] [x264].mkv", "/m/Film (2020) [WEBDL-2160p] [x264].mkv") == "quality");
+Check("upgrade x264 to x265 is codec", Kind("/m/Film [1080p] [x264].mkv", "/m/Film [1080p] [x265].mkv") == "codec");
+Check("upgrade VOSTFR to MULTI is audio", Kind("/m/Film [VOSTFR] [1080p].mkv", "/m/Film [MULTI] [1080p].mkv") == "audio");
+Check("upgrade with several changes lists them all", Kind("/m/Film [1080p] [x264].mkv", "/m/Film [2160p] [x265] [MULTI].mkv") == "quality,codec,audio");
+Check("removing an audio track is no upgrade", Kind("/m/Film [MULTI] [1080p].mkv", "/m/Film [VOSTFR] [1080p].mkv") == null);
+Check("plain rename is no upgrade", Kind("/m/Film [1080p].mkv", "/m/Film (2020) [1080p].mkv") == null);
+Check("same size under another name is no upgrade", Kind("/m/Film [1080p] [x264].mkv", "/m/Film [2160p] [x265].mkv", 1000, 1000) == null);
+Check("same path is no upgrade", Kind("/m/Film [1080p].mkv", "/m/Film [1080p].mkv") == null);
+Check("no old path gives no signal", Kind(string.Empty, "/m/Film [2160p].mkv") == null);
+
+// Moves: an identical size against a recent deletion means the file only moved.
+Check("same size back again is a move", MediaChangeDetector.IsSameFileBackAgain(1234, 1234));
+Check("different size is not a move", !MediaChangeDetector.IsSameFileBackAgain(1234, 1235));
+Check("unknown size is not a move", !MediaChangeDetector.IsSameFileBackAgain(null, 1234));
+
+Console.WriteLine(failed == 0 ? "All tests passed." : failed + " test(s) failed.");
+return failed == 0 ? 0 : 1;

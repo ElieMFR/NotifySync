@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- Lets the tests run on a newer runtime than the plugin targets. -->
+    <RollForward>Major</RollForward>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>NotifySync.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The plugin's files are compiled here directly; only MediaChangeDetector needs the
+         Jellyfin types, through the same 12.0.0 packages as the plugin. -->
+    <Compile Include="../../AccessRules.cs" />
+    <Compile Include="../../IdHelper.cs" />
+    <Compile Include="../../MediaChangeDetector.cs" />
+    <Compile Include="../../NotificationItem.cs" />
+    <Compile Include="../../DeletedFolder.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Jellyfin.Controller" Version="12.0.0" />
+    <PackageReference Include="Jellyfin.Model" Version="12.0.0" />
+  </ItemGroup>
+
+</Project>

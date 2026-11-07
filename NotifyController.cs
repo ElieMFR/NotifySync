@@ -107,8 +107,7 @@ namespace NotifySync
         [HttpPost("Refresh")]
         public ActionResult Refresh()
         {
-            if (!User.IsInRole("Administrator")
-                && !string.Equals(User.FindFirst("Jellyfin-IsApiKey")?.Value, "true", StringComparison.OrdinalIgnoreCase))
+            if (!AccessRules.IsAdministrator(User))
             {
                 return Forbid();
             }
@@ -173,8 +172,7 @@ namespace NotifySync
         [HttpPost("ScanCollections")]
         public ActionResult ScanCollectionsNow()
         {
-            if (!User.IsInRole("Administrator")
-                && !string.Equals(User.FindFirst("Jellyfin-IsApiKey")?.Value, "true", StringComparison.OrdinalIgnoreCase))
+            if (!AccessRules.IsAdministrator(User))
             {
                 return Forbid();
             }
@@ -698,8 +696,7 @@ namespace NotifySync
         [HttpGet("DeletedItems")]
         public ActionResult GetDeletedItems([FromQuery] int limit = 200, [FromQuery] int offset = 0)
         {
-            if (!User.IsInRole("Administrator")
-                && !string.Equals(User.FindFirst("Jellyfin-IsApiKey")?.Value, "true", StringComparison.OrdinalIgnoreCase))
+            if (!AccessRules.IsAdministrator(User))
             {
                 return Forbid();
             }
@@ -885,50 +882,21 @@ namespace NotifySync
 
         private bool IsAuthorizedForUser(string userId)
         {
-            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(currentUserId))
+            var access = AccessRules.CheckUserAccess(User, userId, name => _userManager.GetUserByName(name)?.Id, out var currentUserId);
+            switch (access)
             {
-                currentUserId = User.FindFirst("UserId")?.Value ?? User.Identity?.Name;
-            }
-
-            if (string.IsNullOrEmpty(currentUserId))
-            {
-                _logger.LogWarning("NotifySync: No user identity found in the request principal.");
-                return false;
-            }
-
-            if (!Guid.TryParse(currentUserId, out var currentGuid))
-            {
-                var userByName = _userManager.GetUserByName(currentUserId);
-                if (userByName != null)
-                {
-                    currentGuid = userByName.Id;
-                    currentUserId = currentGuid.ToString("N");
-                }
-                else
-                {
+                case UserAccess.Allowed:
+                    return true;
+                case UserAccess.NoIdentity:
+                    _logger.LogWarning("NotifySync: No user identity found in the request principal.");
+                    return false;
+                case UserAccess.UnknownUser:
                     _logger.LogWarning("NotifySync: Unable to resolve username '{Username}'.", currentUserId);
                     return false;
-                }
+                default:
+                    _logger.LogWarning("NotifySync: Authorization denied. Current: {Current}, Requested: {Requested}.", currentUserId, userId);
+                    return false;
             }
-
-            var normalizedCurrent = NormalizeId(currentUserId);
-            var normalizedRequested = NormalizeId(userId);
-
-            if (normalizedCurrent == normalizedRequested)
-            {
-                return true;
-            }
-
-            var isAdmin = User.IsInRole("Administrator")
-                || string.Equals(User.FindFirst("Jellyfin-IsApiKey")?.Value, "true", StringComparison.OrdinalIgnoreCase);
-            if (isAdmin)
-            {
-                return true;
-            }
-
-            _logger.LogWarning("NotifySync: Authorization denied. Current: {Current}, Requested: {Requested}.", currentUserId, userId);
-            return false;
         }
 
         private static bool IsUserThrottled(string userId, int minIntervalMs = 500)

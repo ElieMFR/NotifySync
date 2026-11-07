@@ -7,6 +7,8 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <!-- The test projects live under tests/ and must not be compiled into the plugin. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests\**</DefaultItemExcludes>
     <!-- Audit only DIRECT dependencies. The SQLite native lib (SQLitePCLRaw.lib.e_sqlite3)
          is pulled transitively by Microsoft.Data.Sqlite but is NOT shipped by this plugin
          (PrivateAssets=All + CopyLocalLockFileAssemblies=false) — at runtime the host's

@@ -1,0 +1,39 @@
+# Checks every push and pull request on the Jellyfin 12 line: builds without warnings, flags
+# vulnerable packages, runs the tests and checks the bell's script. Publishes nothing.
+name: Verify
+on:
+  push:
+    branches: [jellyfin-12]
+  pull_request:
+    branches: [jellyfin-12]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DOTNET: 10.0.x
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET }}
+      - name: Build without warnings
+        run: dotnet build NotifySync.csproj -c Release -warnaserror
+      # Direct packages only, as NuGetAuditMode in the .csproj: the SQLite native library comes
+      # in transitively through Microsoft.Data.Sqlite, is never shipped (the server provides
+      # its own) and would fail this step on every run.
+      - name: Vulnerable packages
+        run: |
+          dotnet list NotifySync.csproj package --vulnerable 2>&1 | tee vuln.txt
+          if grep -q "has the following vulnerable packages" vuln.txt; then echo "Vulnerable package"; exit 1; fi
+      - name: Tests
+        run: |
+          for p in tests/*/*.csproj; do dotnet run --project "$p" -c Release; done
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Bell script syntax
+        run: node --check client.js
