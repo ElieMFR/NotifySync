@@ -59,6 +59,19 @@ Check("EXG-013 administrator passes", AccessRules.IsAdministrator(adminCaller));
 Check("EXG-013 API key passes", AccessRules.IsAdministrator(apiKeyCaller));
 Check("EXG-013 anonymous is refused", !AccessRules.IsAdministrator(new ClaimsPrincipal(new ClaimsIdentity())));
 
+// Collections: a card follows its collection through the settings and renames.
+var colA = Guid.NewGuid();
+var colB = Guid.NewGuid();
+var onlyA = new HashSet<Guid> { colA };
+string CardOf(Guid col) => $"col:{col:N}:{Guid.NewGuid()}";
+Check("collection card of a monitored collection is shown", !CollectionRules.IsFromUnmonitoredCollection(CardOf(colA), onlyA));
+Check("collection card of an unchecked collection is hidden", CollectionRules.IsFromUnmonitoredCollection(CardOf(colB), onlyA));
+Check("no collection monitored hides every collection card", CollectionRules.IsFromUnmonitoredCollection(CardOf(colA), new HashSet<Guid>()));
+Check("a library notification is never hidden by the rule", !CollectionRules.IsFromUnmonitoredCollection(Guid.NewGuid().ToString(), new HashSet<Guid>()));
+Check("card belongs to its own collection", CollectionRules.BelongsTo(CardOf(colA), colA));
+Check("card does not belong to another collection", !CollectionRules.BelongsTo(CardOf(colA), colB));
+Check("settings ids that do not parse are ignored", CollectionRules.MonitoredSet(new[] { colA.ToString("N"), "not-a-guid" }).SetEquals(onlyA));
+
 // Upgrade detection: what changed between the deleted file and the one that replaced it.
 static NotificationItem File(string path, long? size = null) => new NotificationItem { FilePath = path, Size = size };
 string? Kind(string oldPath, string newPath, long? oldSize = null, long? newSize = null)

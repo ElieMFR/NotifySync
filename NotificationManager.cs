@@ -1188,19 +1188,6 @@ namespace NotifySync
         }
 
         /// <summary>
-        /// True for a collection notification ("col:{collectionId}:{itemId}") whose collection
-        /// is among the given ones.
-        /// </summary>
-        /// <param name="notificationId">The notification id.</param>
-        /// <param name="monitored">The collections monitored now.</param>
-        /// <returns><c>true</c> when its collection is monitored.</returns>
-        private static bool IsFromMonitoredCollection(string notificationId, HashSet<Guid> monitored)
-        {
-            var parts = notificationId.Split(':');
-            return parts.Length >= 3 && Guid.TryParse(parts[1], out var collectionId) && monitored.Contains(collectionId);
-        }
-
-        /// <summary>
         /// True when two notifications for the same item would read the same in the bell and
         /// in the database: everything the client receives, plus the file fields kept for
         /// upgrade detection, which the client never sees.
@@ -1508,6 +1495,53 @@ namespace NotifySync
         }
 
         /// <summary>
+        /// Gives the cards of a collection its current name. A card keeps the name the collection
+        /// had when the card was made, so a renamed collection filled the bell with two tabs, the
+        /// old name and the new one.
+        /// </summary>
+        /// <param name="collectionId">The collection.</param>
+        /// <param name="name">Its name now.</param>
+        private void RenameCollectionCards(Guid collectionId, string? name)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                return;
+            }
+
+            var renamed = new List<NotificationItem>();
+            try
+            {
+                _dataLock.EnterWriteLock();
+                foreach (var n in _notifications)
+                {
+                    if (CollectionRules.BelongsTo(n.Id, collectionId) && !string.Equals(n.Category, name, StringComparison.Ordinal))
+                    {
+                        n.Category = name;
+                        renamed.Add(n);
+                    }
+                }
+
+                if (renamed.Count > 0)
+                {
+                    Interlocked.Increment(ref _versionCounter);
+                }
+            }
+            finally
+            {
+                if (_dataLock.IsWriteLockHeld)
+                {
+                    _dataLock.ExitWriteLock();
+                }
+            }
+
+            if (renamed.Count > 0)
+            {
+                _db.SaveNotifications(renamed);
+                _logger.LogInformation("NotifySync: {Count} cards renamed with their collection to \"{Name}\".", renamed.Count, name);
+            }
+        }
+
+        /// <summary>
         /// Merges new notifications into the in-memory list, applies quotas, and persists to DB.
         /// </summary>
         private void MergeAndPersistNotifications(List<NotificationItem> newItems)
@@ -1810,14 +1844,7 @@ namespace NotifySync
             // Only for a collection still monitored: one taken out of the settings loses its
             // cards here, as every collection card did before.
             var scanned = new HashSet<string>(results.Select(n => n.Id), StringComparer.Ordinal);
-            var monitored = new HashSet<Guid>();
-            foreach (var id in config?.EnabledCollections ?? new List<string>())
-            {
-                if (Guid.TryParse(id, out var g))
-                {
-                    monitored.Add(g);
-                }
-            }
+            var monitored = CollectionRules.MonitoredSet(config?.EnabledCollections);
 
             var oldDbIds = new List<string>();
 
@@ -1829,7 +1856,7 @@ namespace NotifySync
                 {
                     if (!scanned.Contains(n.Id)
                         && (n.RealItemId != null
-                            ? IsFromMonitoredCollection(n.Id, monitored)
+                            ? CollectionRules.IsFromMonitoredCollection(n.Id, monitored)
                             : _firstSeen.TryGetValue(n.Id, out var seen) && seen >= scanStartUtc))
                     {
                         results.Add(n);
@@ -2033,6 +2060,8 @@ namespace NotifySync
                     _logger.LogWarning("NotifySync: Collection {CollectionId} not found, skipped.", collectionIdStr);
                     continue;
                 }
+
+                RenameCollectionCards(collectionGuid, boxSet.Name);
 
                 // Read the members through the collection itself. The scan used to look for items
                 // with the collection among their ancestors, and Jellyfin never records one there:

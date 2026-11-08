@@ -313,6 +313,10 @@ namespace NotifySync
                 var userStates = NotificationManager.Instance.Db.GetUserStates(normalizedId);
                 long clearedUntil = NotificationManager.Instance.GetUserCleared(userId);
 
+                // A collection taken out of the settings keeps its rows in the database until the
+                // next regeneration: hidden here, with its tab, as soon as it is unchecked.
+                var monitoredCollections = CollectionRules.MonitoredSet(Plugin.Instance?.Configuration?.EnabledCollections);
+
                 var filtered = new List<NotificationItem>();
                 int filteredNotVisible = 0;
                 int itemNotFound = 0;
@@ -328,6 +332,11 @@ namespace NotifySync
                     }
 
                     if (n.DateCreated.ToUniversalTime().Ticks <= clearedUntil)
+                    {
+                        continue;
+                    }
+
+                    if (CollectionRules.IsFromUnmonitoredCollection(n.Id, monitoredCollections))
                     {
                         continue;
                     }
