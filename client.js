@@ -224,6 +224,9 @@
             .list-container { max-height: 500px; overflow-y: auto; -webkit-overflow-scrolling: touch; content-visibility: auto; contain-intrinsic-size: 500px; flex: 1; }
             .dropdown-item { display:flex; padding:12px 20px; border-bottom:1px solid var(--ns-border); cursor:pointer; transition: background .2s; position: relative; overflow: hidden; }
             .dropdown-item:hover { background: rgba(255,255,255,0.08); }
+            .ns-badge-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 2px; min-width: 0; }
+            .ns-badge-row .item-badge { margin-bottom: 0; }
+            .dropdown-item .item-badge.collection { display: block; background: var(--ns-collection); box-shadow: 0 1px 3px rgba(126,87,194,0.5); }
             .item-badge { display: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; font-weight: bold; padding: 2px 5px; border-radius: 3px; color: #fff; line-height: 1; letter-spacing: 0.5px; width: fit-content; margin-bottom: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); text-transform: uppercase; }
             .style-new .item-badge { display: block; background: var(--ns-red); box-shadow: 0 1px 3px rgba(229,9,20,0.5); }
             .style-new { box-shadow: inset 3px 0 0 var(--ns-red); }
@@ -707,7 +710,8 @@
         if (!bell) return;
         let badge = bell.querySelector('.ns-badge');
         if (!badge) { badge = document.createElement('div'); badge.className = 'ns-badge'; bell.appendChild(badge); }
-        const count = groupedData.filter(i => i.IsNew).length;
+        // Titles, not cards: a title a collection also announces is counted once, as in "All".
+        const count = mergeCollectionTwins(groupedData).filter(i => i.IsNew).length;
         if (count > 0) { badge.innerText = count > 9 ? '9+' : count; badge.classList.add('visible'); }
         else { badge.classList.remove('visible'); }
     };
@@ -755,6 +759,54 @@
         if (!item.IsUpgrade) return T.badgeNew;
         const kind = upgradeKindLabel(item);
         return kind ? `${T.badgeUpgrade} ${kind}` : T.badgeUpgrade;
+    };
+
+    // A title announced twice — by its library, and by a monitored collection that holds it —
+    // is one card in "All": the library's, which says what happened to the server, carrying the
+    // collection's name as a second badge. The collection's own tab keeps its card. Hidden only
+    // when every title of the collection card has its library card on screen.
+    const normId = (id) => String(id).replace(/-/g, '').toLowerCase();
+    const mergeCollectionTwins = (cards) => {
+        const collectionOf = new Map();
+        currentData.forEach(i => {
+            if (String(i.Id).startsWith('col:') && i.RealItemId) collectionOf.set(i.Id, { real: normId(i.RealItemId), name: i.Category });
+        });
+        if (collectionOf.size === 0) return cards;
+        const libraryCardOf = new Map();
+        cards.forEach(c => {
+            if (!isCollectionCard(c)) (c.MemberIds || [c.Id]).forEach(id => libraryCardOf.set(normId(id), c));
+        });
+        const alsoIn = new Map();
+        const kept = cards.filter(c => {
+            if (!isCollectionCard(c)) return true;
+            const members = (c.MemberIds || [c.Id]).map(id => collectionOf.get(id));
+            if (!members.every(m => m && libraryCardOf.has(m.real))) return true;
+            members.forEach(m => {
+                const twin = libraryCardOf.get(m.real);
+                if (!alsoIn.has(twin)) alsoIn.set(twin, []);
+                if (alsoIn.get(twin).indexOf(m.name) === -1) alsoIn.get(twin).push(m.name);
+            });
+            return false;
+        });
+        return kept.map(c => (alsoIn.has(c) ? { ...c, AlsoIn: alsoIn.get(c) } : c));
+    };
+
+    // The collection notifications that stand for the same titles as these library ones:
+    // dismissing the library card in "All" takes them too, or they would come back as a card
+    // of their own.
+    const twinIdsOf = (memberIds) => {
+        const wanted = new Set(memberIds.map(normId));
+        return currentData
+            .filter(i => String(i.Id).startsWith('col:') && i.RealItemId && wanted.has(normId(i.RealItemId)))
+            .map(i => i.Id);
+    };
+
+    // The collection badges of a merged card: the first two by name, the rest as a count.
+    const collectionBadgeTexts = (item) => {
+        const names = item.AlsoIn || [];
+        const texts = names.slice(0, 2).map(n => `${T.badgeAddedTo} ${n}`);
+        if (names.length > 2) texts.push(`+${names.length - 2}`);
+        return texts;
     };
 
     const formatEpisodeTitle = (item) => {
@@ -855,6 +907,7 @@
             activeFilter = 'All';
         }
         let filtered = groupedData || [];
+        if (activeFilter === 'All') filtered = mergeCollectionTwins(filtered);
         // Favorites are picked from every card, not from those the quota left on screen: an
         // older favorite pushed out of its category by newer titles still belongs here.
         if (activeFilter === '__fav') filtered = capCardsPerCategory(allCards.filter(i => i.IsFavorite));
@@ -933,7 +986,7 @@
             const safeHeroId = escapeHtml(hero.CardId || hero.Id);
             const heroNavId = escapeHtml(hero.NavId || hero.RealItemId || hero.Id);
             const heroFallbackImg = client.getUrl(`Items/${encodeURIComponent(hero.SeriesId || heroItemId)}/Images/Primary?quality=70&fillWidth=380&fillHeight=160&format=webp`);
-            htmlParts.push(`<div class="hero-section"${tvStop} data-nav="${heroNavId}"><div class="hero-bg"><img src="${escapeHtml(heroImg)}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="if(this.dataset.fb){this.src=this.dataset.fb;this.removeAttribute('data-fb')}else{this.style.display='none'}" data-fb="${escapeHtml(heroFallbackImg)}"></div><div class="hero-overlay"></div><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" data-dismiss="${safeHeroId}">close</button><div class="hero-content">${showsBadge(hero) ? `<span class="${hero.IsUpgrade ? 'hero-badge-upgrade' : (isCollectionCard(hero) ? 'hero-badge collection' : 'hero-badge')}" title="${escapeHtml(upgradeBadgeText(hero))}">${escapeHtml(upgradeBadgeText(hero))}</span>` : ''}<div style="font-size:18px;font-weight:700;text-shadow:0 2px 4px #000;line-height:1.2;">${heroTitle}${hero.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div style="font-size:12px;opacity:0.8;margin-top:4px">${timeAgo(hero.DateCreated)}${heroSub ? ` &bull; ${heroSub}` : ''}</div></div></div>`);
+            htmlParts.push(`<div class="hero-section"${tvStop} data-nav="${heroNavId}"><div class="hero-bg"><img src="${escapeHtml(heroImg)}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="if(this.dataset.fb){this.src=this.dataset.fb;this.removeAttribute('data-fb')}else{this.style.display='none'}" data-fb="${escapeHtml(heroFallbackImg)}"></div><div class="hero-overlay"></div><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" data-dismiss="${safeHeroId}">close</button><div class="hero-content">${showsBadge(hero) ? `<span class="${hero.IsUpgrade ? 'hero-badge-upgrade' : (isCollectionCard(hero) ? 'hero-badge collection' : 'hero-badge')}" title="${escapeHtml(upgradeBadgeText(hero))}">${escapeHtml(upgradeBadgeText(hero))}</span>` : ''}${collectionBadgeTexts(hero).map(t => `<span class="hero-badge collection" style="margin-left:4px" title="${escapeHtml(t)}">${escapeHtml(t)}</span>`).join('')}<div style="font-size:18px;font-weight:700;text-shadow:0 2px 4px #000;line-height:1.2;">${heroTitle}${hero.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div style="font-size:12px;opacity:0.8;margin-top:4px">${timeAgo(hero.DateCreated)}${heroSub ? ` &bull; ${heroSub}` : ''}</div></div></div>`);
         }
 
         let curSection = null;
@@ -956,7 +1009,9 @@
             const safeId = escapeHtml(item.CardId || item.Id);
             const navId = escapeHtml(item.NavId || item.RealItemId || item.Id);
             const badgeText = escapeHtml(upgradeBadgeText(item));
-            const badgeHtml = showsBadge(item) ? `<span class="item-badge" title="${badgeText}">${badgeText}</span>` : '';
+            const ownBadge = showsBadge(item) ? `<span class="item-badge" title="${badgeText}">${badgeText}</span>` : '';
+            const collectionBadges = collectionBadgeTexts(item).map(t => `<span class="item-badge collection" title="${escapeHtml(t)}">${escapeHtml(t)}</span>`).join('');
+            const badgeHtml = collectionBadges ? `<div class="ns-badge-row">${ownBadge}${collectionBadges}</div>` : ownBadge;
             htmlParts.push(`<div class="dropdown-item ${item.IsUpgrade ? 'style-upgrade' : (isCollectionCard(item) ? 'style-collection' : 'style-new')}" data-item-id="${safeId}"${tvStop} data-nav="${navId}"><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" data-dismiss="${safeId}">close</button><div class="swipe-delete">${T.dismiss}</div><div class="thumb-wrapper"><img data-src="${imgUrl}" decoding="async" class="dropdown-thumb ${isMusic ? 'music' : ''}" loading="lazy" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.removeAttribute('data-fallback')}else{this.style.display='none'}" data-fallback="${fallbackUrl}"><span class="material-icons" style="color:#555;font-size:24px;">${isMusic ? 'album' : 'movie'}</span></div><div class="dropdown-info">${badgeHtml}<div class="dropdown-title" title="${title}">${title}${item.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div class="dropdown-subtitle" title="${sub}"><span class="sub-time">${timeAgo(item.DateCreated)}${sub ? ' &bull;' : ''}</span><span class="sub-text">${sub}</span></div></div></div>`);
         });
 
@@ -1129,7 +1184,9 @@
                     // on the server as well: dismissing a batch of new episodes silently
                     // took away the upgrade card the user had deliberately left alone.
                     const card = (allCards || []).find(c => (c.CardId || c.Id) === cardId);
-                    const memberIds = (card && card.MemberIds && card.MemberIds.length) ? card.MemberIds : [cardId];
+                    let memberIds = (card && card.MemberIds && card.MemberIds.length) ? card.MemberIds : [cardId];
+                    // In "All" a library card also stands for the collection cards merged into it.
+                    if (activeFilter === 'All' && card && !isCollectionCard(card)) memberIds = memberIds.concat(twinIdsOf(memberIds));
 
                     // Drop it from local state now instead of after the round-trip, so the
                     // list settles at the speed of the animation rather than the network's.

@@ -9,7 +9,7 @@ const code = [
   grab('    const upgradeKindLabel', '    const formatEpisodeTitle'),
 ].join('\n');
 const T = { badgeNew: 'NEW', badgeUpgrade: 'UPD', badgeAdded: 'ADDED', badgeAddedTo: 'ADDED TO', kindQuality: 'Quality', kindCodec: 'Codec', kindAudio: 'Audio', kindAll: 'All' };
-const mk = new Function('T', 'state', `let activeFilter = state.f; ${code}; return { processGrouping, upgradeBadgeText, unreadSeen, isUnreadCard, showsBadge, setF: f => { activeFilter = f; } };`);
+const mk = new Function('T', 'state', `let activeFilter = state.f; let currentData = []; ${code}; return { processGrouping, upgradeBadgeText, unreadSeen, isUnreadCard, showsBadge, mergeCollectionTwins, twinIdsOf, collectionBadgeTexts, setData: d => { currentData = d; }, setF: f => { activeFilter = f; } };`);
 const api = mk(T, { f: 'All' });
 let fail = 0; const check = (n, ok) => { console.log((ok ? 'OK    ' : 'FAIL  ') + n); if (!ok) fail++; };
 const now = Date.now();
@@ -36,5 +36,34 @@ api.unreadSeen.clear();
 check('once seen and closed, a library card has no badge', !api.showsBadge({ Id: 'a2', IsNew: false }));
 check('seen upgrade keeps its badge', api.showsBadge({ Id: 'u', IsNew: false, IsUpgrade: true }));
 check('seen collection card keeps its badge', api.showsBadge({ Id: 'col:aaa:111', IsNew: false }));
+// A title announced by its library and by a collection holding it: one card in "All".
+const lib = { Id: 'aaaa1111-0000-0000-0000-000000000001', Type: 'Movie', Category: 'Films', IsNew: true, DateCreated: new Date(now).toISOString() };
+const colTwin = { Id: 'col:bbb:aaaa1111-0000-0000-0000-000000000001', RealItemId: 'AAAA1111-0000-0000-0000-000000000001', Type: 'Movie', Category: 'Classiques', IsNew: true, DateCreated: new Date(now).toISOString() };
+const colAlone = { Id: 'col:bbb:cccc3333-0000-0000-0000-000000000003', RealItemId: 'cccc3333-0000-0000-0000-000000000003', Type: 'Movie', Category: 'Classiques', IsNew: true, DateCreated: new Date(now - 1000).toISOString() };
+api.setData([lib, colTwin, colAlone]);
+const merged = api.mergeCollectionTwins(api.processGrouping([lib, colTwin, colAlone]));
+check('twin collection card is merged into the library card', merged.length === 2 && !merged.some(c => c.Id === colTwin.Id));
+check('library card carries the collection name', merged.find(c => c.Id === lib.Id).AlsoIn.join() === 'Classiques');
+check('collection card without a library twin stays', merged.some(c => c.Id === colAlone.Id));
+check('the bell counts the title once', merged.filter(c => c.IsNew).length === 2);
+check('merged card shows ADDED TO next to NEW', api.collectionBadgeTexts(merged.find(c => c.Id === lib.Id)).join() === 'ADDED TO Classiques');
+check('three collections show two names and a count', api.collectionBadgeTexts({ AlsoIn: ['A', 'B', 'C', 'D'] }).join() === 'ADDED TO A,ADDED TO B,+2');
+check('dismissing the library card takes its twin too', api.twinIdsOf([lib.Id]).join() === colTwin.Id);
+check('a library card without twin takes nothing more', api.twinIdsOf(['zzzz']).length === 0);
+const seenLib = { ...lib, IsNew: false };
+api.setData([seenLib, colTwin]);
+const seenMerged = api.mergeCollectionTwins(api.processGrouping([seenLib, colTwin]));
+check('a seen merged card has no NEW but keeps the collection badge', !api.showsBadge(seenMerged[0]) && api.collectionBadgeTexts(seenMerged[0]).length === 1);
+api.setData([]);
+check('with no collection notification nothing changes', api.mergeCollectionTwins([lib]).length === 1);
+// Episodes: a library group and a collection group for the same series merge as well.
+const mkEp = (id, cat, extra = {}) => ({ Id: id, Type: 'Episode', SeriesId: 'S1', SeriesName: 'Show', Category: cat, IndexNumber: 1, ParentIndexNumber: 1, IsNew: true, DateCreated: new Date(now - 500).toISOString(), ...extra });
+const eps = [mkEp('e0000001-0000-0000-0000-000000000001', 'Séries'), mkEp('e0000002-0000-0000-0000-000000000002', 'Séries'),
+    mkEp('col:ccc:e0000001-0000-0000-0000-000000000001', 'Classiques', { RealItemId: 'e0000001-0000-0000-0000-000000000001' }),
+    mkEp('col:ccc:e0000002-0000-0000-0000-000000000002', 'Classiques', { RealItemId: 'e0000002-0000-0000-0000-000000000002' })];
+api.setData(eps);
+const epCards = api.mergeCollectionTwins(api.processGrouping(eps));
+check('two groups of the same episodes become one card', epCards.length === 1 && epCards[0].IsGroup && epCards[0].AlsoIn.join() === 'Classiques');
+api.setData([]);
 console.log(fail ? fail + ' test(s) failed.' : 'All tests passed.');
 process.exit(fail ? 1 : 0);
