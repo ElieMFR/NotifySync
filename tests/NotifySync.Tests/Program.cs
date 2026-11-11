@@ -102,5 +102,12 @@ Check("source name from a typed name", CollectionRules.MonitoredSourceName(new[]
 Check("a typed name that is no ancestor gives none", CollectionRules.MonitoredSourceName(new[] { "Anime" }, new[] { libA }, Guid.Empty, NameOf) == null);
 Check("a blank entry is skipped", CollectionRules.MonitoredSourceName(new[] { " ", libB.ToString() }, new[] { libB }, Guid.Empty, NameOf) == "Anime");
 
+// The card says what changed in the resolution, in the direction it went.
+Check("1080p to 4K reads as such", MediaChangeDetector.ResolutionChange("/m/Film [1080p].mkv", "/m/Film [2160p].mkv") == "1080p → 4K");
+Check("a drop keeps its real direction", MediaChangeDetector.ResolutionChange("/m/Film.2160p.mkv", "/m/Film.1080p.mkv") == "4K → 1080p");
+Check("720p to 1080p", MediaChangeDetector.ResolutionChange("/m/Film.720p.mkv", "/m/Film.1080p.mkv") == "720p → 1080p");
+Check("the same resolution says nothing", MediaChangeDetector.ResolutionChange("/m/Film.1080p.x264.mkv", "/m/Film.1080p.x265.mkv") == null);
+Check("an unmarked name says nothing", MediaChangeDetector.ResolutionChange("/m/Film.mkv", "/m/Film.2160p.mkv") == null);
+
 Console.WriteLine(failed == 0 ? "All tests passed." : failed + " test(s) failed.");
 return failed == 0 ? 0 : 1;

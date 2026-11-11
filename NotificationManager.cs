@@ -468,6 +468,7 @@ namespace NotifySync
             current.DateCreated = previous.DateCreated;
             current.IsUpgrade = previous.IsUpgrade;
             current.UpgradeKind = previous.UpgradeKind;
+            current.UpgradeDetail = previous.UpgradeDetail;
 
             var cutoff = MoveCandidateCutoffUtc();
             foreach (var kvp in _followedMove)
@@ -999,6 +1000,7 @@ namespace NotifySync
                             {
                                 updatedNotif.IsUpgrade = true;
                                 updatedNotif.UpgradeKind = kind;
+                                updatedNotif.UpgradeDetail = MediaChangeDetector.ResolutionChange(existing.FilePath, updatedNotif.FilePath);
                                 updatedNotif.DateCreated = DateTime.UtcNow; // remonter en tête de liste
                                 _logger.LogInformation(
                                     "NotifySync Upgrade Detected: {Name} | kind={Kind} | old={OldPath} new={NewPath}",
@@ -1015,6 +1017,7 @@ namespace NotifySync
                                 updatedNotif.DateCreated = existing.DateCreated;
                                 updatedNotif.IsUpgrade = existing.IsUpgrade;
                                 updatedNotif.UpgradeKind = existing.UpgradeKind;
+                                updatedNotif.UpgradeDetail = existing.UpgradeDetail;
                                 _logger.LogDebug(
                                     "NotifySync Upgrade Skipped: {Name} | path changed but no token signal",
                                     updatedNotif.Name);
@@ -1050,6 +1053,7 @@ namespace NotifySync
                                 {
                                     updatedNotif.IsUpgrade = true;
                                     updatedNotif.UpgradeKind = kind;
+                                    updatedNotif.UpgradeDetail = MediaChangeDetector.ResolutionChange(deletedAsNotif.FilePath, updatedNotif.FilePath);
                                     updatedNotif.DateCreated = DateTime.UtcNow;
                                     _db.MarkDeletedAsMatched(deletedRecord.Id, updatedNotif.Id);
                                     _logger.LogInformation(
@@ -1090,6 +1094,7 @@ namespace NotifySync
                                     updatedNotif.DateCreated = existing.DateCreated;
                                     updatedNotif.IsUpgrade = existing.IsUpgrade;
                                     updatedNotif.UpgradeKind = existing.UpgradeKind;
+                                    updatedNotif.UpgradeDetail = existing.UpgradeDetail;
                                 }
                             }
                             else
@@ -1097,6 +1102,7 @@ namespace NotifySync
                                 updatedNotif.DateCreated = existing.DateCreated;
                                 updatedNotif.IsUpgrade = existing.IsUpgrade;
                                 updatedNotif.UpgradeKind = existing.UpgradeKind;
+                                updatedNotif.UpgradeDetail = existing.UpgradeDetail;
                             }
                         }
                         else
@@ -1104,6 +1110,7 @@ namespace NotifySync
                             updatedNotif.DateCreated = existing.DateCreated;
                             updatedNotif.IsUpgrade = existing.IsUpgrade;
                             updatedNotif.UpgradeKind = existing.UpgradeKind;
+                            updatedNotif.UpgradeDetail = existing.UpgradeDetail;
                         }
 
                         // A metadata refresh reports every item it touches, most of them
@@ -1366,6 +1373,7 @@ namespace NotifySync
                             {
                                 notif.IsUpgrade = true;
                                 notif.UpgradeKind = kind;
+                                notif.UpgradeDetail = MediaChangeDetector.ResolutionChange(deletedAsNotif.FilePath, notif.FilePath);
                                 if (!upgradedInBatch.TryGetValue(notif.Id, out var matchedId) || matchedId != deletedRecord.Id)
                                 {
                                     upgradedInBatch[notif.Id] = deletedRecord.Id;
@@ -1842,6 +1850,7 @@ namespace NotifySync
                     {
                         notif.IsUpgrade = true;
                         notif.UpgradeKind = old.UpgradeKind;
+                        notif.UpgradeDetail = old.UpgradeDetail;
                         notif.DateCreated = old.DateCreated;
                         carried++;
                     }

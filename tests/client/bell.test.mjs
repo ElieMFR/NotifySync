@@ -105,6 +105,17 @@ const codeOnly = src.split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n')
 check('no ?? (Chromium 56)', !/\?\?/.test(codeOnly));
 check('no ?. (Chromium 56)', !/\?\.[A-Za-z_$[(]/.test(codeOnly));
 check('no object spread (Chromium 56)', !/\{\s*\.\.\.[A-Za-z_$]/.test(codeOnly));
+// An upgrade card says what changed: "1080p → 4K" joins its subtitle.
+const wud = new Function('escapeHtml', grab('    const withUpgradeDetail', '    // Every episode number') + '; return withUpgradeDetail;')(s => String(s).replace(/</g, '&lt;'));
+check('an upgrade with a detail adds it to the subtitle', wud({ IsUpgrade: true, UpgradeDetail: '1080p → 4K' }, '2020') === '2020 • 1080p → 4K');
+check('with no subtitle the detail stands alone', wud({ IsUpgrade: true, UpgradeDetail: '1080p → 4K' }, '') === '1080p → 4K');
+check('a new card never shows a detail', wud({ IsUpgrade: false, UpgradeDetail: '1080p → 4K' }, '2020') === '2020');
+check('an upgrade without detail is unchanged', wud({ IsUpgrade: true }, '2020') === '2020');
+const upEp = (id, d) => ({ Id: id, Type: 'Episode', SeriesId: 'S9', SeriesName: 'Show', Category: 'Séries', IndexNumber: 1, ParentIndexNumber: 1, IsUpgrade: true, UpgradeKind: 'quality', UpgradeDetail: d, DateCreated: new Date(now - 100).toISOString() });
+const same = api.processGrouping([upEp('a1', '1080p → 4K'), upEp('a2', '1080p → 4K')]);
+check('a group of identical upgrades keeps the detail', same.length === 1 && same[0].UpgradeDetail === '1080p → 4K');
+const mixed = api.processGrouping([upEp('b1', '1080p → 4K'), upEp('b2', '720p → 1080p')]);
+check('a group of different upgrades shows none', mixed.length === 1 && !mixed[0].UpgradeDetail);
 api.setData([]);
 console.log(fail ? fail + ' test(s) failed.' : 'All tests passed.');
 process.exit(fail ? 1 : 0);

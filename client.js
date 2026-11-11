@@ -344,6 +344,9 @@
         return seasonsLabel ? `${seasonsLabel} • ${detail}` : detail;
     };
 
+    // An upgrade says what changed in the file when the names told: "1080p → 4K".
+    const withUpgradeDetail = (item, sub) => (item.IsUpgrade && item.UpgradeDetail ? (sub ? sub + ' • ' : '') + escapeHtml(item.UpgradeDetail) : sub);
+
     // Every episode number a file holds: one, or a run for a file named "S01E01-E02",
     // which Jellyfin keeps as a single episode with an end number.
     const episodeSpan = (e) => {
@@ -423,7 +426,7 @@
                     // Id stays the series id — grouping and the favorite lookup key on it.
                     // CardId addresses this card alone, MemberIds says exactly what it stands
                     // for, and NavId is where a click goes.
-                    result.push(Object.assign({}, latest, { IsGroup: true, GroupCount: episodes.length, Name: latest.SeriesName || latest.Name, Id: seriesKey, NavId: oneSeason ? latest.SeasonId : seriesKey, CardId: seriesKey + '#' + subsetKey, MemberIds: subset.map(e => e.Id), IsNew: hasNew, Seasons: seasons, Episodes: episodes, IsFavorite: subset.some(e => e.IsFavorite) }));
+                    result.push(Object.assign({}, latest, { IsGroup: true, GroupCount: episodes.length, Name: latest.SeriesName || latest.Name, Id: seriesKey, NavId: oneSeason ? latest.SeasonId : seriesKey, CardId: seriesKey + '#' + subsetKey, MemberIds: subset.map(e => e.Id), IsNew: hasNew, Seasons: seasons, Episodes: episodes, IsFavorite: subset.some(e => e.IsFavorite), UpgradeDetail: subset.every(e => e.UpgradeDetail === latest.UpgradeDetail) ? latest.UpgradeDetail : undefined }));
                 } else { result.push(latest); }
             });
         });
@@ -981,6 +984,7 @@
             if (isGroup) {
                 heroSub = groupSubtitle(hero);
             }
+            heroSub = withUpgradeDetail(hero, heroSub);
 
             const safeHeroId = escapeHtml(hero.CardId || hero.Id);
             const heroNavId = escapeHtml(hero.NavId || hero.RealItemId || hero.Id);
@@ -1004,6 +1008,7 @@
             let title = escapeHtml(item.Name), sub = escapeHtml(isMusic && item.SeriesName ? item.SeriesName : String(item.ProductionYear == null ? '' : item.ProductionYear));
             if (!isGroup && item.Type === 'Episode') { title = escapeHtml(formatEpisodeTitle(item)); sub = escapeHtml(item.SeriesName); }
             if (isGroup) { sub = groupSubtitle(item); }
+            sub = withUpgradeDetail(item, sub);
 
             const safeId = escapeHtml(item.CardId || item.Id);
             const navId = escapeHtml(item.NavId || item.RealItemId || item.Id);

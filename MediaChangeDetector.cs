@@ -34,6 +34,8 @@ namespace NotifySync
 
         internal static readonly string[] ResolutionUpTokens1080 = { "1080p" };
 
+        internal static readonly string[] ResolutionTokens720 = { "720p" };
+
         internal static readonly string[] SourceBetterTokens = { "bluray", "blu-ray", "remux", "blueray" };
 
         // Audio-track-added tokens: when any of these appears in the new filename but not
@@ -123,6 +125,42 @@ namespace NotifySync
             }
 
             return kinds.Count == 0 ? null : string.Join(",", kinds);
+        }
+
+        /// <summary>
+        /// The resolution change between two file paths, as the card shows it ("1080p → 4K"),
+        /// in whichever direction it went; <c>null</c> when either name does not carry a
+        /// resolution or both carry the same one.
+        /// </summary>
+        /// <param name="oldPath">The replaced file's path.</param>
+        /// <param name="newPath">The new file's path.</param>
+        /// <returns>The label, or <c>null</c>.</returns>
+        internal static string? ResolutionChange(string? oldPath, string? newPath)
+        {
+            var before = ResolutionLabel(oldPath);
+            var after = ResolutionLabel(newPath);
+            return before != null && after != null && before != after ? before + " → " + after : null;
+        }
+
+        private static string? ResolutionLabel(string? path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return null;
+            }
+
+            var lower = path.ToLowerInvariant();
+            if (ContainsAnyTag(lower, ResolutionUpTokens4K))
+            {
+                return "4K";
+            }
+
+            if (ContainsAnyTag(lower, ResolutionUpTokens1080))
+            {
+                return "1080p";
+            }
+
+            return ContainsAnyTag(lower, ResolutionTokens720) ? "720p" : null;
         }
 
         /// <summary>

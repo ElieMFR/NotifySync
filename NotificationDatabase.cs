@@ -85,6 +85,7 @@ namespace NotifySync
                             IsUpgrade INTEGER NOT NULL DEFAULT 0,
                             FilePath TEXT,
                             UpgradeKind TEXT,
+                            UpgradeDetail TEXT,
                             Size INTEGER
                         );
                         CREATE INDEX IF NOT EXISTS idx_notifications_date ON Notifications(DateCreated DESC);
@@ -145,6 +146,7 @@ namespace NotifySync
                 MigrateAddColumn(connection, "Notifications", "IsUpgrade", "INTEGER NOT NULL DEFAULT 0");
                 MigrateAddColumn(connection, "Notifications", "FilePath", "TEXT");
                 MigrateAddColumn(connection, "Notifications", "UpgradeKind", "TEXT");
+                MigrateAddColumn(connection, "Notifications", "UpgradeDetail", "TEXT");
                 MigrateAddColumn(connection, "Notifications", "Size", "INTEGER");
                 MigrateAddColumn(connection, "Notifications", "IndexNumberEnd", "INTEGER");
                 MigrateAddColumn(connection, "DeletedItems", "IndexNumber", "INTEGER");
@@ -326,12 +328,12 @@ namespace NotifySync
                     Id, RealItemId, Name, Category, SeriesName, SeriesId, SeasonId, DateCreated,
                     Type, RunTimeTicks, ProductionYear, BackdropImageTags,
                     PrimaryImageTag, IndexNumber, IndexNumberEnd, ParentIndexNumber,
-                    IsUpgrade, FilePath, UpgradeKind, Size
+                    IsUpgrade, FilePath, UpgradeKind, UpgradeDetail, Size
                 ) VALUES (
                     @Id, @RealItemId, @Name, @Category, @SeriesName, @SeriesId, @SeasonId, @DateCreated,
                     @Type, @RunTimeTicks, @ProductionYear, @Backdrop,
                     @Primary, @Index, @IndexEnd, @ParentIndex,
-                    @IsUpgrade, @FilePath, @UpgradeKind, @Size
+                    @IsUpgrade, @FilePath, @UpgradeKind, @UpgradeDetail, @Size
                 )";
 
             var pId = cmd.Parameters.Add("@Id", SqliteType.Text);
@@ -353,6 +355,7 @@ namespace NotifySync
             var pUpgrade = cmd.Parameters.Add("@IsUpgrade", SqliteType.Integer);
             var pFilePath = cmd.Parameters.Add("@FilePath", SqliteType.Text);
             var pUpgradeKind = cmd.Parameters.Add("@UpgradeKind", SqliteType.Text);
+            var pUpgradeDetail = cmd.Parameters.Add("@UpgradeDetail", SqliteType.Text);
             var pSize = cmd.Parameters.Add("@Size", SqliteType.Integer);
 
             void Bind(NotificationItem item)
@@ -376,6 +379,7 @@ namespace NotifySync
                 pUpgrade.Value = item.IsUpgrade ? 1 : 0;
                 pFilePath.Value = (object?)item.FilePath ?? DBNull.Value;
                 pUpgradeKind.Value = (object?)item.UpgradeKind ?? DBNull.Value;
+                pUpgradeDetail.Value = (object?)item.UpgradeDetail ?? DBNull.Value;
                 pSize.Value = (object?)item.Size ?? DBNull.Value;
             }
 
@@ -603,6 +607,7 @@ namespace NotifySync
                 int oIsUpgrade = reader.GetOrdinal("IsUpgrade");
                 int oFilePath = reader.GetOrdinal("FilePath");
                 int oUpgradeKind = TryGetOrdinal(reader, "UpgradeKind");
+                int oUpgradeDetail = TryGetOrdinal(reader, "UpgradeDetail");
                 int oSize = TryGetOrdinal(reader, "Size");
                 int oRealItemId = TryGetOrdinal(reader, "RealItemId");
                 int oSeasonId = TryGetOrdinal(reader, "SeasonId");
@@ -631,6 +636,7 @@ namespace NotifySync
                         IsUpgrade = !reader.IsDBNull(oIsUpgrade) && reader.GetInt32(oIsUpgrade) != 0,
                         FilePath = reader.IsDBNull(oFilePath) ? null : reader.GetString(oFilePath),
                         UpgradeKind = (oUpgradeKind < 0 || reader.IsDBNull(oUpgradeKind)) ? null : reader.GetString(oUpgradeKind),
+                        UpgradeDetail = (oUpgradeDetail < 0 || reader.IsDBNull(oUpgradeDetail)) ? null : reader.GetString(oUpgradeDetail),
                         Size = (oSize < 0 || reader.IsDBNull(oSize)) ? null : reader.GetInt64(oSize)
                     });
                 }
