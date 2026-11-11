@@ -423,7 +423,7 @@
                     // Id stays the series id — grouping and the favorite lookup key on it.
                     // CardId addresses this card alone, MemberIds says exactly what it stands
                     // for, and NavId is where a click goes.
-                    result.push({ ...latest, IsGroup: true, GroupCount: episodes.length, Name: latest.SeriesName || latest.Name, Id: seriesKey, NavId: oneSeason ? latest.SeasonId : seriesKey, CardId: seriesKey + '#' + subsetKey, MemberIds: subset.map(e => e.Id), IsNew: hasNew, Seasons: seasons, Episodes: episodes, IsFavorite: subset.some(e => e.IsFavorite) });
+                    result.push(Object.assign({}, latest, { IsGroup: true, GroupCount: episodes.length, Name: latest.SeriesName || latest.Name, Id: seriesKey, NavId: oneSeason ? latest.SeasonId : seriesKey, CardId: seriesKey + '#' + subsetKey, MemberIds: subset.map(e => e.Id), IsNew: hasNew, Seasons: seasons, Episodes: episodes, IsFavorite: subset.some(e => e.IsFavorite) }));
                 } else { result.push(latest); }
             });
         });
@@ -777,7 +777,7 @@
             });
             return false;
         });
-        return kept.map(c => (alsoIn.has(c) ? { ...c, AlsoIn: alsoIn.get(c) } : c));
+        return kept.map(c => (alsoIn.has(c) ? Object.assign({}, c, { AlsoIn: alsoIn.get(c) }) : c));
     };
 
     // The collection notifications that stand for the same titles as these library ones:
@@ -833,6 +833,16 @@
         el.scrollIntoView({ block: 'nearest' });
     };
 
+    // Which row takes the focus back. When the list shrank under the focus (the last card was
+    // taken out), the nearest row left is the footer, "Clear list": a stray OK there would
+    // empty everything. Stop on the card above it instead.
+    const tvRestoreIndex = (rows, wanted, first) => {
+        let i = Math.min(wanted === null ? first : wanted, rows.length - 1);
+        const shrunk = wanted !== null && wanted > rows.length - 1;
+        if (shrunk && i > 0 && rows[i].length === 1 && rows[i][0].classList.contains('footer-tools')) i--;
+        return i;
+    };
+
     // A redraw replaces the elements under the focus: put it back on the same row, or the
     // nearest one left.
     const restoreTvFocus = (drop) => {
@@ -840,7 +850,7 @@
         const rows = tvRows(drop);
         if (!rows.length) return;
         const first = rows.length > 1 && rows[0].length > 1 ? 1 : 0;
-        const row = rows[Math.min(tvFocusRow === null ? first : tvFocusRow, rows.length - 1)];
+        const row = rows[tvRestoreIndex(rows, tvFocusRow, first)];
         focusTv(row.find(p => p.classList.contains('active')) || row[0]);
     };
 
@@ -966,7 +976,7 @@
                 heroTitle = escapeHtml(formatEpisodeTitle(hero)); heroSub = escapeHtml(hero.SeriesName);
             } else {
                 // A lone track names its album: a year alone says nothing of what arrived.
-                heroSub = escapeHtml(hero.Type === 'Audio' && hero.SeriesName ? hero.SeriesName : String(hero.ProductionYear ?? ''));
+                heroSub = escapeHtml(hero.Type === 'Audio' && hero.SeriesName ? hero.SeriesName : String(hero.ProductionYear == null ? '' : hero.ProductionYear));
             }
             if (isGroup) {
                 heroSub = groupSubtitle(hero);
@@ -991,7 +1001,7 @@
             const imgUrl = client.getUrl(`Items/${encodeURIComponent(imgItemId)}/Images/Primary?tag=${encodeURIComponent(item.PrimaryImageTag || '')}&${isMusic ? 'fillHeight=100&fillWidth=100' : 'fillHeight=112&fillWidth=200'}&quality=80&format=webp`);
             const fallbackUrl = item.SeriesId ? client.getUrl(`Items/${encodeURIComponent(item.SeriesId)}/Images/Primary?${isMusic ? 'fillHeight=100&fillWidth=100' : 'fillHeight=112&fillWidth=200'}&quality=80&format=webp`) : '';
 
-            let title = escapeHtml(item.Name), sub = escapeHtml(isMusic && item.SeriesName ? item.SeriesName : String(item.ProductionYear ?? ''));
+            let title = escapeHtml(item.Name), sub = escapeHtml(isMusic && item.SeriesName ? item.SeriesName : String(item.ProductionYear == null ? '' : item.ProductionYear));
             if (!isGroup && item.Type === 'Episode') { title = escapeHtml(formatEpisodeTitle(item)); sub = escapeHtml(item.SeriesName); }
             if (isGroup) { sub = groupSubtitle(item); }
 

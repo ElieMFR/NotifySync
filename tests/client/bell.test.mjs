@@ -92,6 +92,19 @@ const mkFetch = (res) => {
     await r3.api.clearAllNotifications();
     check('Clear also empties the stored list', !r3.store.has('ns-data') && !r3.store.has('ns-data-ts') && !r3.store.has('ns-etag'));
 }
+// TV: the remote's focus after the last card goes, and syntax the Chromium 56 of older TVs rejects.
+const restore = new Function(grab('    const tvRestoreIndex', '    // A redraw replaces the elements') + '; return tvRestoreIndex;')();
+const row = (cls) => [{ classList: { contains: c => c === cls } }];
+const rowsNow = [row('filter-pill'), row('dropdown-item'), row('dropdown-item'), row('footer-tools')];
+check('after the last card goes, focus stops on a card, not on "Clear list"', restore(rowsNow, 4, 1) === 2);
+check('a focus left on the footer stays there', restore(rowsNow, 3, 1) === 3);
+check('focus on a middle card stays', restore(rowsNow, 2, 1) === 2);
+check('first open lands on the first card', restore(rowsNow, null, 1) === 1);
+const codeOnly = src.split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n')
+    .replace(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g, '""').replace(/\/\/[^\n]*/g, '');
+check('no ?? (Chromium 56)', !/\?\?/.test(codeOnly));
+check('no ?. (Chromium 56)', !/\?\.[A-Za-z_$[(]/.test(codeOnly));
+check('no object spread (Chromium 56)', !/\{\s*\.\.\.[A-Za-z_$]/.test(codeOnly));
 api.setData([]);
 console.log(fail ? fail + ' test(s) failed.' : 'All tests passed.');
 process.exit(fail ? 1 : 0);
