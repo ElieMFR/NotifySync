@@ -116,6 +116,11 @@ const same = api.processGrouping([upEp('a1', '1080p → 4K'), upEp('a2', '1080p 
 check('a group of identical upgrades keeps the detail', same.length === 1 && same[0].UpgradeDetail === '1080p → 4K');
 const mixed = api.processGrouping([upEp('b1', '1080p → 4K'), upEp('b2', '720p → 1080p')]);
 check('a group of different upgrades shows none', mixed.length === 1 && !mixed[0].UpgradeDetail);
+// The large card keeps its title and subtitle on one line each, cut with an ellipsis.
+const heroRule = (cls) => (src.match(new RegExp('\.' + cls + ' \{[^}]*\}')) || [''])[0];
+check('hero title stays on one line with an ellipsis', /white-space: nowrap/.test(heroRule('hero-title')) && /text-overflow: ellipsis/.test(heroRule('hero-title')));
+check('hero subtitle stays on one line with an ellipsis', /white-space: nowrap/.test(heroRule('hero-sub')) && /text-overflow: ellipsis/.test(heroRule('hero-sub')));
+check('hero markup uses those classes', src.includes('class="hero-title"') && src.includes('class="hero-sub"'));
 api.setData([]);
 console.log(fail ? fail + ' test(s) failed.' : 'All tests passed.');
 process.exit(fail ? 1 : 0);
