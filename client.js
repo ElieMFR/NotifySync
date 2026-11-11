@@ -473,7 +473,11 @@
         allCards = [];
         previousDataIds = new Set();
         lastFetchTime = 0;
+        // The stored copy goes too: left behind, it is read back on the next load as if the
+        // cleared cards were still there.
         localStorage.removeItem(nsKey('etag'));
+        localStorage.removeItem(nsKey('data'));
+        localStorage.removeItem(nsKey('data-ts'));
         updateBadge();
         const drop = document.getElementById('notification-dropdown');
         if (drop) updateList(drop);
@@ -593,7 +597,7 @@
 
             const res = await fetch(serverUrl(`/NotifySync/Data?userId=${userId}`), { headers: headers });
 
-            if (res.status === 304 && currentData.length === 0) {
+            if (res.status === 304 && currentData.length === 0 && !firstLoadDone) {
                 // "Nothing changed" only means something if we still hold what it refers to.
                 // After a restart the list starts empty, and an event-driven fetch — a
                 // reconnect, the app coming back to the foreground — can land before the

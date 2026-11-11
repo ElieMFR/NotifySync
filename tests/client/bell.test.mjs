@@ -64,6 +64,34 @@ const eps = [mkEp('e0000001-0000-0000-0000-000000000001', 'Séries'), mkEp('e000
 api.setData(eps);
 const epCards = api.mergeCollectionTwins(api.processGrouping(eps));
 check('two groups of the same episodes become one card', epCards.length === 1 && epCards[0].IsGroup && epCards[0].AlsoIn.join() === 'Classiques');
+// Fetch and Clear, run on client.js with a stand-in localStorage and fetch.
+const fcode = [grab('    const clearAllNotifications', '    const clearCategoryNotifications'), grab('    const fetchData', '    const loadFromCache')].join('\n');
+const mkFetch = (res) => {
+    const store = new Map(); const calls = [];
+    const ls = { getItem: k => store.has(k) ? store.get(k) : null, setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) };
+    const f = new Function('S', `let isFetching = false, lastFetchTime = 0, firstLoadDone = S.firstLoadDone, currentData = S.currentData, groupedData = [], allCards = [], previousDataIds = new Set(), pollTimeout = null, retryDelay = 2000, lastPulseTime = 0;
+        const localStorage = S.ls, document = { getElementById: () => null, querySelector: () => null }, setTimeout = (fn, ms) => { S.calls.push('retry'); return 1; }, clearTimeout = () => {};
+        const nsKey = k => 'ns-' + k, getUserId = () => 'u1', serverUrl = p => p, getAuthHeaders = () => ({}), updateBadge = () => {}, updateList = () => {}, markVisibleAsRead = () => {}, recalculateNewStatus = () => {};
+        const fetch = async () => S.res; ${fcode}; return { resetThrottle: () => { lastFetchTime = 0; }, fetchData, clearAllNotifications, get firstLoadDone() { return firstLoadDone; } };`);
+    const S = { ls, calls, res, firstLoadDone: false, currentData: [] };
+    return { store, calls, S, api: f(S) };
+};
+{
+    const r = mkFetch({ status: 304, ok: false, headers: { get: () => null } });
+    r.store.set('ns-etag', '"x"');
+    await r.api.fetchData();
+    check('a 304 on a never-loaded bell asks again', r.calls.includes('retry') && !r.store.has('ns-etag'));
+    // An empty list that did load: its 304 is the answer, not a reason to refetch.
+    const r2 = mkFetch({ status: 200, ok: true, json: async () => [], headers: { get: () => '"e1"' } });
+    await r2.api.fetchData();
+    r2.S.res = { status: 304, ok: false, headers: { get: () => null } }; r2.api.resetThrottle(); r2.calls.length = 0;
+    await r2.api.fetchData();
+    check('a 304 after an empty list was loaded does not loop', !r2.calls.includes('retry') && r2.store.has('ns-etag'));
+    const r3 = mkFetch({ ok: true, status: 200 });
+    r3.store.set('ns-data', '[{"Id":"a"}]'); r3.store.set('ns-data-ts', '1'); r3.store.set('ns-etag', '"x"');
+    await r3.api.clearAllNotifications();
+    check('Clear also empties the stored list', !r3.store.has('ns-data') && !r3.store.has('ns-data-ts') && !r3.store.has('ns-etag'));
+}
 api.setData([]);
 console.log(fail ? fail + ' test(s) failed.' : 'All tests passed.');
 process.exit(fail ? 1 : 0);
