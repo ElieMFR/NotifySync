@@ -92,5 +92,15 @@ Check("same size back again is a move", MediaChangeDetector.IsSameFileBackAgain(
 Check("different size is not a move", !MediaChangeDetector.IsSameFileBackAgain(1234, 1235));
 Check("unknown size is not a move", !MediaChangeDetector.IsSameFileBackAgain(null, 1234));
 
+// A monitored library typed by name (the admin's manual list) names the card's category.
+var libA = Guid.NewGuid();
+var libB = Guid.NewGuid();
+var names = new Dictionary<Guid, string> { [libA] = "Films", [libB] = "Anime" };
+string? NameOf(Guid g) => names.TryGetValue(g, out var n) ? n : null;
+Check("source name from a library id", CollectionRules.MonitoredSourceName(new[] { libA.ToString() }, new[] { libA }, Guid.Empty, NameOf) == "Films");
+Check("source name from a typed name", CollectionRules.MonitoredSourceName(new[] { "films" }, new[] { Guid.NewGuid(), libA }, Guid.Empty, NameOf) == "Films");
+Check("a typed name that is no ancestor gives none", CollectionRules.MonitoredSourceName(new[] { "Anime" }, new[] { libA }, Guid.Empty, NameOf) == null);
+Check("a blank entry is skipped", CollectionRules.MonitoredSourceName(new[] { " ", libB.ToString() }, new[] { libB }, Guid.Empty, NameOf) == "Anime");
+
 Console.WriteLine(failed == 0 ? "All tests passed." : failed + " test(s) failed.");
 return failed == 0 ? 0 : 1;

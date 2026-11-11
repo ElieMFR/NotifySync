@@ -1605,7 +1605,6 @@ namespace NotifySync
             var scanStartUtc = DateTime.UtcNow;
 
             var config = Plugin.Instance?.Configuration;
-            int maxItems = config?.MaxItems ?? 10;
 
             // diagnostic
             if (config != null)
@@ -2258,24 +2257,7 @@ namespace NotifySync
 
             var monitored = (config.EnabledLibraries ?? Enumerable.Empty<string>())
                 .Concat(config.ManualLibraryIds ?? Enumerable.Empty<string>());
-            foreach (var id in monitored)
-            {
-                if (!Guid.TryParse(id, out var libGuid) || libGuid == Guid.Empty)
-                {
-                    continue;
-                }
-
-                if (owners.Contains(libGuid) || (item.ChannelId != Guid.Empty && item.ChannelId == libGuid))
-                {
-                    var name = _libraryManager.GetItemById(libGuid)?.Name;
-                    if (!string.IsNullOrWhiteSpace(name))
-                    {
-                        return name;
-                    }
-                }
-            }
-
-            return null;
+            return CollectionRules.MonitoredSourceName(monitored, owners, item.ChannelId, id => _libraryManager.GetItemById(id)?.Name);
         }
 
         private NotificationItem? CreateNotificationFromItem(BaseItem item)

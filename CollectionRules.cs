@@ -11,6 +11,55 @@ namespace NotifySync
     internal static class CollectionRules
     {
         /// <summary>
+        /// Name of the monitored library an item belongs to, for a list of monitored entries that
+        /// holds ids and plain names alike (the admin can type either).
+        /// </summary>
+        /// <param name="monitored">The monitored entries: a library id or a library name.</param>
+        /// <param name="owners">The item's ancestor ids.</param>
+        /// <param name="channelId">The item's channel id, or <see cref="Guid.Empty"/>.</param>
+        /// <param name="nameOf">Name of the item with the given id, or <c>null</c>.</param>
+        /// <returns>The library name, or <c>null</c> when none applies.</returns>
+        internal static string? MonitoredSourceName(IEnumerable<string> monitored, Guid[] owners, Guid channelId, Func<Guid, string?> nameOf)
+        {
+            foreach (var entry in monitored)
+            {
+                if (string.IsNullOrWhiteSpace(entry))
+                {
+                    continue;
+                }
+
+                if (Guid.TryParse(entry, out var libGuid))
+                {
+                    if (libGuid == Guid.Empty || !(Array.IndexOf(owners, libGuid) >= 0 || (channelId != Guid.Empty && channelId == libGuid)))
+                    {
+                        continue;
+                    }
+
+                    var name = nameOf(libGuid);
+                    if (!string.IsNullOrWhiteSpace(name))
+                    {
+                        return name;
+                    }
+
+                    continue;
+                }
+
+                // Typed by name: the owner carrying that name is the library (same match as
+                // the one that decides whether the item is monitored at all).
+                foreach (var ownerId in owners)
+                {
+                    var ownerName = nameOf(ownerId);
+                    if (ownerName != null && ownerName.Equals(entry, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return ownerName;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// True for a collection notification whose collection is among the given ones.
         /// </summary>
         /// <param name="notificationId">The notification id.</param>
