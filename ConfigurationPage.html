@@ -1553,6 +1553,8 @@
                 },
 
                 scanCollectionsNow: async function () {
+                    // Same as the rescan above: the scan reads the SAVED collection list.
+                    if (!await this.save({ quiet: true })) return;
                     Dashboard.showLoadingMsg();
                     try {
                         const res = await ApiClient.ajax({ type: "POST", url: ApiClient.getUrl("NotifySync/ScanCollections"), dataType: 'json' });
