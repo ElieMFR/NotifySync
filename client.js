@@ -670,21 +670,8 @@
 
     const loadFromCache = () => {
         try {
-            // Helper: read from scoped key, fallback to legacy unscoped key + migrate
-            const getWithLegacy = (k) => {
-                const scoped = nsKey(k);
-                let val = localStorage.getItem(scoped);
-                if (val) return val;
-                const legacy = `ns-${k}`;
-                if (legacy !== scoped) {
-                    val = localStorage.getItem(legacy);
-                    if (val) { localStorage.setItem(scoped, val); localStorage.removeItem(legacy); }
-                }
-                return val;
-            };
-
             // Check TTL (1 hour max)
-            const cachedTime = parseInt(getWithLegacy('data-ts') || '0');
+            const cachedTime = parseInt(localStorage.getItem(nsKey('data-ts')) || '0');
             if (Date.now() - cachedTime > 3600000) {
                 localStorage.removeItem(nsKey('data'));
                 localStorage.removeItem(nsKey('etag'));
@@ -692,7 +679,7 @@
                 return;
             }
 
-            const cached = getWithLegacy('data');
+            const cached = localStorage.getItem(nsKey('data'));
             if (cached) {
                 try {
                     currentData = JSON.parse(cached);
@@ -704,8 +691,6 @@
                 // nothing, and would earn a 304 that leaves the bell empty.
                 localStorage.removeItem(nsKey('etag'));
             }
-            // Migrate legacy etag if present
-            getWithLegacy('etag');
         } catch (e) { }
     };
 
