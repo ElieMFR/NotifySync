@@ -36,13 +36,15 @@ namespace NotifySync
         /// <param name="loggerFactory">The logger factory.</param>
         /// <param name="userDataManager">The user data manager.</param>
         /// <param name="serverConfiguration">The server configuration, for its display language.</param>
+        /// <param name="userManager">The user manager, whose account changes reach the bell.</param>
         public Plugin(
             IApplicationPaths applicationPaths,
             IXmlSerializer xmlSerializer,
             ILibraryManager libraryManager,
             ILoggerFactory loggerFactory,
             IUserDataManager userDataManager,
-            IServerConfigurationManager serverConfiguration)
+            IServerConfigurationManager serverConfiguration,
+            IUserManager userManager)
             : base(applicationPaths, xmlSerializer)
         {
             _applicationPaths = applicationPaths;
@@ -63,7 +65,7 @@ namespace NotifySync
             }
 
             Instance = this;
-            _notificationManager = new NotificationManager(libraryManager, loggerFactory.CreateLogger<NotificationManager>(), userDataManager);
+            _notificationManager = new NotificationManager(libraryManager, loggerFactory.CreateLogger<NotificationManager>(), userDataManager, userManager);
         }
 
         /// <summary>

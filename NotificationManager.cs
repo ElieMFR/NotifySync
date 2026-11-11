@@ -54,6 +54,7 @@ namespace NotifySync
         private readonly ILibraryManager _libraryManager;
         private readonly IUserDataManager _userDataManager;
         private readonly ILogger<NotificationManager> _logger;
+        private readonly IUserManager _userManager;
         private readonly string _jsonPath;
         private readonly string _clearedPath;
         private readonly NotificationDatabase _db;
@@ -102,8 +103,10 @@ namespace NotifySync
         /// <param name="libraryManager">The library manager.</param>
         /// <param name="logger">The logger.</param>
         /// <param name="userDataManager">The user data manager.</param>
-        public NotificationManager(ILibraryManager libraryManager, ILogger<NotificationManager> logger, IUserDataManager userDataManager)
+        /// <param name="userManager">The user manager.</param>
+        public NotificationManager(ILibraryManager libraryManager, ILogger<NotificationManager> logger, IUserDataManager userDataManager, IUserManager userManager)
         {
+            _userManager = userManager;
             _libraryManager = libraryManager;
             _logger = logger;
             _userDataManager = userDataManager;
@@ -128,6 +131,7 @@ namespace NotifySync
             _libraryManager.ItemRemoved += OnItemRemoved;
             _libraryManager.ItemUpdated += OnItemUpdated;
             _userDataManager.UserDataSaved += OnUserDataSaved;
+            _userManager.OnUserUpdated += OnUserUpdated;
         }
 
         /// <summary>
@@ -185,6 +189,14 @@ namespace NotifySync
         public void OnConfigurationChanged()
         {
             Interlocked.Increment(ref _versionCounter);
+        }
+
+        // An account's rights (the libraries it may see, its parental rating) decide which cards
+        // it gets, while the cached view is keyed on the notifications alone: without this, a
+        // change made in the dashboard reached the bell only once a library next changed.
+        private void OnUserUpdated(object? sender, Jellyfin.Data.Events.GenericEventArgs<Jellyfin.Database.Implementations.Entities.User> e)
+        {
+            OnConfigurationChanged();
         }
 
         /// <summary>
@@ -549,6 +561,7 @@ namespace NotifySync
             _libraryManager.ItemRemoved -= OnItemRemoved;
             _libraryManager.ItemUpdated -= OnItemUpdated;
             _userDataManager.UserDataSaved -= OnUserDataSaved;
+            _userManager.OnUserUpdated -= OnUserUpdated;
 
             _disposeCts.Cancel();
             SaveUserCleared();
