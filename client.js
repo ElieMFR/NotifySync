@@ -937,7 +937,7 @@
         }
 
         if (filtered.length === 0) {
-            const emptyHtml = `<div style="padding:60px 20px;text-align:center;color:#666;font-style:italic;">${firstLoadDone ? T.empty : T.loading}</div>`;
+            const emptyHtml = `<div style="padding:60px 20px;text-align:center;color:#9a9a9a;font-style:italic;">${firstLoadDone ? T.empty : T.loading}</div>`;
             if (syncOnly) { lastRenderedHtml = emptyHtml; return; }
             // A leftover card in the DOM means it is not showing the empty state at all,
             // whatever we last recorded — draw it.
