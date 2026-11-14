@@ -358,7 +358,7 @@ namespace NotifySync
                 // artists the user favorited are listed with one read-only query, on the first
                 // track met: reading each artist by name would go through GetArtist, which
                 // creates the artist item when the library has none.
-                bool favoritesOn = Plugin.Instance?.Configuration?.FavoritesInBell != false;
+                bool favoritesOn = Plugin.Instance?.Configuration?.FavoritesInBell == true;
                 HashSet<string>? favoriteArtists = null;
 
                 // Phase 2: library lookups only on remaining candidates

@@ -1019,7 +1019,7 @@
                         const manual = page.querySelector('#manualLibraryIds');
                         if (manual) manual.value = this.config.ManualLibraryIds.join(', ');
 
-                        const favArtists = this.config.FavoritesInBell !== false;
+                        const favArtists = this.config.FavoritesInBell === true;
                         const favToggle = page.querySelector('#favoritesToggle');
                         if (favToggle) {
                             favToggle.classList.toggle('on', favArtists);

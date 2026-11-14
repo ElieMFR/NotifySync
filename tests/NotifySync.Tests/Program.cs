@@ -136,7 +136,7 @@ Check("another artist is no favorite", !FavoriteRules.IsByFavoriteArtist(new[] {
 Check("no favorite artist means no favorite track", !FavoriteRules.IsByFavoriteArtist(new[] { "Daft Punk" }, FavoriteRules.NameSet(Array.Empty<string?>())));
 Check("a track without artists is no favorite", !FavoriteRules.IsByFavoriteArtist(null, favArtists));
 Check("blank names never match", favArtists.Count == 1);
-Check("favorites are on in a fresh configuration", new PluginConfiguration().FavoritesInBell);
+Check("favorites are off in a fresh configuration", !new PluginConfiguration().FavoritesInBell);
 
 Console.WriteLine(failed == 0 ? "All tests passed." : failed + " test(s) failed.");
 return failed == 0 ? 0 : 1;
