@@ -353,11 +353,12 @@ namespace NotifySync
                 var favoriteIds = new HashSet<string>(StringComparer.Ordinal);
                 var seriesFavCache = new Dictionary<string, bool>(StringComparer.Ordinal);
 
-                // Music by a favorite artist, when the admin turned it on. The artists the user
-                // favorited are listed with one read-only query, on the first track met: reading
-                // each artist by name would go through GetArtist, which creates the artist item
-                // when the library has none.
-                bool favoriteArtistsOn = Plugin.Instance?.Configuration?.FavoriteArtistsInBell == true;
+                // One admin switch for every favorite: with it off nothing is starred and the
+                // "Favorites" filter never appears. Music by a favorite artist counts too: the
+                // artists the user favorited are listed with one read-only query, on the first
+                // track met: reading each artist by name would go through GetArtist, which
+                // creates the artist item when the library has none.
+                bool favoritesOn = Plugin.Instance?.Configuration?.FavoritesInBell != false;
                 HashSet<string>? favoriteArtists = null;
 
                 // Phase 2: library lookups only on remaining candidates
@@ -415,12 +416,12 @@ namespace NotifySync
                         continue;
                     }
 
-                    bool isFav = userData?.IsFavorite == true;
+                    bool isFav = favoritesOn && userData?.IsFavorite == true;
                     // IsNullOrEmpty is not enough: rows written before 5.7.19 can hold an
                     // all-zeros GUID (an episode scanned before its series was linked), a
                     // non-empty string that GetItemById rejects with ArgumentException —
                     // which aborted the whole response during library scans.
-                    if (!isFav && IsResolvableId(n.SeriesId))
+                    if (favoritesOn && !isFav && IsResolvableId(n.SeriesId))
                     {
                         if (!seriesFavCache.TryGetValue(n.SeriesId, out isFav))
                         {
@@ -430,7 +431,7 @@ namespace NotifySync
                         }
                     }
 
-                    if (!isFav && favoriteArtistsOn && item is Audio track)
+                    if (favoritesOn && !isFav && item is Audio track)
                     {
                         favoriteArtists ??= FavoriteRules.NameSet(
                             _libraryManager.GetItemList(new InternalItemsQuery(user)
@@ -439,7 +440,7 @@ namespace NotifySync
                                 IsFavorite = true,
                                 Recursive = true,
                             }).Select(a => a.Name));
-                        isFav = FavoriteRules.IsByFavoriteArtist(true, track.Artists.Concat(track.AlbumArtists), favoriteArtists);
+                        isFav = FavoriteRules.IsByFavoriteArtist(track.Artists.Concat(track.AlbumArtists), favoriteArtists);
                     }
 
                     if (isFav)

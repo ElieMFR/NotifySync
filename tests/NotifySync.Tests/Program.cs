@@ -128,15 +128,15 @@ Check("French description of the history scan is French", TaskTexts.Description(
 Check("an English server no longer gets French text", !TaskTexts.Description(TaskTexts.Task.CollectionScan, "en-US").StartsWith("Analyse", StringComparison.Ordinal));
 Check("language ignores case and underscore", TaskTexts.Language("PT_br") == "pt");
 
-// Music by a favorite artist: only when the admin turned it on, and by name without regard to case.
+// Music by a favorite artist counts as a favorite, by name without regard to case.
 var favArtists = FavoriteRules.NameSet(new string?[] { "Daft Punk", " ", null });
-Check("a track by a favorite artist is a favorite when the option is on", FavoriteRules.IsByFavoriteArtist(true, new[] { "daft punk" }, favArtists));
-Check("the same track is not a favorite when the option is off", !FavoriteRules.IsByFavoriteArtist(false, new[] { "Daft Punk" }, favArtists));
-Check("an album artist counts too", FavoriteRules.IsByFavoriteArtist(true, new[] { "Someone", "Daft Punk" }, favArtists));
-Check("another artist is no favorite", !FavoriteRules.IsByFavoriteArtist(true, new[] { "Justice" }, favArtists));
-Check("no favorite artist means no favorite track", !FavoriteRules.IsByFavoriteArtist(true, new[] { "Daft Punk" }, FavoriteRules.NameSet(Array.Empty<string?>())));
-Check("a track without artists is no favorite", !FavoriteRules.IsByFavoriteArtist(true, null, favArtists));
+Check("a track by a favorite artist is a favorite", FavoriteRules.IsByFavoriteArtist(new[] { "daft punk" }, favArtists));
+Check("an album artist counts too", FavoriteRules.IsByFavoriteArtist(new[] { "Someone", "Daft Punk" }, favArtists));
+Check("another artist is no favorite", !FavoriteRules.IsByFavoriteArtist(new[] { "Justice" }, favArtists));
+Check("no favorite artist means no favorite track", !FavoriteRules.IsByFavoriteArtist(new[] { "Daft Punk" }, FavoriteRules.NameSet(Array.Empty<string?>())));
+Check("a track without artists is no favorite", !FavoriteRules.IsByFavoriteArtist(null, favArtists));
 Check("blank names never match", favArtists.Count == 1);
+Check("favorites are on in a fresh configuration", new PluginConfiguration().FavoritesInBell);
 
 Console.WriteLine(failed == 0 ? "All tests passed." : failed + " test(s) failed.");
 return failed == 0 ? 0 : 1;

@@ -23,6 +23,7 @@ namespace NotifySync
             CategoryMappings = new List<CategoryMapping>();
             EnabledCollections = new List<string>();
             MaxItems = 10;
+            FavoritesInBell = true;
             EnableDeletedTracking = true;
             DeletedRetentionDays = 30;
         }
@@ -57,11 +58,11 @@ namespace NotifySync
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the music of a favorite artist counts as a
-        /// favorite in the bell (a star, and a place under "Favorites"). Off by default. Movies
-        /// and episodes follow the user's own favorites, whatever this says.
+        /// Gets or sets a value indicating whether favorites show in the bell: the star and the
+        /// "Favorites" filter, for movies, series and the music of a favorite artist alike. On by
+        /// default, as favorites were always shown.
         /// </summary>
-        public bool FavoriteArtistsInBell { get; set; }
+        public bool FavoritesInBell { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether deleted item tracking is enabled.
