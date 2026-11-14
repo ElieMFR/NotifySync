@@ -68,7 +68,7 @@ namespace NotifySync
             (Task.CollectionScan, "pt") => "Verifica as coleções monitoradas para detectar novas adições e criar notificações.",
             (Task.CollectionScan, _) => "Scans the monitored collections for new additions and creates notifications.",
             (Task.HistoryScan, "fr") => "Analyse la bibliothèque pour générer les notifications initiales, seulement tant qu'aucune notification n'est enregistrée. Pour tout reconstruire, utilisez « Régénérer l'historique » dans les paramètres du plugin.",
-            (Task.HistoryScan, "pt") => "Verifica a biblioteca para gerar as notificações iniciais, somente enquanto nenhuma notificação estiver registrada. Para recriar tudo, use «Regenerar histórico» nas configurações do plugin.",
+            (Task.HistoryScan, "pt") => "Verifica a biblioteca para gerar as notificações iniciais, somente enquanto nenhuma notificação estiver registrada. Para recriar tudo, use \"Regenerar histórico\" nas configurações do plugin.",
             (Task.HistoryScan, _) => "Scans the library to generate the initial notifications, only while none is stored. To rebuild everything, use \"Regenerate history\" in the plugin settings.",
             (Task.DatabaseMaintenance, "fr") => "Compacte la base de données NotifySync (VACUUM) pour récupérer l'espace libéré par les ajouts et les suppressions.",
             (Task.DatabaseMaintenance, "pt") => "Compacta o banco de dados do NotifySync (VACUUM) para recuperar o espaço liberado por adições e remoções.",

@@ -139,7 +139,7 @@ check('the three languages carry the question', ['Tout effacer ?', 'Clear everyt
 // The admin page carries the single "favorites in the bell" switch, in the three languages, saved and loaded.
 const page = fs.readFileSync(new URL('../../ConfigurationPage.html', import.meta.url), 'utf8');
 check('one favorites switch on the admin page', (page.match(/id="favoriteArtistsToggle"/g) || []).length === 1);
-check('the switch is translated in fr, en and pt', ['Favoris dans la cloche', 'Favorites in the bell', 'Favoritos no sino'].every(t => page.includes('favTitle: "' + t + '"')));
+check('the switch is translated in fr, en and pt', ['Favoris dans la cloche', 'Favorites in the Bell', 'Favoritos no sino'].every(t => page.includes('favTitle: "' + t + '"')));
 check('the switch is loaded and saved', page.includes('this.config.FavoriteArtistsInBell === true') && page.includes('this.config.FavoriteArtistsInBell = '));
 api.setData([]);
 console.log(fail ? fail + ' test(s) failed.' : 'All tests passed.');
