@@ -70,9 +70,9 @@
 
     let userLang = navigator.language || 'en';
     const strings = {
-        fr: { header: "Quoi de neuf ?", empty: "Vous êtes à jour !", loading: "Chargement…", clearAll: "Vider la liste", clearAsk: "Tout effacer ?", yes: "Oui", no: "Non", clearCat: "Vider", dismiss: "Retirer", badgeNew: "NOUVEAU", badgeAdded: "AJOUTÉ", badgeAddedTo: "AJOUTÉ À", badgeUpgrade: "MAJ", eps: "épisodes", eps1: "épisode", epPrefix: "Ép.", tracks: "pistes", tracks1: "piste", filterAll: "Tout", filterMovie: "Films", filterSeries: "Séries", filterMusic: "Musique", filterOther: "Autre", filterFav: "Favoris", kindQuality: "Qualité", kindCodec: "Codec", kindAudio: "Audio", kindAll: "Tout", season: "Saison", secToday: "Aujourd'hui", secWeek: "Cette semaine", secOlder: "Plus ancien" },
-        en: { header: "What's New?", empty: "You're all caught up!", loading: "Loading…", clearAll: "Clear list", clearAsk: "Clear everything?", yes: "Yes", no: "No", clearCat: "Clear", dismiss: "Dismiss", badgeNew: "NEW", badgeAdded: "ADDED", badgeAddedTo: "ADDED TO", badgeUpgrade: "UPD", eps: "episodes", eps1: "episode", epPrefix: "Ep.", tracks: "tracks", tracks1: "track", filterAll: "All", filterMovie: "Movies", filterSeries: "Series", filterMusic: "Music", filterOther: "Other", filterFav: "Favorites", kindQuality: "Quality", kindCodec: "Codec", kindAudio: "Audio", kindAll: "All", season: "Season", secToday: "Today", secWeek: "This week", secOlder: "Earlier" },
-        pt: { header: "Novidades", empty: "Você está em dia!", loading: "Carregando…", clearAll: "Limpar lista", clearAsk: "Limpar tudo?", yes: "Sim", no: "Não", clearCat: "Limpar", dismiss: "Dispensar", badgeNew: "NOVO", badgeAdded: "ADICIONADO", badgeAddedTo: "ADICIONADO A", badgeUpgrade: "ATUAL.", eps: "episódios", eps1: "episódio", epPrefix: "Ep.", tracks: "faixas", tracks1: "faixa", filterAll: "Tudo", filterMovie: "Filmes", filterSeries: "Séries", filterMusic: "Música", filterOther: "Outros", filterFav: "Favoritos", kindQuality: "Qualidade", kindCodec: "Codec", kindAudio: "Áudio", kindAll: "Tudo", season: "Temporada", secToday: "Hoje", secWeek: "Esta semana", secOlder: "Mais antigos" }
+        fr: { header: "Quoi de neuf ?", empty: "Vous êtes à jour !", loading: "Chargement…", clearAll: "Vider la liste", clearCat: "Vider", dismiss: "Retirer", badgeNew: "NOUVEAU", badgeAdded: "AJOUTÉ", badgeAddedTo: "AJOUTÉ À", badgeUpgrade: "MAJ", eps: "épisodes", eps1: "épisode", epPrefix: "Ép.", tracks: "pistes", tracks1: "piste", filterAll: "Tout", filterMovie: "Films", filterSeries: "Séries", filterMusic: "Musique", filterOther: "Autre", filterFav: "Favoris", kindQuality: "Qualité", kindCodec: "Codec", kindAudio: "Audio", kindAll: "Tout", season: "Saison", secToday: "Aujourd'hui", secWeek: "Cette semaine", secOlder: "Plus ancien" },
+        en: { header: "What's New?", empty: "You're all caught up!", loading: "Loading…", clearAll: "Clear list", clearCat: "Clear", dismiss: "Dismiss", badgeNew: "NEW", badgeAdded: "ADDED", badgeAddedTo: "ADDED TO", badgeUpgrade: "UPD", eps: "episodes", eps1: "episode", epPrefix: "Ep.", tracks: "tracks", tracks1: "track", filterAll: "All", filterMovie: "Movies", filterSeries: "Series", filterMusic: "Music", filterOther: "Other", filterFav: "Favorites", kindQuality: "Quality", kindCodec: "Codec", kindAudio: "Audio", kindAll: "All", season: "Season", secToday: "Today", secWeek: "This week", secOlder: "Earlier" },
+        pt: { header: "Novidades", empty: "Você está em dia!", loading: "Carregando…", clearAll: "Limpar lista", clearCat: "Limpar", dismiss: "Dispensar", badgeNew: "NOVO", badgeAdded: "ADICIONADO", badgeAddedTo: "ADICIONADO A", badgeUpgrade: "ATUAL.", eps: "episódios", eps1: "episódio", epPrefix: "Ep.", tracks: "faixas", tracks1: "faixa", filterAll: "Tudo", filterMovie: "Filmes", filterSeries: "Séries", filterMusic: "Música", filterOther: "Outros", filterFav: "Favoritos", kindQuality: "Qualidade", kindCodec: "Codec", kindAudio: "Áudio", kindAll: "Tudo", season: "Temporada", secToday: "Hoje", secWeek: "Esta semana", secOlder: "Mais antigos" }
     };
     // A locale ("pt-BR", "fr-FR", "en-US"…) to a table above; English otherwise.
     const langKey = (lang) => {
@@ -259,12 +259,6 @@
             .hero-badge-upgrade { background: var(--ns-upgrade); color: #fff; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 3px; display: inline-block; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); text-transform: uppercase; }
             .footer-tools { padding: 10px; text-align: center; border-top: 1px solid var(--ns-border); font-size: 11px; color: #888; cursor: pointer; transition: color 0.2s; flex-shrink: 0; }
             .footer-tools:hover { color: #fff; text-decoration: underline; }
-            .footer-confirm { display: flex; align-items: center; justify-content: center; gap: 12px; cursor: default; }
-            .footer-confirm:hover { color: #888; text-decoration: none; }
-            .confirm-ask { color: #ddd; }
-            .confirm-btn { font: inherit; font-size: 12px; color: #fff; background: rgba(255,255,255,0.12); border: 1px solid var(--ns-border); border-radius: 14px; padding: 5px 18px; cursor: pointer; }
-            .confirm-btn[data-confirm="yes"] { background: var(--ns-red); border-color: transparent; }
-            .confirm-btn:hover, .confirm-btn:focus { outline: 2px solid #fff; outline-offset: 1px; }
             .ns-section { font-size: 11px; color: #999; letter-spacing: 1.1px; text-transform: uppercase; padding: 12px 20px 4px; display: flex; align-items: center; gap: 8px; user-select: none; }
             .ns-section::after { content: ''; flex: 1; height: 1px; background: var(--ns-border); }
             .ns-fav { color: #f0a92d; font-size: 11px; vertical-align: 1px; }
@@ -836,14 +830,9 @@
         const rows = [];
         const pills = Array.from(drop.querySelectorAll('.filter-pill'));
         if (pills.length > 1) rows.push(pills);
-        drop.querySelectorAll('.hero-section, .dropdown-item, .footer-tools').forEach(el => {
-            // The question's two answers are two stops side by side.
-            if (el.classList.contains('footer-confirm')) rows.push(Array.from(el.querySelectorAll('.confirm-btn')));
-            else rows.push([el]);
-        });
+        drop.querySelectorAll('.hero-section, .dropdown-item, .footer-tools').forEach(el => rows.push([el]));
         return rows;
     };
-    let confirmingClear = false; // the footer is asking "Clear everything?"
     let tvFocusRow = null; // null = the first card, where the bell opens
     const focusTv = (el) => {
         if (!el) return;
@@ -1034,10 +1023,7 @@
             htmlParts.push(`<div class="dropdown-item ${item.IsUpgrade ? 'style-upgrade' : (isCollectionCard(item) ? 'style-collection' : 'style-new')}" data-item-id="${safeId}"${tvStop} data-nav="${navId}"><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" data-dismiss="${safeId}">close</button><div class="swipe-delete">${T.dismiss}</div><div class="thumb-wrapper"><img data-src="${imgUrl}" decoding="async" class="dropdown-thumb ${isMusic ? 'music' : ''}" loading="lazy" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.removeAttribute('data-fallback')}else{this.style.display='none'}" data-fallback="${fallbackUrl}"><span class="material-icons" style="color:#555;font-size:24px;">${isMusic ? 'album' : 'movie'}</span></div><div class="dropdown-info">${badgeHtml}<div class="dropdown-title" title="${title}">${title}${item.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div class="dropdown-subtitle" title="${sub}"><span class="sub-time">${timeAgo(item.DateCreated)}${sub ? ' &bull;' : ''}</span><span class="sub-text">${sub}</span></div></div></div>`);
         });
 
-        if (activeFilter === 'All' && confirmingClear) {
-            // One touch must not wipe the list: ask first. "No" is where the focus lands.
-            htmlParts.push(`<div class="footer-tools footer-confirm"><span class="confirm-ask">${T.clearAsk}</span><button type="button" class="confirm-btn" data-confirm="yes">${T.yes}</button><button type="button" class="confirm-btn" data-confirm="no">${T.no}</button></div>`);
-        } else if (activeFilter === 'All') {
+        if (activeFilter === 'All') {
             htmlParts.push(`<div class="footer-tools"${tvStop} data-action="clearall">${T.clearAll}</div>`);
         } else {
             const catLabel = activeFilter === '__fav' ? T.filterFav : (T['filter' + activeFilter] || escapeHtml(activeFilter));
@@ -1067,23 +1053,9 @@
         // Wire footer "Clear" button via data attributes
         const footer = container.querySelector('.footer-tools');
         if (footer) {
-            footer.querySelectorAll('.confirm-btn').forEach(btn => {
-                btn.onclick = (ev) => {
-                    ev.stopPropagation();
-                    confirmingClear = false;
-                    if (btn.dataset.confirm === 'yes') { document.dispatchEvent(new Event('ns-clearall')); return; }
-                    updateList(drop);
-                    const again = drop.querySelector('.footer-tools');
-                    if (again) focusTv(again);
-                };
-            });
             footer.onclick = () => {
-                if (footer.classList.contains('footer-confirm')) return;
                 if (footer.dataset.action === 'clearall') {
-                    confirmingClear = true;
-                    updateList(drop);
-                    const no = drop.querySelector('.confirm-btn[data-confirm="no"]');
-                    if (no) focusTv(no);
+                    document.dispatchEvent(new Event('ns-clearall'));
                 } else if (footer.dataset.action === 'clearcat') {
                     document.dispatchEvent(new CustomEvent('ns-clearcat', { detail: footer.dataset.category }));
                 }
@@ -1181,7 +1153,6 @@
         if (drop) drop.style.display = 'none';
         if (back) back.style.display = 'none';
         unreadSeen.clear();
-        confirmingClear = false;
         recalculateNewStatus(); // Clear badges for next open
     };
 
@@ -1194,7 +1165,7 @@
             document.body.appendChild(drop);
 
             if (!eventsRegistered) {
-                document.addEventListener('ns-filter', (e) => { activeFilter = e.detail; confirmingClear = false; const d = document.getElementById('notification-dropdown'); if (d) updateList(d); });
+                document.addEventListener('ns-filter', (e) => { activeFilter = e.detail; const d = document.getElementById('notification-dropdown'); if (d) updateList(d); });
                 document.addEventListener('ns-clearall', () => { clearAllNotifications(); });
                 document.addEventListener('ns-clearcat', (e) => { clearCategoryNotifications(e.detail); });
                 document.addEventListener('ns-navigate', (e) => {

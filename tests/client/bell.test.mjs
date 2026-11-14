@@ -121,21 +121,6 @@ const heroRule = (cls) => (src.match(new RegExp('\.' + cls + ' \{[^}]*\}')) || [
 check('hero title stays on one line with an ellipsis', /white-space: nowrap/.test(heroRule('hero-title')) && /text-overflow: ellipsis/.test(heroRule('hero-title')));
 check('hero subtitle stays on one line with an ellipsis', /white-space: nowrap/.test(heroRule('hero-sub')) && /text-overflow: ellipsis/.test(heroRule('hero-sub')));
 check('hero markup uses those classes', src.includes('class="hero-title"') && src.includes('class="hero-sub"'));
-// "Clear list" asks first: the footer's own touch only opens the question, "Yes" clears.
-const tvRowsFn = new Function(grab('    const tvRows', '    let confirmingClear') + '; return tvRows;')();
-const mkEl = (cls, kids = []) => ({ classList: { contains: c => cls.split(' ').includes(c) }, querySelectorAll: () => kids });
-const yesNo = [mkEl('confirm-btn'), mkEl('confirm-btn')];
-const dropAsk = { querySelectorAll: sel => sel.includes('filter-pill') ? [] : [mkEl('dropdown-item'), mkEl('footer-tools footer-confirm', yesNo)] };
-const askRows = tvRowsFn(dropAsk);
-check('the question gives the remote two stops on one row', askRows.length === 2 && askRows[1].length === 2);
-const dropPlain = { querySelectorAll: sel => sel.includes('filter-pill') ? [] : [mkEl('dropdown-item'), mkEl('footer-tools')] };
-check('the plain footer is one stop', tvRowsFn(dropPlain)[1].length === 1);
-const wire = grab('        // Wire footer "Clear" button via data attributes', '        if (!syncOnly) restoreTvFocus(drop);');
-const touchBranch = wire.slice(wire.indexOf('footer.onclick'));
-check('a touch on "Clear list" does not clear by itself', !/ns-clearall/.test(touchBranch.slice(0, touchBranch.indexOf("'clearcat'"))));
-check('only "Yes" clears the list', (wire.match(/ns-clearall/g) || []).length === 1 && /confirm === 'yes'/.test(wire));
-check('closing the bell or changing filter drops the question', /confirmingClear = false;\s*\n?\s*recalculateNewStatus/.test(src) && /ns-filter', \(e\) => \{ activeFilter = e.detail; confirmingClear = false;/.test(src));
-check('the three languages carry the question', ['Tout effacer ?', 'Clear everything?', 'Limpar tudo?'].every(t => src.includes('clearAsk: "' + t + '"')));
 // The admin page carries the single "favorites in the bell" switch, in the three languages, saved and loaded.
 const page = fs.readFileSync(new URL('../../ConfigurationPage.html', import.meta.url), 'utf8');
 check('the one favorites switch is on the admin page', (page.match(/id="favoritesToggle"/g) || []).length === 1);
