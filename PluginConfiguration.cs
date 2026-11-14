@@ -57,6 +57,13 @@ namespace NotifySync
         }
 
         /// <summary>
+        /// Gets or sets a value indicating whether the music of a favorite artist counts as a
+        /// favorite in the bell (a star, and a place under "Favorites"). Off by default. Movies
+        /// and episodes follow the user's own favorites, whatever this says.
+        /// </summary>
+        public bool FavoriteArtistsInBell { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether deleted item tracking is enabled.
         /// </summary>
         public bool EnableDeletedTracking { get; set; }

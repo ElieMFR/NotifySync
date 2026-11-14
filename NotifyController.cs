@@ -9,7 +9,9 @@ using System.Security.Claims;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -351,6 +353,13 @@ namespace NotifySync
                 var favoriteIds = new HashSet<string>(StringComparer.Ordinal);
                 var seriesFavCache = new Dictionary<string, bool>(StringComparer.Ordinal);
 
+                // Music by a favorite artist, when the admin turned it on. The artists the user
+                // favorited are listed with one read-only query, on the first track met: reading
+                // each artist by name would go through GetArtist, which creates the artist item
+                // when the library has none.
+                bool favoriteArtistsOn = Plugin.Instance?.Configuration?.FavoriteArtistsInBell == true;
+                HashSet<string>? favoriteArtists = null;
+
                 // Phase 2: library lookups only on remaining candidates
                 foreach (var n in candidates)
                 {
@@ -419,6 +428,18 @@ namespace NotifySync
                             isFav = seriesItem != null && _userDataManager.GetUserData(user, seriesItem)?.IsFavorite == true;
                             seriesFavCache[n.SeriesId] = isFav;
                         }
+                    }
+
+                    if (!isFav && favoriteArtistsOn && item is Audio track)
+                    {
+                        favoriteArtists ??= FavoriteRules.NameSet(
+                            _libraryManager.GetItemList(new InternalItemsQuery(user)
+                            {
+                                IncludeItemTypes = new[] { BaseItemKind.MusicArtist },
+                                IsFavorite = true,
+                                Recursive = true,
+                            }).Select(a => a.Name));
+                        isFav = FavoriteRules.IsByFavoriteArtist(true, track.Artists.Concat(track.AlbumArtists), favoriteArtists);
                     }
 
                     if (isFav)

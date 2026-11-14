@@ -136,6 +136,11 @@ check('a touch on "Clear list" does not clear by itself', !/ns-clearall/.test(to
 check('only "Yes" clears the list', (wire.match(/ns-clearall/g) || []).length === 1 && /confirm === 'yes'/.test(wire));
 check('closing the bell or changing filter drops the question', /confirmingClear = false;\s*\n?\s*recalculateNewStatus/.test(src) && /ns-filter', \(e\) => \{ activeFilter = e.detail; confirmingClear = false;/.test(src));
 check('the three languages carry the question', ['Tout effacer ?', 'Clear everything?', 'Limpar tudo?'].every(t => src.includes('clearAsk: "' + t + '"')));
+// The admin page carries the single "favorites in the bell" switch, in the three languages, saved and loaded.
+const page = fs.readFileSync(new URL('../../ConfigurationPage.html', import.meta.url), 'utf8');
+check('one favorites switch on the admin page', (page.match(/id="favoriteArtistsToggle"/g) || []).length === 1);
+check('the switch is translated in fr, en and pt', ['Favoris dans la cloche', 'Favorites in the bell', 'Favoritos no sino'].every(t => page.includes('favTitle: "' + t + '"')));
+check('the switch is loaded and saved', page.includes('this.config.FavoriteArtistsInBell === true') && page.includes('this.config.FavoriteArtistsInBell = '));
 api.setData([]);
 console.log(fail ? fail + ' test(s) failed.' : 'All tests passed.');
 process.exit(fail ? 1 : 0);

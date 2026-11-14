@@ -483,6 +483,18 @@
 
                             <div class="ns-card">
                                 <h3 class="ns-card-title">
+                                    <span class="material-icons">favorite_border</span>
+                                    <span id="i18n-favTitle">Favorites in the bell</span>
+                                </h3>
+                                <p class="ns-card-desc" id="i18n-favDesc"></p>
+                                <div class="ns-toggle-row">
+                                    <label id="i18n-favEnable">Include music by favorite artists</label>
+                                    <div id="favoriteArtistsToggle" class="ns-toggle" onclick="NotifySyncConf.toggleFavoriteArtists()"></div>
+                                </div>
+                            </div>
+
+                            <div class="ns-card">
+                                <h3 class="ns-card-title">
                                     <span class="material-icons">add_circle_outline</span>
                                     <span id="i18n-manualTitle">Manual Library IDs</span>
                                 </h3>
@@ -673,6 +685,9 @@
                     tabSettings: "Paramètres", tabLibraries: "Bibliothèques", tabCollections: "Collections",
                     tabCategories: "Catégories", tabDeletions: "Suppressions",
                     quotaTitle: "Quota par catégorie",
+                    favTitle: "Favoris dans la cloche",
+                    favDesc: "Les films et les séries en favoris, ou dont la série est en favori, ont une étoile et un onglet « Favoris ». Activez l'option pour y ajouter la musique des artistes en favoris.",
+                    favEnable: "Inclure la musique des artistes favoris",
                     quotaDesc: "Nombre maximum de cartes affichées par catégorie (Films, Séries, Musique…). Les épisodes arrivés ensemble forment une seule carte.",
                     libTitle: "Bibliothèques surveillées",
                     libDesc: "Cochez les bibliothèques qui doivent apparaître dans la cloche de notifications. Tant qu'aucune n'est cochée, la cloche reste vide.",
@@ -731,6 +746,9 @@
                     tabSettings: "Settings", tabLibraries: "Libraries", tabCollections: "Collections",
                     tabCategories: "Categories", tabDeletions: "Deletions",
                     quotaTitle: "Quota per Category",
+                    favTitle: "Favorites in the bell",
+                    favDesc: "Favorite movies and series, or those of a favorite series, get a star and a \"Favorites\" tab. Turn this on to add the music of favorite artists.",
+                    favEnable: "Include music by favorite artists",
                     quotaDesc: "Maximum number of cards shown per category (Movies, Series, Music…). Episodes that arrived together share one card.",
                     libTitle: "Monitored Libraries",
                     libDesc: "Check the libraries that should appear in the notification bell. Until one is checked, the bell stays empty.",
@@ -789,6 +807,9 @@
                     tabSettings: "Configurações", tabLibraries: "Bibliotecas", tabCollections: "Coleções",
                     tabCategories: "Categorias", tabDeletions: "Exclusões",
                     quotaTitle: "Cota por categoria",
+                    favTitle: "Favoritos no sino",
+                    favDesc: "Filmes e séries favoritos, ou de uma série favorita, recebem uma estrela e a aba \"Favoritos\". Ative para incluir também a música dos artistas favoritos.",
+                    favEnable: "Incluir a música de artistas favoritos",
                     quotaDesc: "Número máximo de cartões exibidos por categoria (Filmes, Séries, Música…). Os episódios que chegaram juntos formam um único cartão.",
                     libTitle: "Bibliotecas monitoradas",
                     libDesc: "Marque as bibliotecas que devem aparecer no sino de notificações. Enquanto nenhuma estiver marcada, o sino fica vazio.",
@@ -857,7 +878,7 @@
 
             function applyTranslations(page) {
                 const ids = ['tabSettings', 'tabLibraries', 'tabCollections', 'tabCategories', 'tabDeletions',
-                    'quotaTitle', 'quotaDesc', 'libTitle', 'libDesc', 'colTitle', 'colDesc',
+                    'quotaTitle', 'quotaDesc', 'favTitle', 'favDesc', 'favEnable', 'libTitle', 'libDesc', 'colTitle', 'colDesc',
                     'mapTitle', 'mapDesc', 'mapLibLabel', 'mapCatLabel', 'addBtn',
                     'manualTitle', 'manualDesc', 'saveBtn', 'maintTitle', 'maintDesc', 'refreshBtn', 'scanColBtn',
                     'delTitle', 'delDesc', 'delEnable', 'delRetLabel',
@@ -997,6 +1018,13 @@
 
                         const manual = page.querySelector('#manualLibraryIds');
                         if (manual) manual.value = this.config.ManualLibraryIds.join(', ');
+
+                        const favArtists = this.config.FavoriteArtistsInBell === true;
+                        const favToggle = page.querySelector('#favoriteArtistsToggle');
+                        if (favToggle) {
+                            favToggle.classList.toggle('on', favArtists);
+                            favToggle.setAttribute('aria-checked', favArtists);
+                        }
 
                         const tracking = this.config.EnableDeletedTracking !== false;
                         const toggle = page.querySelector('#enableDeletedToggle');
@@ -1151,6 +1179,12 @@
                         cb.checked = checked;
                     });
                     this.updateCounters(page);
+                },
+
+                toggleFavoriteArtists: function () {
+                    const toggle = this.pageEl().querySelector('#favoriteArtistsToggle');
+                    toggle.classList.toggle('on');
+                    toggle.setAttribute('aria-checked', toggle.classList.contains('on'));
                 },
 
                 toggleDeletedTracking: function () {
@@ -1595,6 +1629,7 @@
                         }
 
                         this.config.EnableDeletedTracking = page.querySelector('#enableDeletedToggle').classList.contains('on');
+                        this.config.FavoriteArtistsInBell = page.querySelector('#favoriteArtistsToggle').classList.contains('on');
                         const rawRet = parseInt(page.querySelector('#deletedRetentionDays').value, 10);
                         this.config.DeletedRetentionDays = isNaN(rawRet) ? 30 : Math.min(Math.max(rawRet, 7), 365);
 
