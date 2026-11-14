@@ -87,6 +87,11 @@ namespace NotifySync
         public override string Description => PluginDescription.For(_serverConfiguration?.Configuration?.UICulture);
 
         /// <summary>
+        /// Gets the server's display language, for the texts that follow it.
+        /// </summary>
+        internal string? ServerLanguage => _serverConfiguration?.Configuration?.UICulture;
+
+        /// <summary>
         /// Gets the notification manager.
         /// </summary>
         public NotificationManager? NotificationManager => _notificationManager;

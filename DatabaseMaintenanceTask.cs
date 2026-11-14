@@ -15,13 +15,13 @@ namespace NotifySync
     public class DatabaseMaintenanceTask : IScheduledTask
     {
         /// <inheritdoc />
-        public string Name => "NotifySync: Database Maintenance";
+        public string Name => TaskTexts.Name(TaskTexts.Task.DatabaseMaintenance, Plugin.Instance?.ServerLanguage);
 
         /// <inheritdoc />
         public string Key => "NotifySyncDatabaseMaintenanceTask";
 
         /// <inheritdoc />
-        public string Description => "Compacte la base de données NotifySync (VACUUM) pour récupérer l'espace libéré par les ajouts/suppressions.";
+        public string Description => TaskTexts.Description(TaskTexts.Task.DatabaseMaintenance, Plugin.Instance?.ServerLanguage);
 
         /// <inheritdoc />
         public string Category => "NotifySync";

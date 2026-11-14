@@ -12,13 +12,13 @@ namespace NotifySync
     public class HistoryScanTask : IScheduledTask
     {
         /// <inheritdoc />
-        public string Name => "NotifySync: History Scan";
+        public string Name => TaskTexts.Name(TaskTexts.Task.HistoryScan, Plugin.Instance?.ServerLanguage);
 
         /// <inheritdoc />
         public string Key => "NotifySyncHistoryScanTask";
 
         /// <inheritdoc />
-        public string Description => "Scanne la bibliothèque pour générer les notifications initiales, seulement tant qu'aucune notification n'est enregistrée. Pour tout reconstruire, utilisez « Régénérer l'historique » dans les paramètres du plugin.";
+        public string Description => TaskTexts.Description(TaskTexts.Task.HistoryScan, Plugin.Instance?.ServerLanguage);
 
         /// <inheritdoc />
         public string Category => "NotifySync";

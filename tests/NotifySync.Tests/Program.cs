@@ -109,5 +109,24 @@ Check("720p to 1080p", MediaChangeDetector.ResolutionChange("/m/Film.720p.mkv", 
 Check("the same resolution says nothing", MediaChangeDetector.ResolutionChange("/m/Film.1080p.x264.mkv", "/m/Film.1080p.x265.mkv") == null);
 Check("an unmarked name says nothing", MediaChangeDetector.ResolutionChange("/m/Film.mkv", "/m/Film.2160p.mkv") == null);
 
+// Scheduled tasks speak the server's language: French, Portuguese, English for any other.
+foreach (var task in Enum.GetValues<TaskTexts.Task>())
+{
+    foreach (var (culture, language) in new (string?, string)[] { ("fr-FR", "fr"), ("pt-BR", "pt"), ("en-US", "en"), ("de-DE", "en"), (null, "en") })
+    {
+        Check($"task {task} name in {language} ({culture ?? "none"})", TaskTexts.Language(culture) == language && !string.IsNullOrWhiteSpace(TaskTexts.Name(task, culture)));
+    }
+
+    var taskNames = new[] { "fr-FR", "pt-PT", "en-GB" }.Select(c => TaskTexts.Name(task, c)).ToArray();
+    var descriptions = new[] { "fr", "pt", "en" }.Select(c => TaskTexts.Description(task, c)).ToArray();
+    Check($"task {task}: three different names", taskNames.Distinct().Count() == 3);
+    Check($"task {task}: three different descriptions", descriptions.Distinct().Count() == 3);
+}
+
+Check("English names start with the plugin name", TaskTexts.Name(TaskTexts.Task.HistoryScan, "en") == "NotifySync: History Scan");
+Check("French description of the history scan is French", TaskTexts.Description(TaskTexts.Task.HistoryScan, "fr").StartsWith("Analyse la bibliothèque", StringComparison.Ordinal));
+Check("an English server no longer gets French text", !TaskTexts.Description(TaskTexts.Task.CollectionScan, "en-US").StartsWith("Analyse", StringComparison.Ordinal));
+Check("language ignores case and underscore", TaskTexts.Language("PT_br") == "pt");
+
 Console.WriteLine(failed == 0 ? "All tests passed." : failed + " test(s) failed.");
 return failed == 0 ? 0 : 1;

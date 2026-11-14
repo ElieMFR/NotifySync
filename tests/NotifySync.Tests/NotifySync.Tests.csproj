@@ -20,6 +20,7 @@
     <Compile Include="../../MediaChangeDetector.cs" />
     <Compile Include="../../NotificationItem.cs" />
     <Compile Include="../../DeletedFolder.cs" />
+    <Compile Include="../../TaskTexts.cs" />
   </ItemGroup>
 
   <ItemGroup>
