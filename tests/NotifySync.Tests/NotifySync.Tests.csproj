@@ -21,6 +21,7 @@
     <Compile Include="../../NotificationItem.cs" />
     <Compile Include="../../DeletedFolder.cs" />
     <Compile Include="../../TaskTexts.cs" />
+    <Compile Include="../../PluginDescription.cs" />
     <Compile Include="../../FavoriteRules.cs" />
     <Compile Include="../../PluginConfiguration.cs" />
     <Compile Include="../../CategoryMapping.cs" />

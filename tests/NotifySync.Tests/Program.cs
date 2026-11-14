@@ -138,5 +138,17 @@ Check("a track without artists is no favorite", !FavoriteRules.IsByFavoriteArtis
 Check("blank names never match", favArtists.Count == 1);
 Check("favorites are off in a fresh configuration", !new PluginConfiguration().FavoritesInBell);
 
+// The plugin page's description follows the server language, and the catalogs and meta.json say the same.
+Check("description in French", PluginDescription.For("fr-FR") == PluginDescription.French);
+Check("description in Portuguese", PluginDescription.For("pt-BR") == PluginDescription.Portuguese && PluginDescription.For("pt_PT") == PluginDescription.Portuguese);
+Check("description in English for any other language", PluginDescription.For("de-DE") == PluginDescription.English && PluginDescription.For(null) == PluginDescription.English);
+var repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../.."));
+var threeTexts = string.Join("\n\n", PluginDescription.French, PluginDescription.English, PluginDescription.Portuguese);
+foreach (var file in new[] { "meta.json", "repository-12.json", "repository-12-beta.json" })
+{
+    var path = Path.Combine(repoRoot, file);
+    Check($"{file} carries the three texts of the plugin page", System.IO.File.Exists(path) && System.IO.File.ReadAllText(path).Contains(threeTexts.Replace("\n", "\\n"), StringComparison.Ordinal));
+}
+
 Console.WriteLine(failed == 0 ? "All tests passed." : failed + " test(s) failed.");
 return failed == 0 ? 0 : 1;

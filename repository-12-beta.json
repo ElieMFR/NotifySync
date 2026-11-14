@@ -3,7 +3,7 @@
     "category": "UI",
     "guid": "95655672-2342-4321-8291-321312312312",
     "name": "NotifySync",
-    "description": "Ajoute une cloche de notifications à Jellyfin : les derniers films, séries et musiques ajoutés, sans quitter la page.\n\nAdds a notification bell to Jellyfin: the latest movies, series and music added, without leaving the page.",
+    "description": "Ajoute une cloche de notifications à Jellyfin : les derniers films, séries et musiques ajoutés, sans quitter la page.\n\nAdds a notification bell to Jellyfin: the latest movies, series and music added, without leaving the page.\n\nAdiciona um sino de notificações ao Jellyfin: os últimos filmes, séries e músicas adicionados, sem sair da página.",
     "owner": "ElieM & Peterdu1109",
     "overview": "Une cloche de notifications pour Jellyfin 12 — canal beta.\nA notification bell for Jellyfin 12 — beta channel.",
     "supportUrl": "https://github.com/ElieMFR/NotifySync",
