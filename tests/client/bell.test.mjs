@@ -129,7 +129,7 @@ check('the switch is loaded and saved', page.includes('this.config.FavoritesInBe
 // The panel takes the page's font, and the bell shows a focus outline on TV only.
 const dropRule = (src.match(/#notification-dropdown \{[^}]*\}/) || [''])[0];
 check('the panel follows the font of the page', /font-family: inherit;/.test(dropRule) && !src.includes("Noto Sans"));
-check('the bell has a white 3px outline on focus in the TV layout', /\.layout-tv #netflix-bell:focus \{ outline: 3px solid #fff;/.test(src));
+check('the bell has a white 3px outline on focus in the TV layout', /\.layout-tv #netflix-bell:focus \{ outline: 3px solid #fff !important;/.test(src)); // !important: Jellyfin sets outline: none !important on .paper-icon-button-light
 check('that outline is for the TV layout only', !/(^|[^-])#netflix-bell:focus/m.test(src.replace(/\.layout-tv #netflix-bell:focus/g, '')));
 // D15 to D17: switches by keyboard, labels in the language, clear without the device clock.
 check('Clear sends no date from the device clock', !/NotifySync\/Clear\/[^`]*\?date=/.test(src) && !/Clear[^\n]*toISOString/.test(src));
