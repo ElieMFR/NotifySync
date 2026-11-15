@@ -268,7 +268,7 @@
             .layout-tv #netflix-bell .ns-badge { top: calc(50% - 1.2em); right: calc(50% - 1.2em); font-size: 0.6em; line-height: 1.3; min-width: 1.3em; padding: 0 0.4em; box-sizing: border-box; text-align: center; border-radius: 1em; }
             .layout-tv #notification-dropdown { transform: scale(1.5); transform-origin: top right; max-height: calc(80vh / 1.5); animation-name: nsSlideDownTv; }
             @keyframes nsSlideDownTv { from { opacity:0; transform:translateY(-10px) scale(1.5); } to { opacity:1; transform:scale(1.5); } }
-            /* The bell itself, reached by the remote: the same white 3 px outline as the cards. A theme that draws its own focus on header buttons keeps it (it sets outline with !important). */
+            /* The bell itself, reached by the remote: the same white 3 px outline as the cards. The page sets outline: none !important on header buttons, so this one needs !important too. */
             .layout-tv #netflix-bell:focus { outline: 3px solid #fff !important; outline-offset: 2px; }
             .layout-tv #notification-dropdown .filter-pill:focus, .layout-tv #notification-dropdown .footer-tools:focus { outline: 3px solid #fff; outline-offset: -3px; }
             .layout-tv #notification-dropdown .filter-pill.active:focus { outline-offset: 2px; }
