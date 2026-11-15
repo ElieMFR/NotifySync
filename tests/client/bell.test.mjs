@@ -131,6 +131,16 @@ const dropRule = (src.match(/#notification-dropdown \{[^}]*\}/) || [''])[0];
 check('the panel follows the font of the page', /font-family: inherit;/.test(dropRule) && !src.includes("Noto Sans"));
 check('the bell has a white 3px outline on focus in the TV layout', /\.layout-tv #netflix-bell:focus \{ outline: 3px solid #fff;/.test(src));
 check('that outline is for the TV layout only', !/(^|[^-])#netflix-bell:focus/m.test(src.replace(/\.layout-tv #netflix-bell:focus/g, '')));
+// D15 to D17: switches by keyboard, labels in the language, clear without the device clock.
+check('Clear sends no date from the device clock', !/NotifySync\/Clear\/[^`]*\?date=/.test(src) && !/Clear[^\n]*toISOString/.test(src));
+for (const id of ['favoritesToggle', 'enableDeletedToggle']) {
+    const tag = (page.match(new RegExp('<div id="' + id + '"[^>]*>')) || [''])[0];
+    check(id + ' is a keyboard switch', /role="switch"/.test(tag) && /tabindex="0"/.test(tag) && /aria-labelledby="/.test(tag) && /event\.key==='Enter'\|\|event\.key===' '/.test(tag));
+}
+check('switches show a focus outline', /\.ns-toggle:focus-visible \{ outline: 2px solid var\(--ns-accent\)/.test(page));
+check('the page has no hard-coded English accessible name left', !/aria-label="(Move up|Move down|Delete)"/.test(page) && /aria-label="' \+ CT\.moveUp/.test(page));
+check('the three languages carry the page labels', ['Monter', 'Move up', 'Subir'].every(t => page.includes('moveUp: "' + t + '"')) && ['Supprimer', 'Delete', 'Excluir'].every(t => page.includes('removeLabel: "' + t + '"')));
+check('the bell label comes from the dictionary', src.includes("setAttribute('aria-label', T.bellLabel)") && ['Notifications', 'Notificações'].every(t => src.includes('bellLabel: "' + t + '"')));
 api.setData([]);
 console.log(fail ? fail + ' test(s) failed.' : 'All tests passed.');
 process.exit(fail ? 1 : 0);

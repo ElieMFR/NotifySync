@@ -231,6 +231,7 @@
                 width: 20px; height: 20px; background: #fff; border-radius: 50%;
                 transition: transform 0.2s;
             }
+            .ns-toggle:focus-visible { outline: 2px solid var(--ns-accent); outline-offset: 3px; }
             .ns-toggle.on { background: var(--ns-accent); }
             .ns-toggle.on::after { transform: translateX(20px); }
 
@@ -489,7 +490,7 @@
                                 <p class="ns-card-desc" id="i18n-favDesc"></p>
                                 <div class="ns-toggle-row">
                                     <label id="i18n-favEnable">Show favorites</label>
-                                    <div id="favoritesToggle" class="ns-toggle" onclick="NotifySyncConf.toggleFavorites()"></div>
+                                    <div id="favoritesToggle" class="ns-toggle" role="switch" tabindex="0" aria-checked="false" aria-labelledby="i18n-favEnable" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" onclick="NotifySyncConf.toggleFavorites()"></div>
                                 </div>
                             </div>
 
@@ -619,7 +620,7 @@
 
                                 <div class="ns-toggle-row">
                                     <label id="i18n-delEnable">Enable deletion tracking</label>
-                                    <div id="enableDeletedToggle" class="ns-toggle" onclick="NotifySyncConf.toggleDeletedTracking()"></div>
+                                    <div id="enableDeletedToggle" class="ns-toggle" role="switch" tabindex="0" aria-checked="false" aria-labelledby="i18n-delEnable" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" onclick="NotifySyncConf.toggleDeletedTracking()"></div>
                                 </div>
 
                                 <div class="ns-setting-row">
@@ -738,7 +739,7 @@
                     versionLinkTitle: "Voir les notes de version sur GitHub",
                     confirmDeleteMappingTitle: "Supprimer le mappage ?",
                     confirmDeleteMappingMsg: "La catégorie \"{cat}\" pour cette bibliothèque sera supprimée.",
-                    cancel: "Annuler", confirm: "Confirmer",
+                    cancel: "Annuler", confirm: "Confirmer", moveUp: "Monter", moveDown: "Descendre", removeLabel: "Supprimer",
                     pageInfo: "Page {page} sur {total}",
                     prevPage: "Précédent", nextPage: "Suivant"
                 },
@@ -799,7 +800,7 @@
                     versionLinkTitle: "View the release notes on GitHub",
                     confirmDeleteMappingTitle: "Delete this mapping?",
                     confirmDeleteMappingMsg: "The category \"{cat}\" for this library will be removed.",
-                    cancel: "Cancel", confirm: "Confirm",
+                    cancel: "Cancel", confirm: "Confirm", moveUp: "Move up", moveDown: "Move down", removeLabel: "Delete",
                     pageInfo: "Page {page} of {total}",
                     prevPage: "Previous", nextPage: "Next"
                 },
@@ -860,7 +861,7 @@
                     versionLinkTitle: "Ver as notas de versão no GitHub",
                     confirmDeleteMappingTitle: "Excluir este mapeamento?",
                     confirmDeleteMappingMsg: "A categoria \"{cat}\" desta biblioteca será removida.",
-                    cancel: "Cancelar", confirm: "Confirmar",
+                    cancel: "Cancelar", confirm: "Confirmar", moveUp: "Subir", moveDown: "Descer", removeLabel: "Excluir",
                     pageInfo: "Página {page} de {total}",
                     prevPage: "Anterior", nextPage: "Próxima"
                 }
@@ -1346,15 +1347,15 @@
 
                         row.innerHTML =
                             '<div class="ns-move-controls">' +
-                            '<button type="button" class="ns-icon-btn ns-move-up"' + (isFirst ? ' disabled' : '') + ' aria-label="Move up">' +
+                            '<button type="button" class="ns-icon-btn ns-move-up"' + (isFirst ? ' disabled' : '') + ' aria-label="' + CT.moveUp + '">' +
                             '<span class="material-icons">arrow_upward</span></button>' +
-                            '<button type="button" class="ns-icon-btn ns-move-down"' + (isLast ? ' disabled' : '') + ' aria-label="Move down">' +
+                            '<button type="button" class="ns-icon-btn ns-move-down"' + (isLast ? ' disabled' : '') + ' aria-label="' + CT.moveDown + '">' +
                             '<span class="material-icons">arrow_downward</span></button>' +
                             '</div>' +
                             '<div class="ns-mapping-info">' +
                             '<b></b><span class="ns-mapping-arrow">→</span><span class="ns-mapping-cat"></span>' +
                             '</div>' +
-                            '<button type="button" class="ns-icon-btn ns-delete-btn" aria-label="Delete">' +
+                            '<button type="button" class="ns-icon-btn ns-delete-btn" aria-label="' + CT.removeLabel + '">' +
                             '<span class="material-icons">delete</span>' +
                             '</button>';
 
