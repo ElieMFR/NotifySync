@@ -141,6 +141,9 @@ check('switches show a focus outline', /\.ns-toggle:focus-visible \{ outline: 2p
 check('the page has no hard-coded English accessible name left', !/aria-label="(Move up|Move down|Delete)"/.test(page) && /aria-label="' \+ CT\.moveUp/.test(page));
 check('the three languages carry the page labels', ['Monter', 'Move up', 'Subir'].every(t => page.includes('moveUp: "' + t + '"')) && ['Supprimer', 'Delete', 'Excluir'].every(t => page.includes('removeLabel: "' + t + '"')));
 check('the bell label comes from the dictionary', src.includes("setAttribute('aria-label', T.bellLabel)") && ['Notifications', 'Notificações'].every(t => src.includes('bellLabel: "' + t + '"')));
+// The hero's badges sit in their own row, not inline above the title (a gap showed under the pill).
+check('hero badges are in a flex row of their own', /\.ns-hero-badges \{ display: flex;/.test(src) && src.includes('<div class="ns-hero-badges">'));
+check('the hero markup no longer sets badges inline before the title', !/<div class="hero-content">\$\{showsBadge/.test(src));
 api.setData([]);
 console.log(fail ? fail + ' test(s) failed.' : 'All tests passed.');
 process.exit(fail ? 1 : 0);
