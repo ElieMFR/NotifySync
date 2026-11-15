@@ -188,7 +188,7 @@
                 border: 1px solid var(--ns-border); border-radius: 12px;
                 box-shadow: 0 20px 60px rgba(0,0,0,0.6);
                 z-index: 999999; display: none;
-                font-family: 'Noto Sans', sans-serif;
+                font-family: inherit;
                 animation: slideDown 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
                 overflow: hidden;
                 flex-direction: column;
@@ -266,6 +266,8 @@
             .layout-tv #netflix-bell .ns-badge { top: calc(50% - 1.2em); right: calc(50% - 1.2em); font-size: 0.6em; line-height: 1.3; min-width: 1.3em; padding: 0 0.4em; box-sizing: border-box; text-align: center; border-radius: 1em; }
             .layout-tv #notification-dropdown { transform: scale(1.5); transform-origin: top right; max-height: calc(80vh / 1.5); animation-name: nsSlideDownTv; }
             @keyframes nsSlideDownTv { from { opacity:0; transform:translateY(-10px) scale(1.5); } to { opacity:1; transform:scale(1.5); } }
+            /* The bell itself, reached by the remote: the same white 3 px outline as the cards. A theme that draws its own focus on header buttons keeps it (it sets outline with !important). */
+            .layout-tv #netflix-bell:focus { outline: 3px solid #fff; outline-offset: 2px; }
             .layout-tv #notification-dropdown .filter-pill:focus, .layout-tv #notification-dropdown .footer-tools:focus { outline: 3px solid #fff; outline-offset: -3px; }
             .layout-tv #notification-dropdown .filter-pill.active:focus { outline-offset: 2px; }
             .layout-tv #notification-dropdown .hero-section:focus, .layout-tv #notification-dropdown .dropdown-item:focus { outline: none; }

@@ -126,6 +126,11 @@ const page = fs.readFileSync(new URL('../../ConfigurationPage.html', import.meta
 check('the one favorites switch is on the admin page', (page.match(/id="favoritesToggle"/g) || []).length === 1);
 check('the switch is translated in fr, en and pt', ['Favoris dans la cloche', 'Favorites in the Bell', 'Favoritos no sino'].every(t => page.includes('favTitle: "' + t + '"')));
 check('the switch is loaded and saved', page.includes('this.config.FavoritesInBell === true') && page.includes('this.config.FavoritesInBell = '));
+// The panel takes the page's font, and the bell shows a focus outline on TV only.
+const dropRule = (src.match(/#notification-dropdown \{[^}]*\}/) || [''])[0];
+check('the panel follows the font of the page', /font-family: inherit;/.test(dropRule) && !src.includes("Noto Sans"));
+check('the bell has a white 3px outline on focus in the TV layout', /\.layout-tv #netflix-bell:focus \{ outline: 3px solid #fff;/.test(src));
+check('that outline is for the TV layout only', !/(^|[^-])#netflix-bell:focus/m.test(src.replace(/\.layout-tv #netflix-bell:focus/g, '')));
 api.setData([]);
 console.log(fail ? fail + ' test(s) failed.' : 'All tests passed.');
 process.exit(fail ? 1 : 0);
