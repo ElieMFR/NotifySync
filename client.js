@@ -269,7 +269,7 @@
             .layout-tv #notification-dropdown { transform: scale(1.5); transform-origin: top right; max-height: calc(80vh / 1.5); animation-name: nsSlideDownTv; }
             @keyframes nsSlideDownTv { from { opacity:0; transform:translateY(-10px) scale(1.5); } to { opacity:1; transform:scale(1.5); } }
             /* The bell itself, reached by the remote: the same white 3 px outline as the cards. The page sets outline: none !important on header buttons, so this one needs !important too. */
-            .layout-tv #netflix-bell:focus { outline: 3px solid #fff !important; outline-offset: 2px; }
+            .layout-tv #netflix-bell:focus:not(.ns-themed-focus) { outline: 3px solid #fff !important; outline-offset: 2px; }
             .layout-tv #notification-dropdown .filter-pill:focus, .layout-tv #notification-dropdown .footer-tools:focus { outline: 3px solid #fff; outline-offset: -3px; }
             .layout-tv #notification-dropdown .filter-pill.active:focus { outline-offset: 2px; }
             .layout-tv #notification-dropdown .hero-section:focus, .layout-tv #notification-dropdown .dropdown-item:focus { outline: none; }
@@ -1444,6 +1444,10 @@
         bellBtn.type = 'button';
         bellBtn.setAttribute('aria-label', T.bellLabel);
         bellBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); toggleDropdown(); };
+        // A theme that already marks a focused header button (ElegantFin's white disc) raises its
+        // z-index above 0, a property that is not animated: read it on focus and leave the outline to the
+        // theme, so the bell looks like its neighbours.
+        bellBtn.addEventListener('focus', () => bellBtn.classList.toggle('ns-themed-focus', (parseInt(getComputedStyle(bellBtn).zIndex, 10) || 0) > 0));
 
         if (host.kind === 'legacy') {
             bellBtn.className = 'paper-icon-button-light headerButton headerButtonRight';
