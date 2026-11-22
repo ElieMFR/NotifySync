@@ -181,7 +181,7 @@
                 transform: scale(0.5); pointer-events: none;
             }
             .ns-badge.visible { opacity: 1; transform: scale(1); }
-            #notify-backdrop { position: fixed; inset: 0; z-index: 999998; display: none; }
+            #notify-backdrop { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 999998; display: none; }
             #notification-dropdown {
                 position: fixed; top: 70px; right: 20px; width: 380px; max-width: 90vw;
                 background: var(--ns-glass); backdrop-filter: blur(var(--ns-blur)); -webkit-backdrop-filter: blur(var(--ns-blur));
@@ -209,7 +209,7 @@
             .dismiss-btn { position:absolute; top:6px; right:6px; background:rgba(255,255,255,0.1); border:none; color:#888; cursor:pointer; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; line-height:1; opacity:0; transition:opacity 0.2s, background 0.2s; z-index:2; padding:0; font-family:'Material Icons'; }
             .dropdown-item:hover .dismiss-btn { opacity:1; }
             .dismiss-btn:hover { background:rgba(255,255,255,0.2); color:#fff; }
-            @media (pointer: coarse) { .dismiss-btn { opacity:0.6; } .dismiss-btn::after { content:''; position:absolute; inset:-10px; border-radius:50%; } }
+            @media (pointer: coarse) { .dismiss-btn { opacity:0.6; } .dismiss-btn::after { content:''; position:absolute; top:-10px; right:-10px; bottom:-10px; left:-10px; border-radius:50%; } }
             .dismiss-btn:focus-visible { opacity:1; outline:2px solid #fff; outline-offset:2px; }
             @keyframes dismissSlide { to { opacity:0; transform:translateX(50px); height:0; padding:0; margin:0; overflow:hidden; } }
             .dismissing { animation: dismissSlide 0.3s ease-out forwards; }
@@ -235,7 +235,7 @@
             .style-collection .item-badge { display: block; background: var(--ns-collection); box-shadow: 0 1px 3px rgba(126,87,194,0.5); }
             .style-collection { box-shadow: inset 3px 0 0 var(--ns-collection); }
             .thumb-wrapper { width:90px; height:50px; margin-right:15px; flex-shrink:0; background:#222; border-radius:6px; overflow:hidden; display:flex; justify-content:center; align-items:center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); position:relative; }
-            .dropdown-thumb { width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 0.3s; position:absolute; inset:0; z-index:1; }
+            .dropdown-thumb { width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 0.3s; position:absolute; top:0; right:0; bottom:0; left:0; z-index:1; }
             .dropdown-thumb.music { object-fit:contain; }
             .dropdown-thumb.loaded { opacity:1; }
             .dropdown-info { flex:1; display:flex; flex-direction:column; justify-content:center; min-width: 0; }
@@ -247,8 +247,8 @@
             .hero-section .dismiss-btn { top:10px; right:10px; background:rgba(0,0,0,0.5); color:#fff; z-index:3; }
             .hero-section:hover .dismiss-btn { opacity:1; }
             .hero-section .dismiss-btn:hover { background:rgba(229,9,20,0.8); }
-            .hero-bg { position: absolute; inset: 0; background-size: cover; background-position: center center; transition: transform 5s ease; background-color: #1a1a2e; }
-            .hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, var(--ns-glass) 5%, transparent 100%); }
+            .hero-bg { position: absolute; top: 0; right: 0; bottom: 0; left: 0; background-size: cover; background-position: center center; transition: transform 5s ease; background-color: #1a1a2e; }
+            .hero-overlay { position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: linear-gradient(to top, var(--ns-glass) 5%, transparent 100%); }
             .hero-content { position: relative; z-index: 2; padding: 20px; width: 100%; }
             .hero-badge { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: top; background: var(--ns-red); color: #fff; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 3px; display: inline-block; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); text-transform: uppercase; }
             /* One line each, cut with an ellipsis: a long episode title used to grow upward out of the 160px banner and push the badge off its top edge. */

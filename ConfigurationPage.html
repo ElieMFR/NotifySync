@@ -23,7 +23,7 @@
                 --ns-bg: rgba(20, 20, 20, 0.6);
                 --ns-card: rgba(255, 255, 255, 0.04);
                 --ns-card-hover: rgba(255, 255, 255, 0.07);
-                --ns-border: rgba(255, 255, 255, 0.1);
+                --ns-cfg-border: rgba(255, 255, 255, 0.1);
                 --ns-text: #f0f0f0;
                 --ns-text-dim: #9aa0a6;
                 --ns-accent: #00a4dc;
@@ -40,7 +40,7 @@
                 display: flex; align-items: center; gap: 16px;
                 justify-content: center;
                 background: linear-gradient(135deg, rgba(0, 164, 220, 0.15), rgba(33, 150, 243, 0.05));
-                border: 1px solid var(--ns-border);
+                border: 1px solid var(--ns-cfg-border);
                 border-radius: var(--ns-radius);
                 padding: 18px 22px;
                 margin: 24px 0 16px;
@@ -73,7 +73,7 @@
 
             /* Tabs */
             .ns-tabs {
-                display: flex; gap: 4px; border-bottom: 1px solid var(--ns-border);
+                display: flex; gap: 4px; border-bottom: 1px solid var(--ns-cfg-border);
                 margin-bottom: 20px; overflow-x: auto; -webkit-overflow-scrolling: touch;
                 scrollbar-width: thin;
             }
@@ -99,7 +99,7 @@
 
             /* Cards (panel sections) */
             .ns-card {
-                background: var(--ns-card); border: 1px solid var(--ns-border);
+                background: var(--ns-card); border: 1px solid var(--ns-cfg-border);
                 border-radius: var(--ns-radius); padding: 18px 20px; margin-bottom: 16px;
             }
             .ns-card-title {
@@ -130,7 +130,7 @@
             .ns-slider:focus-visible::-moz-range-thumb { outline: 2px solid var(--ns-accent); outline-offset: 3px; box-shadow: 0 0 0 7px rgba(0, 164, 220, 0.25); }
             .ns-slider-value {
                 min-width: 50px; text-align: center;
-                background: var(--ns-card-hover); border: 1px solid var(--ns-border);
+                background: var(--ns-card-hover); border: 1px solid var(--ns-cfg-border);
                 border-radius: 6px; padding: 6px 10px; font-weight: 600; font-size: 14px;
                 color: var(--ns-text);
             }
@@ -138,7 +138,7 @@
             /* Search input */
             .ns-search {
                 width: 100%; padding: 10px 14px; padding-left: 38px;
-                background: var(--ns-card-hover); border: 1px solid var(--ns-border);
+                background: var(--ns-card-hover); border: 1px solid var(--ns-cfg-border);
                 border-radius: 6px; color: var(--ns-text); font-size: 13px;
                 box-sizing: border-box; transition: border-color 0.2s;
             }
@@ -155,7 +155,7 @@
             }
             .ns-list-actions .ns-counter { color: var(--ns-text-dim); font-size: 12px; margin-right: auto; }
             .ns-mini-btn {
-                background: var(--ns-card-hover); border: 1px solid var(--ns-border);
+                background: var(--ns-card-hover); border: 1px solid var(--ns-cfg-border);
                 color: var(--ns-text); padding: 5px 10px; border-radius: 5px; font-size: 12px;
                 cursor: pointer; transition: all 0.15s;
             }
@@ -245,20 +245,20 @@
             .ns-setting-help { color: var(--ns-text-dim); font-size: 12px; margin-top: 4px; line-height: 1.4; }
             .ns-number-input {
                 width: 100px; padding: 8px 12px;
-                background: var(--ns-card-hover); border: 1px solid var(--ns-border);
+                background: var(--ns-card-hover); border: 1px solid var(--ns-cfg-border);
                 border-radius: 6px; color: var(--ns-text); font-size: 14px;
             }
             .ns-number-input:focus { outline: none; border-color: var(--ns-accent); }
             .ns-textarea {
                 width: 100%; padding: 10px 14px; min-height: 70px;
-                background: var(--ns-card-hover); border: 1px solid var(--ns-border);
+                background: var(--ns-card-hover); border: 1px solid var(--ns-cfg-border);
                 border-radius: 6px; color: var(--ns-text); font-size: 13px;
                 font-family: inherit; resize: vertical; box-sizing: border-box;
             }
             .ns-textarea:focus { outline: none; border-color: var(--ns-accent); }
             .ns-select-input {
                 width: 100%; padding: 8px 12px;
-                background: var(--ns-card-hover); border: 1px solid var(--ns-border);
+                background: var(--ns-card-hover); border: 1px solid var(--ns-cfg-border);
                 border-radius: 6px; color: var(--ns-text); font-size: 13px;
                 box-sizing: border-box;
             }
@@ -283,7 +283,7 @@
             .ns-table th {
                 text-align: left; padding: 10px 12px; color: var(--ns-text-dim);
                 font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
-                background: rgba(0, 0, 0, 0.3); border-bottom: 1px solid var(--ns-border);
+                background: rgba(0, 0, 0, 0.3); border-bottom: 1px solid var(--ns-cfg-border);
                 cursor: pointer; user-select: none; white-space: nowrap;
             }
             .ns-table th:hover { color: var(--ns-text); }
@@ -330,7 +330,7 @@
                 margin-top: 12px;
             }
             .ns-pagination button {
-                background: var(--ns-card-hover); border: 1px solid var(--ns-border);
+                background: var(--ns-card-hover); border: 1px solid var(--ns-cfg-border);
                 color: var(--ns-text); padding: 5px 10px; border-radius: 5px; font-size: 12px;
                 cursor: pointer; min-width: 32px; transition: all 0.15s;
             }
@@ -348,7 +348,7 @@
             .ns-action-btn.primary { background: var(--ns-accent); color: #03131a; }
             .ns-action-btn.primary:hover { background: #33b9e6; }
             .ns-action-btn.secondary {
-                background: transparent; border-color: var(--ns-border); color: var(--ns-text);
+                background: transparent; border-color: var(--ns-cfg-border); color: var(--ns-text);
             }
             .ns-action-btn.secondary:hover { background: var(--ns-card-hover); border-color: var(--ns-accent); }
             .ns-action-btn .material-icons { font-size: 16px !important; }
@@ -372,7 +372,7 @@
             /* Toast notification */
             .ns-toast {
                 position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
-                background: rgba(20, 20, 20, 0.95); border: 1px solid var(--ns-border);
+                background: rgba(20, 20, 20, 0.95); border: 1px solid var(--ns-cfg-border);
                 color: var(--ns-text); padding: 12px 22px; border-radius: 30px;
                 font-size: 14px; font-weight: 500; opacity: 0; pointer-events: none;
                 transition: all 0.3s ease; z-index: 1100; box-shadow: var(--ns-shadow);
@@ -393,7 +393,7 @@
             }
             .ns-modal-backdrop.show { display: flex; }
             .ns-modal {
-                background: #1a1a1a; border: 1px solid var(--ns-border);
+                background: #1a1a1a; border: 1px solid var(--ns-cfg-border);
                 border-radius: var(--ns-radius); padding: 22px 24px; max-width: 380px;
                 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
             }
