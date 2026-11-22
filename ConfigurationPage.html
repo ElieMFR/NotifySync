@@ -93,9 +93,9 @@
             .ns-tab.active .ns-tab-count { background: rgba(0, 164, 220, 0.2); color: var(--ns-accent); }
 
             /* Panels */
-            .ns-panel { display: none; animation: fadein 0.2s ease; }
+            .ns-panel { display: none; animation: ns-fadein 0.2s ease; }
             .ns-panel.active { display: block; }
-            @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+            @keyframes ns-fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
             /* Cards (panel sections) */
             .ns-card {
@@ -417,6 +417,10 @@
                 .ns-card { padding: 14px 16px; }
                 .ns-save-bar { bottom: 12px; right: 12px; }
                 .ns-mapping-form > * { min-width: 100%; }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                .ns-panel { animation: none; }
+                .ns-root *, .ns-toast { transition: none !important; }
             }
         </style>
 

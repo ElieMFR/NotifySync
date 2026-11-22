@@ -197,8 +197,8 @@
             @media (max-width: 600px) { #notification-dropdown { top: 60px; right: 10px; left: 10px; width: auto; max-width: none; } }
             @media (max-height: 500px) {
                 #notification-dropdown { top: 10px; bottom: 10px; right: 20px; left: auto; width: 400px; max-height: none; }
-                .hero-section { height: 110px !important; flex-shrink: 0; }
-                .list-container { flex: 1; overflow-y: auto; max-height: none !important; }
+                #notification-dropdown .hero-section { height: 110px !important; flex-shrink: 0; }
+                #notification-dropdown .list-container { flex: 1; overflow-y: auto; max-height: none !important; }
             }
             @media (max-height: 500px) and (max-width: 600px) { #notification-dropdown { left: 10px; right: 10px; width: auto; } }
             @keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
@@ -281,6 +281,7 @@
                 #notification-dropdown, .layout-tv #notification-dropdown, .ns-pulse, .ns-pulse .ns-badge { animation: none; }
                 .dismissing { animation-duration: 0.01ms; }
                 .dropdown-item { transition: none; }
+                .ns-badge, .filter-pill, #netflix-bell { transition: none; }
             }
         `;
         const style = document.createElement('style'); style.id = 'notifysync-css'; style.textContent = css; document.head.appendChild(style);
@@ -1349,11 +1350,10 @@
     //  * Legacy header (Jellyfin <=10.11 and legacy pages): a VISIBLE .headerRight
     //    exists -> prepend the bell inside it (safe, non-React DOM).
     //  * Jellyfin 12 React/MUI app bar: the legacy containers still exist in the
-    //    DOM but are hidden (0x0), and the visible bar is React-managed. Never
-    //    insert INTO React-managed DOM (its reconciliation can crash on foreign
-    //    nodes) -> the bell lives in <body> instead (like the dropdown already
-    //    does) as a fixed overlay glued just left of the search icon, and is
-    //    repositioned on every observer tick / resize.
+    //    DOM but are hidden (0x0), and the visible bar is React-managed. The bell is
+    //    inserted into the bar just before the search icon (installBell, further down),
+    //    with the classes of that neighbour so MUI styles it the same, and the observer
+    //    puts it back if React re-renders the bar. The dropdown lives in <body>.
     // offsetParent is null for position:fixed elements (the app bar IS fixed), so
     // visibility is checked via computed display/visibility + a real rect.
     const isVisible = (el) => {

@@ -234,6 +234,13 @@ const wireFn = grab2("// Wire sort handlers", '// Pagination handlers');
 check('Enter and Space sort a header', /th\.onkeydown = [^;]*'Enter'[^;]*' '/.test(wireFn.replace(/\s+/g, ' ')) && /th\.click\(\)/.test(wireFn));
 check('focus stays on the header after the table is redrawn', /th\[data-col="' \+ newCol/.test(wireFn) && /again\.focus\(\)/.test(wireFn));
 check('sortable headers show a focus outline', /\.ns-table th:focus-visible \{ outline: 2px solid var\(--ns-accent\)/.test(page));
+// Reduced motion and unshared names (audit 2026-11-22).
+check('settings page: reduced motion switches the panel animation and the transitions off',
+    /@media \(prefers-reduced-motion: reduce\)[^}]*\.ns-panel \{ animation: none; \}/.test(page));
+check('settings page: its keyframes are not named like the fadein of jellyfin-web', /@keyframes ns-fadein/.test(page) && !/@keyframes fadein/.test(page));
+check('the short-screen rules apply to the panel only, not to any page element with these classes',
+    /#notification-dropdown \.hero-section \{ height: 110px !important/.test(src) && /#notification-dropdown \.list-container \{ flex: 1/.test(src) && !/^\s*\.hero-section \{ height: 110px/m.test(src));
+check('bell: reduced motion also covers the badge, the pills and the bell', /\.ns-badge, \.filter-pill, #netflix-bell \{ transition: none; \}/.test(src));
 api.setData([]);
 console.log(fail ? fail + ' test(s) failed.' : 'All tests passed.');
 process.exit(fail ? 1 : 0);
