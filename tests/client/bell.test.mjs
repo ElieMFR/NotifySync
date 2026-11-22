@@ -155,6 +155,11 @@ check('cards and footer take the focus on every layout', /const cardStop = ' tab
 check('the panel is a labelled dialog', src.includes("drop.setAttribute('role', 'dialog')") && src.includes("drop.setAttribute('aria-label', T.header)"));
 check('the bell says it opens a dialog and whether it is open', src.includes("bellBtn.setAttribute('aria-haspopup', 'dialog')") && src.includes("bell.setAttribute('aria-expanded', 'false')") && src.includes("bellBtn.setAttribute('aria-expanded', 'true')"));
 check('a keyboard click on the bell moves the focus into the panel', /e\.detail === 0 && !isTvLayout\(\)/.test(src));
+// Screen readers: decoration is hidden, the favorite star is named, in the three languages.
+check('the favorite star is an image named "Favorites" on the cards and the large card', (src.match(/<span class="ns-fav" role="img" aria-label="\$\{T\.filterFav\}">★<\/span>/g) || []).length === 2 && !/<span class="ns-fav">/.test(src));
+check('the star label exists in fr, en and pt', ['Favoris', 'Favorites', 'Favoritos'].every(t => src.includes('filterFav: "' + t + '"')));
+check('the swipe-delete strip and the placeholder icon are hidden from screen readers', src.includes('<div class="swipe-delete" aria-hidden="true">') && src.includes('<span class="material-icons" aria-hidden="true" style="color:#555;font-size:24px;">'));
+check('the thumbnail has an empty alt', /<img data-src="\$\{imgUrl\}" alt="" /.test(src));
 const codeOnly = src.split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n')
     .replace(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g, '""').replace(/\/\/[^\n]*/g, '');
 check('no ?? (Chromium 56)', !/\?\?/.test(codeOnly));
