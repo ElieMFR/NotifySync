@@ -132,6 +132,10 @@ check('TV, a card: the arrows are still taken by the panel', withCard(true).pres
     k.press(13);
     check('TV, OK opens the focused card once', k.card.clicks === 1);
 }
+// The system's long-press click (seen on the Philips, no key event reaches the page) lands on the first
+// card right after the panel opened: the card click is ignored in TV mode for a moment after opening.
+check('TV, a card click right after the panel opened is ignored (held OK echo)',
+    /panelOpenedAt = Date\.now\(\)/.test(src) && /isTvLayout\(\) && Date\.now\(\) - panelOpenedAt < 600\) return;/.test(src));
 // Keyboard on a computer: Escape closes the panel, Enter and Space act on a card, and the cards can be reached.
 {
     const k = withCard(false);

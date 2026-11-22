@@ -840,6 +840,7 @@
         return rows;
     };
     let tvFocusRow = null; // null = the first card, where the bell opens
+    let panelOpenedAt = 0; // when the panel last opened, to tell a held OK's echo from a choice
     const focusTv = (el) => {
         if (!el) return;
         try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
@@ -1297,6 +1298,10 @@
                     return;
                 }
                 const card = e.target.closest('[data-nav]');
+                // Held OK: the bell opens the panel and the focus lands on the first card, then the
+                // system's long-press click (no key event reaches the page) opens that card. A
+                // click this soon after the panel opened is that echo, not a choice.
+                if (card && isTvLayout() && Date.now() - panelOpenedAt < 600) return;
                 if (card && listEl.contains(card)) {
                     document.dispatchEvent(new CustomEvent('ns-navigate', { detail: card.dataset.nav }));
                 }
@@ -1333,6 +1338,7 @@
             drop.style.display = 'flex';
             const bellBtn = document.getElementById('netflix-bell');
             if (bellBtn) bellBtn.setAttribute('aria-expanded', 'true');
+            panelOpenedAt = Date.now();
             tvFocusRow = null;
             restoreTvFocus(drop);
         } else { closeDropdown(); }
