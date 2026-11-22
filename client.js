@@ -867,9 +867,28 @@
         focusTv(row.find(p => p.classList.contains('active')) || row[0]);
     };
 
+    // Outside TV mode the panel is a dialog: Escape closes it and gives the focus back to the
+    // bell; Enter and Space act on a card or the footer as a click does (the pills and the ✕
+    // buttons answer for themselves).
+    const panelKeys = (e) => {
+        if (e.keyCode === 27 || e.key === 'Escape') {
+            e.preventDefault();
+            closeDropdown();
+            const bell = document.getElementById('netflix-bell');
+            if (bell) bell.focus();
+            return;
+        }
+        const t = e.target;
+        if ((e.key === 'Enter' || e.key === ' ') && t && t.matches && t.matches('.hero-section, .dropdown-item, .footer-tools')) {
+            e.preventDefault();
+            if (!e.repeat) t.click();
+        }
+    };
+
     window.addEventListener('keydown', (e) => {
         const drop = document.getElementById('notification-dropdown');
-        if (!drop || drop.style.display !== 'flex' || !isTvLayout()) return;
+        if (!drop || drop.style.display !== 'flex') return;
+        if (!isTvLayout()) { panelKeys(e); return; }
         const key = e.keyCode;
         const back = TV_BACK_KEYS.indexOf(key) !== -1;
         if (!back && [13, 37, 38, 39, 40].indexOf(key) === -1) return;
@@ -912,8 +931,8 @@
     const updateList = (drop, syncOnly) => {
         if (!drop) return;
         const container = drop.querySelector('.list-container');
-        // In TV mode the cards and the footer take the focus, so the remote can reach them.
-        const tvStop = isTvLayout() ? ' tabindex="0"' : '';
+        // The cards and the footer take the focus, so the remote and the keyboard can reach them.
+        const cardStop = ' tabindex="0"';
         // The chosen filter outlives its cards: once the last one of the category, or the last
         // favorite, is watched or dismissed, its button leaves the bar but the bell went on
         // filtering on it and read "You're all caught up!" over other categories' cards.
@@ -1007,7 +1026,7 @@
             const safeHeroId = escapeHtml(hero.CardId || hero.Id);
             const heroNavId = escapeHtml(hero.NavId || hero.RealItemId || hero.Id);
             const heroFallbackImg = client.getUrl(`Items/${encodeURIComponent(hero.SeriesId || heroItemId)}/Images/Primary?quality=70&fillWidth=380&fillHeight=160&format=webp`);
-            htmlParts.push(`<div class="hero-section"${tvStop} data-nav="${heroNavId}"><div class="hero-bg"><img src="${escapeHtml(heroImg)}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="if(this.dataset.fb){this.src=this.dataset.fb;this.removeAttribute('data-fb')}else{this.style.display='none'}" data-fb="${escapeHtml(heroFallbackImg)}"></div><div class="hero-overlay"></div><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" data-dismiss="${safeHeroId}">close</button><div class="hero-content">${heroBadges}<div class="hero-title">${heroTitle}${hero.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div class="hero-sub">${timeAgo(hero.DateCreated)}${heroSub ? ` &bull; ${heroSub}` : ''}</div></div></div>`);
+            htmlParts.push(`<div class="hero-section"${cardStop} data-nav="${heroNavId}"><div class="hero-bg"><img src="${escapeHtml(heroImg)}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="if(this.dataset.fb){this.src=this.dataset.fb;this.removeAttribute('data-fb')}else{this.style.display='none'}" data-fb="${escapeHtml(heroFallbackImg)}"></div><div class="hero-overlay"></div><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" data-dismiss="${safeHeroId}">close</button><div class="hero-content">${heroBadges}<div class="hero-title">${heroTitle}${hero.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div class="hero-sub">${timeAgo(hero.DateCreated)}${heroSub ? ` &bull; ${heroSub}` : ''}</div></div></div>`);
         }
 
         let curSection = null;
@@ -1034,14 +1053,14 @@
             const ownBadge = showsBadge(item) ? `<span class="item-badge" title="${badgeText}">${badgeText}</span>` : '';
             const collectionBadges = collectionBadgeTexts(item).map(t => `<span class="item-badge collection" title="${escapeHtml(t)}">${escapeHtml(t)}</span>`).join('');
             const badgeHtml = collectionBadges ? `<div class="ns-badge-row">${ownBadge}${collectionBadges}</div>` : ownBadge;
-            htmlParts.push(`<div class="dropdown-item ${item.IsUpgrade ? 'style-upgrade' : (isCollectionCard(item) ? 'style-collection' : 'style-new')}" data-item-id="${safeId}"${tvStop} data-nav="${navId}"><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" data-dismiss="${safeId}">close</button><div class="swipe-delete">${T.dismiss}</div><div class="thumb-wrapper"><img data-src="${imgUrl}" decoding="async" class="dropdown-thumb ${isMusic ? 'music' : ''}" loading="lazy" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.removeAttribute('data-fallback')}else{this.style.display='none'}" data-fallback="${fallbackUrl}"><span class="material-icons" style="color:#555;font-size:24px;">${isMusic ? 'album' : 'movie'}</span></div><div class="dropdown-info">${badgeHtml}<div class="dropdown-title" title="${title}">${title}${item.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div class="dropdown-subtitle" title="${sub}"><span class="sub-time">${timeAgo(item.DateCreated)}${sub ? ' &bull;' : ''}</span><span class="sub-text">${sub}</span></div></div></div>`);
+            htmlParts.push(`<div class="dropdown-item ${item.IsUpgrade ? 'style-upgrade' : (isCollectionCard(item) ? 'style-collection' : 'style-new')}" data-item-id="${safeId}"${cardStop} data-nav="${navId}"><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" data-dismiss="${safeId}">close</button><div class="swipe-delete">${T.dismiss}</div><div class="thumb-wrapper"><img data-src="${imgUrl}" decoding="async" class="dropdown-thumb ${isMusic ? 'music' : ''}" loading="lazy" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.removeAttribute('data-fallback')}else{this.style.display='none'}" data-fallback="${fallbackUrl}"><span class="material-icons" style="color:#555;font-size:24px;">${isMusic ? 'album' : 'movie'}</span></div><div class="dropdown-info">${badgeHtml}<div class="dropdown-title" title="${title}">${title}${item.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div class="dropdown-subtitle" title="${sub}"><span class="sub-time">${timeAgo(item.DateCreated)}${sub ? ' &bull;' : ''}</span><span class="sub-text">${sub}</span></div></div></div>`);
         });
 
         if (activeFilter === 'All') {
-            htmlParts.push(`<div class="footer-tools"${tvStop} data-action="clearall">${T.clearAll}</div>`);
+            htmlParts.push(`<div class="footer-tools"${cardStop} data-action="clearall">${T.clearAll}</div>`);
         } else {
             const catLabel = activeFilter === '__fav' ? T.filterFav : (T['filter' + activeFilter] || escapeHtml(activeFilter));
-            htmlParts.push(`<div class="footer-tools"${tvStop} data-action="clearcat" data-category="${escapeHtml(activeFilter)}">${T.clearCat} ${catLabel}</div>`);
+            htmlParts.push(`<div class="footer-tools"${cardStop} data-action="clearcat" data-category="${escapeHtml(activeFilter)}">${T.clearCat} ${catLabel}</div>`);
         }
         const finalHtml = htmlParts.join('');
 
@@ -1166,6 +1185,8 @@
         const back = document.getElementById('notify-backdrop');
         if (drop) drop.style.display = 'none';
         if (back) back.style.display = 'none';
+        const bell = document.getElementById('netflix-bell');
+        if (bell) bell.setAttribute('aria-expanded', 'false');
         unreadSeen.clear();
         recalculateNewStatus(); // Clear badges for next open
     };
@@ -1176,6 +1197,8 @@
 
         if (!drop) {
             drop = document.createElement('div'); drop.id = 'notification-dropdown';
+            drop.setAttribute('role', 'dialog');
+            drop.setAttribute('aria-label', T.header);
             document.body.appendChild(drop);
 
             if (!eventsRegistered) {
@@ -1308,6 +1331,8 @@
             positionDropdown(drop);
             document.getElementById('notify-backdrop').style.display = 'block';
             drop.style.display = 'flex';
+            const bellBtn = document.getElementById('netflix-bell');
+            if (bellBtn) bellBtn.setAttribute('aria-expanded', 'true');
             tvFocusRow = null;
             restoreTvFocus(drop);
         } else { closeDropdown(); }
@@ -1446,7 +1471,15 @@
         bellBtn.id = 'netflix-bell';
         bellBtn.type = 'button';
         bellBtn.setAttribute('aria-label', T.bellLabel);
-        bellBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); toggleDropdown(); };
+        bellBtn.setAttribute('aria-haspopup', 'dialog');
+        bellBtn.setAttribute('aria-expanded', 'false');
+        bellBtn.onclick = (e) => {
+            e.preventDefault(); e.stopPropagation(); toggleDropdown();
+            // Opened from the keyboard (a click with no pointer): the focus goes into the panel.
+            const drop = document.getElementById('notification-dropdown');
+            const first = e.detail === 0 && !isTvLayout() && drop && drop.style.display === 'flex' ? drop.querySelector('.hero-section, .dropdown-item') : null;
+            if (first) first.focus();
+        };
         // A theme that already marks a focused header button (ElegantFin's white disc) raises its
         // z-index above 0, a property that is not animated: read it on focus and leave the outline to the
         // theme, so the bell looks like its neighbours.
