@@ -42,12 +42,14 @@
     <PackageReference Include="Jellyfin.Model" Version="12.0.0" PrivateAssets="All" />
     <PackageReference Include="Jellyfin.Data" Version="12.0.0" PrivateAssets="All" />
 
-    <!-- MUST match the Microsoft.Data.Sqlite version Jellyfin 12 ships (the plugin does NOT
-         bundle it: PrivateAssets=All + CopyLocalLockFileAssemblies=false, so at runtime it
-         binds to the host's copy, and .NET refuses a host version LOWER than the compiled
-         reference — a too-high pin causes FileLoadException / "Malfunctioned"). 10.0.9 ran on
-         12.0.0-rc3; RE-VERIFY against the exact version Jellyfin 12 stable bundles before
-         publishing. The transitive SQLite-vuln warning is handled by NuGetAuditMode=direct. -->
+    <!-- Microsoft.Data.Sqlite: the plugin does NOT bundle it (PrivateAssets=All +
+         CopyLocalLockFileAssemblies=false), so at runtime it binds to the host's copy, and .NET
+         refuses a host version LOWER than the compiled reference (FileLoadException, plugin
+         "Malfunctioned"). Pin the LOWEST version any Jellyfin 12 ships, never the latest.
+         Shipped (upstream Directory.Packages.props, checked 2026-11-22): 12.0 to 12.2 = 10.0.11,
+         12.3 = 10.0.12, 12.4 = 10.0.14. 10.0.9 is below all of them; raising it gains nothing
+         (the host's copy runs) and breaks the older servers. The transitive SQLite-vuln warning
+         is handled by NuGetAuditMode=direct. -->
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.9" PrivateAssets="All" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
