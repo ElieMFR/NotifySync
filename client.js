@@ -886,7 +886,8 @@
         }
         const active = document.activeElement;
         if (key === 13) {
-            if (active && drop.contains(active)) active.click();
+            // A held OK repeats: it opens or dismisses once, not once per repeat.
+            if (!e.repeat && active && drop.contains(active)) active.click();
             return;
         }
         const r = rows.findIndex(row => row.some(el => el === active || el.contains(active)));

@@ -125,6 +125,13 @@ const mkCard = (cls) => ({ clicks: 0, click() { this.clicks++; }, contains(x) { 
 }
 const withCard = (tv) => { const c = mkCard('dropdown-item'); const k = mkKeys({ tv, els: [c], active: c }); k.card = c; return k; };
 check('TV, a card: the arrows are still taken by the panel', withCard(true).press(40).prevented);
+{
+    const k = withCard(true);
+    const held = k.press(13, { repeat: true });
+    check('TV, a held OK does not click again', k.card.clicks === 0 && held.prevented);
+    k.press(13);
+    check('TV, OK opens the focused card once', k.card.clicks === 1);
+}
 const codeOnly = src.split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n')
     .replace(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g, '""').replace(/\/\/[^\n]*/g, '');
 check('no ?? (Chromium 56)', !/\?\?/.test(codeOnly));
