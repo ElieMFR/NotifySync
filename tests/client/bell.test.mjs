@@ -179,6 +179,8 @@ const tabNames = ['settings', 'libraries', 'collections', 'categories', 'deletio
 check('each tab has aria-selected and aria-controls to its panel', tabNames.every(n => new RegExp('<button type="button" class="ns-tab[^"]*" data-tab="' + n + '" role="tab" aria-selected="(true|false)" aria-controls="ns-panel-' + n + '"').test(page) && new RegExp('<div class="ns-panel[^"]*" data-panel="' + n + '" id="ns-panel-' + n + '" role="tabpanel"').test(page)));
 check('only the first tab starts selected', (page.match(/class="ns-tab[^"]*"[^>]*aria-selected="true"/g) || []).length === 1 && /class="ns-tab active" data-tab="settings" role="tab" aria-selected="true"/.test(page));
 check('switching tabs moves aria-selected with the active class', /classList\.toggle\('active', on\);\s*t\.setAttribute\('aria-selected', on\)/.test(page));
+// Admin page a11y: the toast is announced.
+check('the toast is a polite live region', /<div id="ns-toast" class="ns-toast" role="status" aria-live="polite"/.test(page));
 api.setData([]);
 console.log(fail ? fail + ' test(s) failed.' : 'All tests passed.');
 process.exit(fail ? 1 : 0);
