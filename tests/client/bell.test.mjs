@@ -132,6 +132,29 @@ check('TV, a card: the arrows are still taken by the panel', withCard(true).pres
     k.press(13);
     check('TV, OK opens the focused card once', k.card.clicks === 1);
 }
+// Keyboard on a computer: Escape closes the panel, Enter and Space act on a card, and the cards can be reached.
+{
+    const k = withCard(false);
+    const esc = k.press(27, { key: 'Escape' });
+    check('PC, Escape closes the panel and returns the focus to the bell', k.closed === 1 && k.bellFocus === 1 && esc.prevented);
+    k.press(13);
+    check('PC, Enter on a card clicks it', k.card.clicks === 1);
+    const sp = k.press(32);
+    check('PC, Space on a card clicks it without scrolling the page', k.card.clicks === 2 && sp.prevented);
+    k.press(13, { repeat: true });
+    check('PC, a held Enter clicks once', k.card.clicks === 2);
+    const pill = mkCard('filter-pill');
+    const onPill = k.press(13, { target: pill });
+    check('PC, Enter on a pill is left to the pill', pill.clicks === 0 && !onPill.prevented);
+    const shut = mkKeys({ tv: false, display: 'none' });
+    shut.press(27, { key: 'Escape' });
+    check('PC, Escape does nothing while the panel is closed', shut.closed === 0);
+}
+check('TV, Escape still closes the panel', (() => { const k = withCard(true); k.press(27); return k.closed === 1 && k.bellFocus === 1; })());
+check('cards and footer take the focus on every layout', /const cardStop = ' tabindex="0"';/.test(src) && !/tvStop/.test(src) && src.includes('class="footer-tools"${cardStop}') && src.includes('class="hero-section"${cardStop}'));
+check('the panel is a labelled dialog', src.includes("drop.setAttribute('role', 'dialog')") && src.includes("drop.setAttribute('aria-label', T.header)"));
+check('the bell says it opens a dialog and whether it is open', src.includes("bellBtn.setAttribute('aria-haspopup', 'dialog')") && src.includes("bell.setAttribute('aria-expanded', 'false')") && src.includes("bellBtn.setAttribute('aria-expanded', 'true')"));
+check('a keyboard click on the bell moves the focus into the panel', /e\.detail === 0 && !isTvLayout\(\)/.test(src));
 const codeOnly = src.split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n')
     .replace(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g, '""').replace(/\/\/[^\n]*/g, '');
 check('no ?? (Chromium 56)', !/\?\?/.test(codeOnly));
@@ -195,6 +218,13 @@ const confirmFn = grab2('function showConfirm', 'const NotifySyncConf');
 check('the dialog opens on Cancel', /page\.querySelector\('#ns-modal-cancel'\)\.focus\(\)/.test(confirmFn));
 check('Escape closes the dialog', /backdrop\.onkeydown = [^;]*'Escape'/.test(confirmFn.replace(/\s+/g, ' ')));
 check('focus returns to the element that opened it', /const opener = document\.activeElement/.test(confirmFn) && /opener\.focus\(\)/.test(confirmFn));
+// Admin page a11y: the history columns sort by keyboard and say how they are sorted.
+const renderFn = grab2('renderDeletedItems: function', 'pageItems.forEach((item, i)');
+check('every sortable header is focusable and carries aria-sort', (renderFn.match(/<th [^\n]*data-col="/g) || []).length === 7 && (renderFn.match(/<th [^\n]*data-col="[^\n]*' \+ sortAttrs\(/g) || []).length === 7 && /aria-sort="' \+ \(c === col \? \(dir === 'asc' \? 'ascending' : 'descending'\) : 'none'\)/.test(renderFn) && /tabindex="0"/.test(renderFn));
+const wireFn = grab2("// Wire sort handlers", '// Pagination handlers');
+check('Enter and Space sort a header', /th\.onkeydown = [^;]*'Enter'[^;]*' '/.test(wireFn.replace(/\s+/g, ' ')) && /th\.click\(\)/.test(wireFn));
+check('focus stays on the header after the table is redrawn', /th\[data-col="' \+ newCol/.test(wireFn) && /again\.focus\(\)/.test(wireFn));
+check('sortable headers show a focus outline', /\.ns-table th:focus-visible \{ outline: 2px solid var\(--ns-accent\)/.test(page));
 api.setData([]);
 console.log(fail ? fail + ' test(s) failed.' : 'All tests passed.');
 process.exit(fail ? 1 : 0);

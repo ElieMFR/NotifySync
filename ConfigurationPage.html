@@ -287,6 +287,7 @@
                 cursor: pointer; user-select: none; white-space: nowrap;
             }
             .ns-table th:hover { color: var(--ns-text); }
+            .ns-table th:focus-visible { outline: 2px solid var(--ns-accent); outline-offset: -2px; }
             .ns-table th .sort-icon {
                 font-size: 14px !important; vertical-align: middle; opacity: 0.4; margin-left: 2px;
             }
@@ -1499,15 +1500,16 @@
                         return '<span class="material-icons sort-icon">' + (dir === 'asc' ? 'arrow_drop_up' : 'arrow_drop_down') + '</span>';
                     };
                     const sortedCls = (c) => c === col ? 'sorted' : '';
+                    const sortAttrs = (c) => ' tabindex="0" aria-sort="' + (c === col ? (dir === 'asc' ? 'ascending' : 'descending') : 'none') + '"';
 
                     let html = '<div class="ns-table-wrap"><table class="ns-table"><thead><tr>';
-                    html += '<th class="' + sortedCls('Name') + '" data-col="Name">' + CT.delColName + sortIcon('Name') + '</th>';
-                    html += '<th class="' + sortedCls('Type') + '" data-col="Type">' + CT.delColType + sortIcon('Type') + '</th>';
-                    html += '<th class="' + sortedCls('SeriesName') + '" data-col="SeriesName">' + CT.delColSeries + sortIcon('SeriesName') + '</th>';
-                    html += '<th class="' + sortedCls('ProductionYear') + '" data-col="ProductionYear">' + CT.delColYear + sortIcon('ProductionYear') + '</th>';
-                    html += '<th class="' + sortedCls('DeletedAt') + '" data-col="DeletedAt">' + CT.delColDate + sortIcon('DeletedAt') + '</th>';
-                    html += '<th data-col="FilePath">' + CT.delColPath + '</th>';
-                    html += '<th data-col="Status">' + CT.delColStatus + '</th>';
+                    html += '<th class="' + sortedCls('Name') + '" data-col="Name"' + sortAttrs('Name') + '>' + CT.delColName + sortIcon('Name') + '</th>';
+                    html += '<th class="' + sortedCls('Type') + '" data-col="Type"' + sortAttrs('Type') + '>' + CT.delColType + sortIcon('Type') + '</th>';
+                    html += '<th class="' + sortedCls('SeriesName') + '" data-col="SeriesName"' + sortAttrs('SeriesName') + '>' + CT.delColSeries + sortIcon('SeriesName') + '</th>';
+                    html += '<th class="' + sortedCls('ProductionYear') + '" data-col="ProductionYear"' + sortAttrs('ProductionYear') + '>' + CT.delColYear + sortIcon('ProductionYear') + '</th>';
+                    html += '<th class="' + sortedCls('DeletedAt') + '" data-col="DeletedAt"' + sortAttrs('DeletedAt') + '>' + CT.delColDate + sortIcon('DeletedAt') + '</th>';
+                    html += '<th data-col="FilePath"' + sortAttrs('FilePath') + '>' + CT.delColPath + '</th>';
+                    html += '<th data-col="Status"' + sortAttrs('Status') + '>' + CT.delColStatus + '</th>';
                     html += '</tr></thead><tbody>';
 
                     pageItems.forEach(item => {
@@ -1570,7 +1572,10 @@
                                 this.delSort.dir = newCol === 'DeletedAt' || newCol === 'ProductionYear' ? 'desc' : 'asc';
                             }
                             this.renderDeletedItems(page);
+                            const again = page.querySelector('th[data-col="' + newCol + '"]');
+                            if (again) again.focus();
                         };
+                        th.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); th.click(); } };
                     });
 
                     // Pagination handlers
