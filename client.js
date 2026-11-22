@@ -1,4 +1,4 @@
-/* NOTIFYSYNC V6.0.2.10 (Jellyfin 12) */
+/* NOTIFYSYNC V6.0.2.11 (Jellyfin 12) */
 (function () {
     let currentData = [];
     let groupedData = [];
@@ -193,7 +193,7 @@
                 border: 1px solid var(--ns-border); border-radius: 12px;
                 box-shadow: 0 20px 60px rgba(0,0,0,0.6);
                 z-index: 999999; display: none;
-                font-family: inherit;
+                font-family: inherit; color: rgba(255,255,255,0.87);
                 animation: slideDown 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
                 overflow: hidden;
                 flex-direction: column;

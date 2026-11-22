@@ -249,6 +249,8 @@ for (const tag of ['en-US', 'fr-FR', 'pt_BR', 'C', 'en-US@posix', 'xx-invalid-ta
     check('formatters build for the language tag "' + tag + '"', ok);
 }
 check('an underscore tag keeps its language', new Intl.DateTimeFormat(buildFormatters('fr_FR').time.resolvedOptions().locale).resolvedOptions().locale.startsWith('fr'));
+// The panel's background is a fixed dark glass: its text colour must not follow a light theme's dark text.
+check('panel sets its own light text colour (readable in a light theme)', /#notification-dropdown \{[^}]*color: rgba\(255,255,255,0\.87\)/.test(src));
 api.setData([]);
 console.log(fail ? fail + ' test(s) failed.' : 'All tests passed.');
 process.exit(fail ? 1 : 0);
