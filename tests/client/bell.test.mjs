@@ -174,6 +174,11 @@ check('the hero markup no longer sets badges inline before the title', !/<div cl
 check('quota slider thumb shows a focus ring (webkit and moz)', /\.ns-slider:focus-visible::-webkit-slider-thumb \{[^}]*outline: 2px solid var\(--ns-accent\)/.test(page) && /\.ns-slider:focus-visible::-moz-range-thumb \{[^}]*outline: 2px solid var\(--ns-accent\)/.test(page));
 check('quota slider is named by the setting title', /<input type="range" id="maxItemsSlider"[^>]*aria-labelledby="i18n-quotaTitle"/.test(page) && page.includes('id="i18n-quotaTitle"'));
 check('quota value is an <output> tied to the slider', /<output id="maxItemsValue"[^>]*for="maxItemsSlider"/.test(page));
+// Admin page a11y: tabs say which one is selected and what they control.
+const tabNames = ['settings', 'libraries', 'collections', 'categories', 'deletions'];
+check('each tab has aria-selected and aria-controls to its panel', tabNames.every(n => new RegExp('<button type="button" class="ns-tab[^"]*" data-tab="' + n + '" role="tab" aria-selected="(true|false)" aria-controls="ns-panel-' + n + '"').test(page) && new RegExp('<div class="ns-panel[^"]*" data-panel="' + n + '" id="ns-panel-' + n + '" role="tabpanel"').test(page)));
+check('only the first tab starts selected', (page.match(/class="ns-tab[^"]*"[^>]*aria-selected="true"/g) || []).length === 1 && /class="ns-tab active" data-tab="settings" role="tab" aria-selected="true"/.test(page));
+check('switching tabs moves aria-selected with the active class', /classList\.toggle\('active', on\);\s*t\.setAttribute\('aria-selected', on\)/.test(page));
 api.setData([]);
 console.log(fail ? fail + ' test(s) failed.' : 'All tests passed.');
 process.exit(fail ? 1 : 0);

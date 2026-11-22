@@ -443,26 +443,26 @@
 
                     <!-- Tab navigation -->
                     <div class="ns-tabs" role="tablist">
-                        <button type="button" class="ns-tab active" data-tab="settings" role="tab">
+                        <button type="button" class="ns-tab active" data-tab="settings" role="tab" aria-selected="true" aria-controls="ns-panel-settings">
                             <span class="material-icons">tune</span>
                             <span id="i18n-tabSettings">Settings</span>
                         </button>
-                        <button type="button" class="ns-tab" data-tab="libraries" role="tab">
+                        <button type="button" class="ns-tab" data-tab="libraries" role="tab" aria-selected="false" aria-controls="ns-panel-libraries">
                             <span class="material-icons">video_library</span>
                             <span id="i18n-tabLibraries">Libraries</span>
                             <span class="ns-tab-count" id="ns-count-libs">0</span>
                         </button>
-                        <button type="button" class="ns-tab" data-tab="collections" role="tab">
+                        <button type="button" class="ns-tab" data-tab="collections" role="tab" aria-selected="false" aria-controls="ns-panel-collections">
                             <span class="material-icons">collections_bookmark</span>
                             <span id="i18n-tabCollections">Collections</span>
                             <span class="ns-tab-count" id="ns-count-cols">0</span>
                         </button>
-                        <button type="button" class="ns-tab" data-tab="categories" role="tab">
+                        <button type="button" class="ns-tab" data-tab="categories" role="tab" aria-selected="false" aria-controls="ns-panel-categories">
                             <span class="material-icons">label</span>
                             <span id="i18n-tabCategories">Categories</span>
                             <span class="ns-tab-count" id="ns-count-maps">0</span>
                         </button>
-                        <button type="button" class="ns-tab" data-tab="deletions" role="tab">
+                        <button type="button" class="ns-tab" data-tab="deletions" role="tab" aria-selected="false" aria-controls="ns-panel-deletions">
                             <span class="material-icons">delete_sweep</span>
                             <span id="i18n-tabDeletions">Deletions</span>
                         </button>
@@ -471,7 +471,7 @@
                     <form id="notifySyncConfigForm">
 
                         <!-- Tab: Settings -->
-                        <div class="ns-panel active" data-panel="settings" role="tabpanel">
+                        <div class="ns-panel active" data-panel="settings" id="ns-panel-settings" role="tabpanel">
 
                             <div class="ns-card">
                                 <h3 class="ns-card-title">
@@ -526,7 +526,7 @@
                         </div>
 
                         <!-- Tab: Libraries -->
-                        <div class="ns-panel" data-panel="libraries" role="tabpanel">
+                        <div class="ns-panel" data-panel="libraries" id="ns-panel-libraries" role="tabpanel">
                             <div class="ns-card">
                                 <h3 class="ns-card-title">
                                     <span class="material-icons">video_library</span>
@@ -555,7 +555,7 @@
                         </div>
 
                         <!-- Tab: Collections -->
-                        <div class="ns-panel" data-panel="collections" role="tabpanel">
+                        <div class="ns-panel" data-panel="collections" id="ns-panel-collections" role="tabpanel">
                             <div class="ns-card">
                                 <h3 class="ns-card-title">
                                     <span class="material-icons">collections_bookmark</span>
@@ -584,7 +584,7 @@
                         </div>
 
                         <!-- Tab: Categories -->
-                        <div class="ns-panel" data-panel="categories" role="tabpanel">
+                        <div class="ns-panel" data-panel="categories" id="ns-panel-categories" role="tabpanel">
                             <div class="ns-card">
                                 <h3 class="ns-card-title">
                                     <span class="material-icons">label</span>
@@ -613,7 +613,7 @@
                         </div>
 
                         <!-- Tab: Deletions -->
-                        <div class="ns-panel" data-panel="deletions" role="tabpanel">
+                        <div class="ns-panel" data-panel="deletions" id="ns-panel-deletions" role="tabpanel">
                             <div class="ns-card">
                                 <h3 class="ns-card-title">
                                     <span class="material-icons">delete_sweep</span>
@@ -1123,7 +1123,11 @@
                 },
 
                 switchTab: function (page, tabName) {
-                    page.querySelectorAll('.ns-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
+                    page.querySelectorAll('.ns-tab').forEach(t => {
+                        const on = t.dataset.tab === tabName;
+                        t.classList.toggle('active', on);
+                        t.setAttribute('aria-selected', on);
+                    });
                     page.querySelectorAll('.ns-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === tabName));
                 },
 
