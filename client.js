@@ -218,14 +218,15 @@
             .dropdown-item.swiping .swipe-delete { opacity:1; pointer-events:auto; }
             .dropdown-header { display:flex; justify-content:space-between; padding:16px 20px; border-bottom: 1px solid var(--ns-border); background: rgba(0,0,0,0.3); align-items:center; flex-shrink: 0; }
             .header-title { font-weight: 700; font-size: 15px; letter-spacing: 0.5px; }
-            .filter-bar { padding: 10px 20px; display: flex; gap: 8px; border-bottom: 1px solid var(--ns-border); overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
+            .filter-bar { padding: 10px 20px; display: flex; border-bottom: 1px solid var(--ns-border); overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
+            .filter-bar > * + * { margin-left: 8px; }
             .filter-pill { font-size: 11px; padding: 4px 12px; border-radius: 20px; background: rgba(255,255,255,0.05); cursor: pointer; transition: all 0.2s; border: 1px solid transparent; white-space: nowrap; position: relative; user-select: none; -webkit-user-select: none; }
             .filter-pill.active { background: #fff; color: #000; font-weight: 700; box-shadow: 0 0 10px rgba(255,255,255,0.2); }
             .list-container { max-height: 500px; overflow-y: auto; -webkit-overflow-scrolling: touch; content-visibility: auto; contain-intrinsic-size: 500px; flex: 1; }
             .dropdown-item { display:flex; padding:12px 20px; border-bottom:1px solid var(--ns-border); cursor:pointer; transition: background .2s; position: relative; overflow: hidden; }
             .dropdown-item:hover { background: rgba(255,255,255,0.08); }
-            .ns-badge-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 2px; min-width: 0; }
-            .ns-badge-row .item-badge { margin-bottom: 0; }
+            .ns-badge-row { display: flex; flex-wrap: wrap; margin-bottom: -2px; margin-right: -4px; min-width: 0; }
+            .ns-badge-row .item-badge { margin: 0 4px 4px 0; }
             .dropdown-item .item-badge.collection { display: block; background: var(--ns-collection); box-shadow: 0 1px 3px rgba(126,87,194,0.5); }
             .item-badge { display: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; font-weight: bold; padding: 2px 5px; border-radius: 3px; color: #fff; line-height: 1; letter-spacing: 0.5px; width: fit-content; margin-bottom: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); text-transform: uppercase; }
             .style-new .item-badge { display: block; background: var(--ns-red); box-shadow: 0 1px 3px rgba(229,9,20,0.5); }
@@ -255,14 +256,14 @@
             .hero-content { box-sizing: border-box; min-width: 0; }
             .hero-title { font-size: 18px; font-weight: 700; text-shadow: 0 2px 4px #000; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             .hero-sub { font-size: 12px; opacity: 0.8; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .ns-hero-badges { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 4px; margin-bottom: 5px; }
-            .ns-hero-badges .hero-badge, .ns-hero-badges .hero-badge-upgrade { margin-bottom: 0; line-height: 1.3; }
+            .ns-hero-badges { display: flex; flex-wrap: wrap; align-items: flex-start; margin-bottom: 1px; margin-right: -4px; }
+            .ns-hero-badges .hero-badge, .ns-hero-badges .hero-badge-upgrade { margin: 0 4px 4px 0; line-height: 1.3; }
             .hero-badge.collection { background: var(--ns-collection); }
             .hero-badge-upgrade { background: var(--ns-upgrade); color: #fff; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 3px; display: inline-block; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); text-transform: uppercase; }
             .footer-tools { padding: 10px; text-align: center; border-top: 1px solid var(--ns-border); font-size: 11px; color: #888; cursor: pointer; transition: color 0.2s; flex-shrink: 0; }
             .footer-tools:hover { color: #fff; text-decoration: underline; }
-            .ns-section { font-size: 11px; color: #999; letter-spacing: 1.1px; text-transform: uppercase; padding: 12px 20px 4px; display: flex; align-items: center; gap: 8px; user-select: none; }
-            .ns-section::after { content: ''; flex: 1; height: 1px; background: var(--ns-border); }
+            .ns-section { font-size: 11px; color: #999; letter-spacing: 1.1px; text-transform: uppercase; padding: 12px 20px 4px; display: flex; align-items: center; user-select: none; }
+            .ns-section::after { content: ''; margin-left: 8px; flex: 1; height: 1px; background: var(--ns-border); }
             .ns-fav { color: #f0a92d; font-size: 11px; vertical-align: 1px; }
             .layout-tv #netflix-bell { width: auto; height: auto; }
             .layout-tv #netflix-bell .ns-badge { top: calc(50% - 1.2em); right: calc(50% - 1.2em); font-size: 0.6em; line-height: 1.3; min-width: 1.3em; padding: 0 0.4em; box-sizing: border-box; text-align: center; border-radius: 1em; }
