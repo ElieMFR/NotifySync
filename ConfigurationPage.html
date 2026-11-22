@@ -660,7 +660,7 @@
 
                     <!-- Confirmation modal -->
                     <div id="ns-modal-backdrop" class="ns-modal-backdrop">
-                        <div class="ns-modal">
+                        <div class="ns-modal" role="dialog" aria-modal="true" aria-labelledby="ns-modal-title">
                             <h3 id="ns-modal-title">Confirm</h3>
                             <p id="ns-modal-message"></p>
                             <div class="ns-modal-actions">
@@ -927,10 +927,16 @@
                 const backdrop = page.querySelector('#ns-modal-backdrop');
                 page.querySelector('#ns-modal-title').textContent = title;
                 page.querySelector('#ns-modal-message').textContent = message;
+                const opener = document.activeElement;
                 backdrop.classList.add('show');
-                const close = () => backdrop.classList.remove('show');
+                const close = () => {
+                    backdrop.classList.remove('show');
+                    if (opener && opener.focus) opener.focus();
+                };
                 page.querySelector('#ns-modal-cancel').onclick = close;
                 page.querySelector('#ns-modal-confirm').onclick = () => { close(); onConfirm(); };
+                backdrop.onkeydown = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
+                page.querySelector('#ns-modal-cancel').focus();
             }
 
             const NotifySyncConf = {

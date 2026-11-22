@@ -188,6 +188,13 @@ check('only the first tab starts selected', (page.match(/class="ns-tab[^"]*"[^>]
 check('switching tabs moves aria-selected with the active class', /classList\.toggle\('active', on\);\s*t\.setAttribute\('aria-selected', on\)/.test(page));
 // Admin page a11y: the toast is announced.
 check('the toast is a polite live region', /<div id="ns-toast" class="ns-toast" role="status" aria-live="polite"/.test(page));
+const grab2 = (start, end) => { const a = page.indexOf(start); const b = page.indexOf(end, a); if (a < 0 || b < 0) throw new Error('missing ' + start); return page.slice(a, b); };
+// Admin page a11y: the confirmation window is a dialog, focus goes in on Cancel, Escape closes, focus comes back.
+check('the confirmation window is a modal dialog named by its title', /<div class="ns-modal" role="dialog" aria-modal="true" aria-labelledby="ns-modal-title"/.test(page));
+const confirmFn = grab2('function showConfirm', 'const NotifySyncConf');
+check('the dialog opens on Cancel', /page\.querySelector\('#ns-modal-cancel'\)\.focus\(\)/.test(confirmFn));
+check('Escape closes the dialog', /backdrop\.onkeydown = [^;]*'Escape'/.test(confirmFn.replace(/\s+/g, ' ')));
+check('focus returns to the element that opened it', /const opener = document\.activeElement/.test(confirmFn) && /opener\.focus\(\)/.test(confirmFn));
 api.setData([]);
 console.log(fail ? fail + ' test(s) failed.' : 'All tests passed.');
 process.exit(fail ? 1 : 0);
