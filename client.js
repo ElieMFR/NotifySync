@@ -85,12 +85,17 @@
 
     // Locale-aware date/time formatters, rebuilt when the Jellyfin language changes.
     // Intl picks the right convention per locale (FR → "14:30" 24h, EN → "2:30 PM").
-    const buildFormatters = (lang) => ({
-        time: new Intl.DateTimeFormat(lang, { hour: '2-digit', minute: '2-digit' }),
-        day: new Intl.DateTimeFormat(lang, { weekday: 'short' }),
-        date: new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short' }),
-        dateYear: new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short', year: 'numeric' })
-    });
+    // A tag Intl rejects ("pt_BR" with its underscore, "C", garbage from a headless browser) throws
+    // a RangeError, which here stopped the whole bell from starting: take the tag with hyphens, else English.
+    const buildFormatters = (tag) => {
+        const lang = [tag, String(tag || '').replace(/_/g, '-'), 'en'].find((l) => { try { return !!new Intl.DateTimeFormat(l); } catch (e) { return false; } });
+        return {
+            time: new Intl.DateTimeFormat(lang, { hour: '2-digit', minute: '2-digit' }),
+            day: new Intl.DateTimeFormat(lang, { weekday: 'short' }),
+            date: new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short' }),
+            dateYear: new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short', year: 'numeric' })
+        };
+    };
     let fmt = buildFormatters(userLang);
 
     const detectJellyfinLang = () => {

@@ -241,6 +241,14 @@ check('settings page: its keyframes are not named like the fadein of jellyfin-we
 check('the short-screen rules apply to the panel only, not to any page element with these classes',
     /#notification-dropdown \.hero-section \{ height: 110px !important/.test(src) && /#notification-dropdown \.list-container \{ flex: 1/.test(src) && !/^\s*\.hero-section \{ height: 110px/m.test(src));
 check('bell: reduced motion also covers the badge, the pills and the bell', /\.ns-badge, \.filter-pill, #netflix-bell \{ transition: none; \}/.test(src));
+// A language tag the browser rejects (an underscore as in "pt_BR", a bare "C", garbage from a headless
+// browser) made new Intl.DateTimeFormat throw a RangeError while the script started: no bell at all.
+const buildFormatters = new Function(grab('    const buildFormatters', '    let fmt = buildFormatters') + '; return buildFormatters;')();
+for (const tag of ['en-US', 'fr-FR', 'pt_BR', 'C', 'en-US@posix', 'xx-invalid-tag-toolongsubtag']) {
+    let ok = true; try { const f = buildFormatters(tag); ok = typeof f.time.format(new Date()) === 'string' && typeof f.dateYear.format(new Date()) === 'string'; } catch { ok = false; }
+    check('formatters build for the language tag "' + tag + '"', ok);
+}
+check('an underscore tag keeps its language', new Intl.DateTimeFormat(buildFormatters('fr_FR').time.resolvedOptions().locale).resolvedOptions().locale.startsWith('fr'));
 api.setData([]);
 console.log(fail ? fail + ' test(s) failed.' : 'All tests passed.');
 process.exit(fail ? 1 : 0);
