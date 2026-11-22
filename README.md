@@ -2,8 +2,8 @@
 
 <p align="center">
   <img src="https://img.shields.io/github/v/release/ElieMFR/NotifySync?label=version&color=blue&cacheSeconds=3600" alt="Version">
-  <img src="https://img.shields.io/badge/.NET-10.0%20%7C%209.0-purple" alt=".NET Framework">
-  <img src="https://img.shields.io/badge/Jellyfin-12.x%20%7C%2010.11.x-blueviolet" alt="Jellyfin">
+  <img src="https://img.shields.io/badge/.NET-10.0-purple" alt=".NET Framework">
+  <img src="https://img.shields.io/badge/Jellyfin-12.x-blueviolet" alt="Jellyfin">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
   <img src="https://img.shields.io/github/stars/ElieMFR/NotifySync?style=flat&color=yellow&cacheSeconds=3600" alt="GitHub stars">
   <img src="https://img.shields.io/github/downloads/ElieMFR/NotifySync/total?color=brightgreen&cacheSeconds=3600" alt="Downloads">
