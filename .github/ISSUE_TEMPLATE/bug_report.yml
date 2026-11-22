@@ -1,0 +1,85 @@
+name: "Report a problem / Signaler un problème"
+description: "Something does not work as expected / Quelque chose ne fonctionne pas comme prévu"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. **Remove keys, tokens and passwords** from logs and screenshots before pasting.
+
+        *Merci pour votre signalement. **Retirez clés, jetons et mots de passe** des journaux et captures avant de les coller.*
+  - type: input
+    id: component_version
+    attributes:
+      label: "Plugin version / Version du plugin"
+      description: "Dashboard → Plugins / Tableau de bord → Extensions"
+      placeholder: "6.0.2.0"
+    validations:
+      required: true
+  - type: input
+    id: jellyfin_version
+    attributes:
+      label: "Jellyfin server version / Version du serveur Jellyfin"
+      placeholder: "12.4.0"
+    validations:
+      required: true
+  - type: textarea
+    id: item
+    attributes:
+      label: "What is affected? / Ce qui est concerné"
+      description: "The bell, the notification list, a settings page, a type of notification (new episode, update…). / La cloche, la liste des notifications, une page de réglages, un type de notification (nouvel épisode, mise à jour…)."
+      placeholder: "Bell does not show the badge after a library scan / La cloche n'affiche pas le badge après un scan de bibliothèque"
+  - type: dropdown
+    id: client
+    attributes:
+      label: "Where does it happen? / Où le problème apparaît-il ?"
+      multiple: true
+      options:
+        - "Desktop browser / Navigateur sur ordinateur"
+        - "Phone or tablet browser / Navigateur sur téléphone ou tablette"
+        - "Android app / Appli Android"
+        - "Android TV or Google TV / Android TV ou Google TV"
+        - "Samsung TV (Tizen)"
+        - "LG TV (webOS)"
+        - "Server only (scheduled task) / Serveur seulement (tâche planifiée)"
+        - "Other (details below) / Autre (précisez plus bas)"
+    validations:
+      required: true
+  - type: input
+    id: client_version
+    attributes:
+      label: "Client, version and device / Client, version et appareil"
+      description: "Browser and version, or app and version. For a TV, also the model, the year and the app installed. / Navigateur et version, ou appli et version. Pour une TV, aussi le modèle, l'année et l'appli installée."
+      placeholder: "Android app 2.7.3, Pixel 10 Pro"
+  - type: textarea
+    id: others
+    attributes:
+      label: "Other active plugins and theme / Autres plugins et thème actifs"
+      description: "Especially File Transformation and plugins or themes that change the interface. / Surtout File Transformation et les plugins ou thèmes qui modifient l'interface."
+  - type: textarea
+    id: what
+    attributes:
+      label: "What happens, and what you expected / Ce qui se passe, et ce que vous attendiez"
+      description: "You can drag a screenshot here. / Vous pouvez glisser une capture ici."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: "How to reproduce it / Comment le reproduire"
+      placeholder: |
+        1. …
+        2. …
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Server log / Journal du serveur"
+      description: "Lines containing NotifySync. Hide personal data. / Les lignes contenant NotifySync. Masquez les données personnelles."
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: "Before sending / Avant d'envoyer"
+      options:
+        - label: "I searched the existing issues, closed ones included. / J'ai cherché dans les issues existantes, y compris fermées."
+          required: true
