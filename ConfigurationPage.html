@@ -125,6 +125,9 @@
                 background: var(--ns-accent); cursor: pointer;
                 box-shadow: 0 0 0 4px rgba(0, 164, 220, 0.15);
             }
+            /* The track has no outline (outline: none above): the focus shows on the thumb. */
+            .ns-slider:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--ns-accent); outline-offset: 3px; box-shadow: 0 0 0 7px rgba(0, 164, 220, 0.25); }
+            .ns-slider:focus-visible::-moz-range-thumb { outline: 2px solid var(--ns-accent); outline-offset: 3px; box-shadow: 0 0 0 7px rgba(0, 164, 220, 0.25); }
             .ns-slider-value {
                 min-width: 50px; text-align: center;
                 background: var(--ns-card-hover); border: 1px solid var(--ns-border);
@@ -477,8 +480,8 @@
                                 </h3>
                                 <p class="ns-card-desc" id="i18n-quotaDesc"></p>
                                 <div class="ns-slider-row">
-                                    <input type="range" id="maxItemsSlider" class="ns-slider" min="1" max="50" value="10" />
-                                    <div class="ns-slider-value" id="maxItemsValue">10</div>
+                                    <input type="range" id="maxItemsSlider" class="ns-slider" min="1" max="50" value="10" aria-labelledby="i18n-quotaTitle" />
+                                    <output id="maxItemsValue" class="ns-slider-value" for="maxItemsSlider" aria-live="off">10</output>
                                 </div>
                             </div>
 

@@ -170,6 +170,10 @@ check('the bell label comes from the dictionary', src.includes("setAttribute('ar
 // The hero's badges sit in their own row, not inline above the title (a gap showed under the pill).
 check('hero badges are in a flex row of their own', /\.ns-hero-badges \{ display: flex;/.test(src) && src.includes('<div class="ns-hero-badges">'));
 check('the hero markup no longer sets badges inline before the title', !/<div class="hero-content">\$\{showsBadge/.test(src));
+// Admin page a11y: the quota slider shows its focus and is named, its value is an <output>.
+check('quota slider thumb shows a focus ring (webkit and moz)', /\.ns-slider:focus-visible::-webkit-slider-thumb \{[^}]*outline: 2px solid var\(--ns-accent\)/.test(page) && /\.ns-slider:focus-visible::-moz-range-thumb \{[^}]*outline: 2px solid var\(--ns-accent\)/.test(page));
+check('quota slider is named by the setting title', /<input type="range" id="maxItemsSlider"[^>]*aria-labelledby="i18n-quotaTitle"/.test(page) && page.includes('id="i18n-quotaTitle"'));
+check('quota value is an <output> tied to the slider', /<output id="maxItemsValue"[^>]*for="maxItemsSlider"/.test(page));
 api.setData([]);
 console.log(fail ? fail + ' test(s) failed.' : 'All tests passed.');
 process.exit(fail ? 1 : 0);
