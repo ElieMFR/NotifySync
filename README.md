@@ -44,20 +44,14 @@ NotifySync adds a notification bell to Jellyfin, like on streaming platforms. Yo
 
 ## ✨ Key Features
 
-*   **Streaming-style bell**: the latest addition is shown large, the others in a list.
+*   **Streaming-style bell**: the latest addition is shown large, the others in a list sorted by date (Today, This week, Earlier).
+*   **Real-time**: additions appear as soon as Jellyfin has identified them, artwork included, without reloading the page.
 *   **Badges and counter**: the red counter clears when you open the bell. Each item keeps its NEW / UPD badge until you dismiss it or watch it.
-*   **Real-time**: additions show up as soon as Jellyfin announces them, without reloading the page.
-*   **Sorted by date**: Today, This week, Earlier.
+*   **Upgrades detected**: a replaced file comes back with a blue **UPD** badge that says what changed (Quality, Codec or Audio). Subtitles and metadata trigger nothing, and reorganising your libraries announces nothing new.
 *   **Grouping**: episodes that arrived together share one card (`Season 4 • Ep. 1-12`). Tracks are grouped by album.
-*   **Upgrades detected**: a replaced file comes back with a blue **UPD** badge that says what changed (Quality, Codec or Audio). Subtitles and metadata trigger nothing.
-*   **Moves ignored**: reorganising your libraries announces nothing new.
-*   **Nothing incomplete**: a title waits, up to 5 minutes, until Jellyfin has identified it, with its artwork.
-*   **Filters**: by category or by favorites.
-*   **Dismiss**: an item or a group, or swipe left on mobile. Dismissing does not mark it as played.
-*   **Collections**: monitored collections announce their new additions.
-*   **Deletion history**: a log for admins.
-*   **Synced**: what you read or dismiss on one device is read or dismissed on all of them.
-*   **Permissions respected**: everyone only sees the libraries they can access.
+*   **Filters and dismiss**: filter by category or by favorites. Dismiss an item or a group, or swipe left on mobile. Dismissing does not mark it as played.
+*   **Collections and deletion history**: monitored collections announce their new additions. Admins get a deletion log.
+*   **Synced, permissions respected**: what you read or dismiss on one device is read or dismissed on all of them. Everyone only sees the libraries they can access.
 *   **Three languages**: French, English or Brazilian Portuguese, following your Jellyfin language.
 *   **On every screen**: desktop, tablet and mobile. On TV, when the app loads NotifySync's script (Samsung TVs installed with [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung) do), the remote drives it: arrows to browse, OK to open or dismiss, Back to close.
 
@@ -65,8 +59,8 @@ NotifySync adds a notification bell to Jellyfin, like on streaming platforms. Yo
 
 > [!IMPORTANT]
 > **Requirements:**
-> * Jellyfin **12.x**
-> * Jellyfin **10.11.x** (with NotifySync 5.8.4.0)
+> * Jellyfin **12.x** with NotifySync **6.x**
+> * Jellyfin **10.11.x**: NotifySync **5.8.4.0**, no longer updated
 > * The **File Transformation** plugin, or a manual edit (see [Without File Transformation](#without-file-transformation))
 
 ### Steps
@@ -140,16 +134,14 @@ Go to **Dashboard → Plugins → NotifySync**.
 | Issue | Solution |
 |-------|----------|
 | **Bell doesn't appear** | Check that **File Transformation** is installed. Restart Jellyfin, then `Ctrl+F5`. |
-| **No bell and `401 Unauthorized` errors in the browser console** | Your server runs Jellyfin 12 with the old 5.x version. Update NotifySync to 6.x from **Plugins**, restart Jellyfin, then `Ctrl+F5`. |
+| **Plugin shown as Incompatible, or no bell and `401 Unauthorized` errors in the browser console** | Jellyfin 12.x needs NotifySync 6.x, not 5.x. Install or update it from the repository in [Installation](#-installation), restart Jellyfin, then `Ctrl+F5`. |
 | **Bell gone after a Jellyfin update** | Without File Transformation, each update overwrites the edit. Redo it, or install File Transformation. |
 | **Content or music missing, wrong counter** | Check the library in **Monitored Libraries**, then click **Regenerate history**. |
-| **Replaced file shows NEW instead of UPD** | Turn on **Enable deletion tracking**. It is needed when a file is deleted, then re-imported. |
+| **Replaced file or moved series shows NEW instead of UPD** | Turn on **Enable deletion tracking**. It is needed when a file is deleted, then re-imported. For a move, detection only works if the folder keeps its name. |
 | **A renamed file shows a false UPD badge** | A plain rename triggers nothing. If a badge shows up anyway, dismiss it: it won't come back. |
-| **A moved series still shows as NEW** | Turn on **Enable deletion tracking**. Detection only works if the folder keeps its name. |
 | **Unauthorized content visible** | The plugin follows Jellyfin permissions. Check the user's restrictions. |
 | **No bell on the admin pages** | Normal: the bell only shows on the user pages. |
 | **"Please wait 30 seconds"** | **Regenerate history** and **Scan collections now** each run once every 30 seconds at most. Wait, then click again. |
-| **Incompatible** | Use the repository from [Installation](#-installation). Jellyfin 12.x needs NotifySync 6.x. |
 
 ## 🎨 Recommended Theme
 
@@ -193,20 +185,14 @@ NotifySync ajoute à Jellyfin une cloche de notifications, comme sur les platefo
 
 ## ✨ Fonctionnalités
 
-*   **Cloche style streaming** : le dernier ajout est affiché en grand, les autres en liste.
+*   **Cloche style streaming** : le dernier ajout est affiché en grand, les autres en liste classée par date (Aujourd'hui, Cette semaine, Plus ancien).
+*   **Temps réel** : les ajouts apparaissent dès que Jellyfin les a identifiés, affiche comprise, sans recharger la page.
 *   **Badges et compteur** : le compteur rouge s'efface à l'ouverture de la cloche. Chaque élément garde son badge NOUVEAU / MAJ jusqu'à ce que vous le retiriez ou le regardiez.
-*   **Temps réel** : les ajouts apparaissent dès que Jellyfin les annonce, sans recharger la page.
-*   **Classé par date** : Aujourd'hui, Cette semaine, Plus ancien.
+*   **Mises à jour détectées** : un fichier remplacé revient avec un badge bleu **MAJ** qui précise ce qui a changé (Qualité, Codec ou Audio). Les sous-titres et les métadonnées ne déclenchent rien, et réorganiser vos bibliothèques n'annonce rien de nouveau.
 *   **Regroupement** : les épisodes arrivés ensemble forment une seule carte (`Saison 4 • Ép. 1-12`). Les pistes sont groupées par album.
-*   **Mises à jour détectées** : un fichier remplacé revient avec un badge bleu **MAJ** qui précise ce qui a changé (Qualité, Codec ou Audio). Les sous-titres et les métadonnées ne déclenchent rien.
-*   **Déplacements ignorés** : réorganiser vos bibliothèques n'annonce rien de nouveau.
-*   **Rien d'incomplet** : un titre attend, jusqu'à 5 minutes, que Jellyfin l'ait identifié, avec son affiche.
-*   **Filtres** : par catégorie ou par favoris.
-*   **Retrait** : un élément ou un groupe, ou en glissant vers la gauche sur mobile. Retirer ne marque pas comme vu.
-*   **Collections** : les collections surveillées signalent leurs nouveaux ajouts.
-*   **Historique des suppressions** : un journal réservé aux admins.
-*   **Synchronisé** : ce que vous lisez ou retirez sur un appareil l'est sur tous les autres.
-*   **Permissions respectées** : chacun ne voit que les bibliothèques auxquelles il a accès.
+*   **Filtres et retrait** : filtrez par catégorie ou par favoris. Retirez un élément ou un groupe, ou glissez vers la gauche sur mobile. Retirer ne marque pas comme vu.
+*   **Collections et historique des suppressions** : les collections surveillées signalent leurs nouveaux ajouts. Les admins disposent d'un journal des suppressions.
+*   **Synchronisé, permissions respectées** : ce que vous lisez ou retirez sur un appareil l'est sur tous les autres. Chacun ne voit que les bibliothèques auxquelles il a accès.
 *   **Trois langues** : français, anglais ou portugais du Brésil, selon la langue de Jellyfin.
 *   **Sur tous les écrans** : ordinateur, tablette et mobile. Sur TV, si l'appli charge le script de NotifySync (c'est le cas des TV Samsung installées avec [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung)), la télécommande la pilote : flèches pour parcourir, OK pour ouvrir ou retirer, Retour pour fermer.
 
@@ -214,8 +200,8 @@ NotifySync ajoute à Jellyfin une cloche de notifications, comme sur les platefo
 
 > [!IMPORTANT]
 > **Prérequis :**
-> * Jellyfin **12.x**
-> * Jellyfin **10.11.x** (avec NotifySync 5.8.4.0)
+> * Jellyfin **12.x** avec NotifySync **6.x**
+> * Jellyfin **10.11.x** : NotifySync **5.8.4.0**, plus mise à jour
 > * L'extension **File Transformation**, ou une modification manuelle (voir [Sans File Transformation](#sans-file-transformation))
 
 ### Étapes
@@ -229,7 +215,7 @@ NotifySync ajoute à Jellyfin une cloche de notifications, comme sur les platefo
     ```
     https://www.iamparadox.dev/jellyfin/plugins/manifest.json
     ```
-2.  Dans **Extensions**, filtre **Disponible**, installez **NotifySync** et **File Transformation**.
+2.  Dans **Extensions**, filtrez sur **Disponible**, puis installez **NotifySync** et **File Transformation**.
 3.  Redémarrez Jellyfin, puis `Ctrl+F5` dans votre navigateur.
 4.  Dans **Tableau de bord → Extensions → NotifySync**, cochez les bibliothèques à surveiller, cliquez sur **Sauvegarder** puis **Régénérer l'historique**. La cloche reste vide tant qu'aucune bibliothèque n'est cochée.
 
@@ -289,16 +275,14 @@ Allez dans **Tableau de bord → Extensions → NotifySync**.
 | Problème | Solution |
 |----------|----------|
 | **La cloche n'apparaît pas** | Vérifiez que **File Transformation** est installé. Redémarrez Jellyfin, puis `Ctrl+F5`. |
-| **Pas de cloche et des erreurs `401 Unauthorized` dans la console du navigateur** | Votre serveur est en Jellyfin 12 avec l'ancienne version 5.x. Mettez NotifySync à jour en 6.x depuis **Extensions**, redémarrez Jellyfin, puis `Ctrl+F5`. |
+| **Extension affichée Incompatible, ou pas de cloche et des erreurs `401 Unauthorized` dans la console du navigateur** | Jellyfin 12.x demande NotifySync 6.x, pas 5.x. Installez-le ou mettez-le à jour depuis le dépôt de l'[Installation](#-installation-1), redémarrez Jellyfin, puis `Ctrl+F5`. |
 | **La cloche a disparu après une mise à jour de Jellyfin** | Sans File Transformation, chaque mise à jour écrase la modification. Refaites-la, ou installez File Transformation. |
 | **Contenu ou musique manquant, compteur faux** | Cochez la bibliothèque dans **Bibliothèques surveillées**, puis cliquez sur **Régénérer l'historique**. |
-| **Un fichier remplacé apparaît en NOUVEAU au lieu de MAJ** | Cochez **Activer le suivi des suppressions**. Il est nécessaire quand un fichier est supprimé puis réimporté. |
+| **Un fichier remplacé ou une série déplacée apparaît en NOUVEAU au lieu de MAJ** | Cochez **Activer le suivi des suppressions**. Il est nécessaire quand un fichier est supprimé puis réimporté. Pour un déplacement, la détection ne marche que si le dossier garde son nom. |
 | **Un fichier renommé affiche un faux badge MAJ** | Un simple renommage ne déclenche rien. Si un badge apparaît quand même, retirez-le : il ne reviendra pas. |
-| **Une série déplacée apparaît en NOUVEAU** | Cochez **Activer le suivi des suppressions**. La détection ne marche que si le dossier garde son nom. |
 | **Contenu non autorisé visible** | Le plugin suit les droits Jellyfin. Vérifiez les restrictions de l'utilisateur. |
 | **Pas de cloche sur les pages d'administration** | C'est normal : la cloche n'apparaît que sur les pages des utilisateurs. |
 | **« Patientez 30 secondes »** | **Régénérer l'historique** et **Scanner les collections** se lancent chacun au plus une fois toutes les 30 secondes. Attendez, puis cliquez de nouveau. |
-| **Incompatible** | Utilisez le dépôt de l'[Installation](#-installation-1). Jellyfin 12.x demande NotifySync 6.x. |
 
 ## 🎨 Thème recommandé
 
