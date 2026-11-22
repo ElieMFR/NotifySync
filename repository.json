@@ -3,9 +3,9 @@
     "category": "UI",
     "guid": "95655672-2342-4321-8291-321312312312",
     "name": "NotifySync",
-    "description": "NotifySync transforms the Jellyfin interface by adding a native notification bell, inspired by major streaming platforms. Your users see the latest additions — Movies, Series, Music — without ever leaving their current page.\n\nNotifySync transforme l'interface Jellyfin en ajoutant une cloche de notifications native, inspirée des grandes plateformes de streaming. Vos utilisateurs voient les derniers ajouts — Films, Séries, Musique — sans quitter leur page.",
+    "description": "Ajoute une cloche de notifications à Jellyfin : les derniers films, séries et musiques ajoutés, sans quitter la page.\n\nAdds a notification bell to Jellyfin: the latest movies, series and music added, without leaving the page.\n\nAdiciona um sino de notificações ao Jellyfin: os últimos filmes, séries e músicas adicionados, sem sair da página.",
     "owner": "ElieM & Peterdu1109",
-    "overview": "A streaming-style notification bell for Jellyfin — see new media without leaving the page.\nUne cloche de notifications style streaming pour Jellyfin.",
+    "overview": "Une cloche de notifications pour Jellyfin 12.\nA notification bell for Jellyfin 12.",
     "supportUrl": "https://github.com/ElieMFR/NotifySync",
     "imageUrl": "https://raw.githubusercontent.com/ElieMFR/NotifySync/main/icon.svg",
     "versions": [

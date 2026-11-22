@@ -4,9 +4,9 @@ Four channels, one version number per build. Since 6.0.0.0 Jellyfin 12 is the ma
 
 | Channel | Branch | Tag | GitHub release | Catalog | Audience |
 |---|---|---|---|---|---|
-| **Jellyfin 12** | `main` | `X.Y.Z.0` | normal — becomes *Latest* | `repository.json` **and** `repository-12.json` on `main` | Jellyfin 12.x |
+| **Jellyfin 12** | `main` | `X.Y.Z.0` | normal — becomes *Latest* | `repository.json` on `main` | Jellyfin 12.x |
 | **Jellyfin 12 beta** | `main` | `X.Y.Z.W-beta`, W ≥ 1 | pre-release | `repository-12-beta.json` on `main` | testers on 12.x |
-| **Jellyfin 10.11** | `jellyfin-10.11` | `vX.Y.Z.0` | normal, never *Latest* | `repository.json` on `main` | Jellyfin 10.11.x — frozen at 5.8.4.0 |
+| **Jellyfin 10.11** | none (tag `v5.8.4.0`) | `vX.Y.Z.0` | normal, never *Latest* | `repository.json` on `main` | Jellyfin 10.11.x — frozen at 5.8.4.0 |
 
 - A stable number always ends in `.0`, a beta's never does. The admin page relies on it: its version link adds `-beta` when the last number is not 0.
 - From 6.0.2.1 on, Jellyfin 12 tags carry neither `v` nor `-jf12`: `6.0.3.0`, `6.0.2.1-beta`. Earlier releases keep their tags (`v6.0.2.0-jf12`, `v6.0.1.7-jf12-beta`); the admin page still links them that way.
@@ -36,14 +36,14 @@ dotnet build -c Release
 
 ## Jellyfin 12 — the main line
 
-`main` is built for .NET 10 against Jellyfin 12. Its `client.js` handles the 12 web client and TV apps; `jellyfin-10.11` keeps the frozen 10.11 code.
+`main` is built for .NET 10 against Jellyfin 12. Its `client.js` handles the 12 web client and TV apps; the frozen 10.11 code is the tag `v5.8.4.0`.
 
 1. Commit on `main` and build with 0 errors and 0 warnings.
 2. Bump the version in the places above.
 3. Tag `X.Y.Z.0` and publish it as a **normal release marked *Latest*** (`gh release create … --latest`), titled `🔔 NotifySync vX.Y.Z.0 — Jellyfin 12`. Its notes open with the 🚀 banner and gather the betas of the cycle.
-4. Add the entry on top of `repository.json` **and** of `repository-12.json`, both on `main`, — `targetAbi` `12.0.0.0` — and point `repository-12-beta.json` at the same build.
+4. Add the entry on top of `repository.json` on `main` — `targetAbi` `12.0.0.0` — and point `repository-12-beta.json` at the same build.
 
-   `repository.json` on `main` is the one link the README gives, for 10.11 and 12 alike: Jellyfin never offers a version whose `targetAbi` is above the server's, so a 10.11 server keeps 5.8.4.0 and a 12 server gets the newest 6.x — including one that installed 5.8.4.0 from this catalog by mistake, which then sees the update. `repository-12.json` is no longer advertised but stays up to date for the servers that already use it.
+   `repository.json` on `main` is the one link the README gives, for 10.11 and 12 alike: Jellyfin never offers a version whose `targetAbi` is above the server's, so a 10.11 server keeps 5.8.4.0 and a 12 server gets the newest 6.x — including one that installed 5.8.4.0 from this catalog by mistake, which then sees the update.
 5. On every beta of the cycle, swap the beta banner for the *shipped as stable* one.
 
 A Jellyfin 12 beta takes steps 1 and 2 with a beta number, then:
@@ -53,7 +53,7 @@ A Jellyfin 12 beta takes steps 1 and 2 with a beta number, then:
 
 ## Jellyfin 10.11 — frozen at 5.8.4.0
 
-Only for a fix that must reach 10.11 servers, built on `jellyfin-10.11` (the catalog entry still goes on `main`):
+Only for a fix that must reach 10.11 servers, branch from the tag `v5.8.4.0`, then the catalog entry goes on `main`:
 
 1. Bump to the next stable number, build, zip.
 2. Tag `vX.Y.Z.0` and publish it as a normal release with `--latest=false`, titled `🔔 NotifySync vX.Y.Z.0 — Jellyfin 10.11`.

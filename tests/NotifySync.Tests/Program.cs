@@ -144,7 +144,7 @@ Check("description in Portuguese", PluginDescription.For("pt-BR") == PluginDescr
 Check("description in English for any other language", PluginDescription.For("de-DE") == PluginDescription.English && PluginDescription.For(null) == PluginDescription.English);
 var repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../.."));
 var threeTexts = string.Join("\n\n", PluginDescription.French, PluginDescription.English, PluginDescription.Portuguese);
-foreach (var file in new[] { "meta.json", "repository-12.json", "repository-12-beta.json" })
+foreach (var file in new[] { "meta.json", "repository.json", "repository-12-beta.json" })
 {
     var path = Path.Combine(repoRoot, file);
     Check($"{file} carries the three texts of the plugin page", System.IO.File.Exists(path) && System.IO.File.ReadAllText(path).Contains(threeTexts.Replace("\n", "\\n"), StringComparison.Ordinal));

@@ -8,7 +8,7 @@ namespace NotifySync
     /// <remarks>
     /// Jellyfin shows <c>Plugin.Description</c> on a loaded plugin's page. Before the restart that
     /// follows an install, and in the catalog, it shows the catalog's description instead: a fixed
-    /// file read by every server, so it carries all three texts (<c>repository-12.json</c>,
+    /// file read by every server, so it carries all three texts (<c>repository.json</c>,
     /// <c>repository-12-beta.json</c>) and must say the same thing.
     /// </remarks>
     internal static class PluginDescription
