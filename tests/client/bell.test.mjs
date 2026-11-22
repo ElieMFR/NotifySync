@@ -1,0 +1,246 @@
+// The bell's labels and grouping, run on client.js itself: the functions are cut out of the
+// file by their surrounding markers and evaluated with stand-in strings, without a browser.
+// Usage: node tests/client/bell.test.mjs [path/to/client.js]
+import fs from 'node:fs';
+const src = fs.readFileSync(process.argv[2] || new URL('../../client.js', import.meta.url), 'utf8');
+const grab = (start, end) => { const a = src.indexOf(start); const b = src.indexOf(end, a); if (a < 0 || b < 0) throw new Error('missing ' + start); return src.slice(a, b); };
+const code = [
+  grab('    const episodeSpan', '    // "Quota per Category"'),
+  grab('    const upgradeKindLabel', '    const formatEpisodeTitle'),
+].join('\n');
+const T = { badgeNew: 'NEW', badgeUpgrade: 'UPD', badgeAdded: 'ADDED', badgeAddedTo: 'ADDED TO', kindQuality: 'Quality', kindCodec: 'Codec', kindAudio: 'Audio', kindAll: 'All' };
+const mk = new Function('T', 'state', `let activeFilter = state.f; let currentData = []; ${code}; return { processGrouping, upgradeBadgeText, unreadSeen, isUnreadCard, showsBadge, mergeCollectionTwins, twinIdsOf, collectionBadgeTexts, setData: d => { currentData = d; }, setF: f => { activeFilter = f; } };`);
+const api = mk(T, { f: 'All' });
+let fail = 0; const check = (n, ok) => { console.log((ok ? 'OK    ' : 'FAIL  ') + n); if (!ok) fail++; };
+const now = Date.now();
+// Issue #12: a title added to a monitored collection is not new to the server.
+const film = { Id: 'col:aaa:111', RealItemId: '111', Type: 'Movie', Category: 'Marvel', DateCreated: new Date(now).toISOString() };
+check('collection film in All says ADDED TO Marvel', api.upgradeBadgeText(film) === 'ADDED TO Marvel');
+api.setF('Marvel');
+check('collection film in its tab says ADDED', api.upgradeBadgeText(film) === 'ADDED');
+api.setF('All');
+check('library film still says NEW', api.upgradeBadgeText({ Id: '222', Type: 'Movie', Category: 'Movie' }) === 'NEW');
+const ep = (id, cat) => ({ Id: id, Type: 'Episode', SeriesId: 'S1', SeriesName: 'Show', Category: cat, IndexNumber: 1, ParentIndexNumber: 1, DateCreated: new Date(now - 1000).toISOString() });
+const cards = api.processGrouping([ep('e1', 'Series'), ep('e2', 'Series'), ep('col:bbb:e3', 'Anime picks')]);
+check('collection episode keeps its own card', cards.length === 2 && cards.some(c => c.Category === 'Anime picks' && !c.IsGroup));
+const grp = cards.find(c => c.IsGroup);
+check('library group card still says NEW', grp && api.upgradeBadgeText(grp) === 'NEW');
+// Opening the bell marks everything read; NEW must outlive that until the panel closes.
+check('unseen card is unread', api.isUnreadCard({ Id: 'a', IsNew: true }));
+check('seen card is not unread', !api.isUnreadCard({ Id: 'b', IsNew: false }));
+api.unreadSeen.add('a2');
+check('card marked read while open is still unread', api.isUnreadCard({ Id: 'a2', IsNew: false }));
+check('group card is unread through a member', api.isUnreadCard({ Id: 'S1', IsNew: false, MemberIds: ['x', 'a2'] }));
+check('unseen library card shows its badge', api.showsBadge({ Id: 'a', IsNew: true }));
+api.unreadSeen.clear();
+check('once seen and closed, a library card has no badge', !api.showsBadge({ Id: 'a2', IsNew: false }));
+check('seen upgrade keeps its badge', api.showsBadge({ Id: 'u', IsNew: false, IsUpgrade: true }));
+check('seen collection card keeps its badge', api.showsBadge({ Id: 'col:aaa:111', IsNew: false }));
+// A title announced by its library and by a collection holding it: one card in "All".
+const lib = { Id: 'aaaa1111-0000-0000-0000-000000000001', Type: 'Movie', Category: 'Films', IsNew: true, DateCreated: new Date(now).toISOString() };
+const colTwin = { Id: 'col:bbb:aaaa1111-0000-0000-0000-000000000001', RealItemId: 'AAAA1111-0000-0000-0000-000000000001', Type: 'Movie', Category: 'Classiques', IsNew: true, DateCreated: new Date(now).toISOString() };
+const colAlone = { Id: 'col:bbb:cccc3333-0000-0000-0000-000000000003', RealItemId: 'cccc3333-0000-0000-0000-000000000003', Type: 'Movie', Category: 'Classiques', IsNew: true, DateCreated: new Date(now - 1000).toISOString() };
+api.setData([lib, colTwin, colAlone]);
+const merged = api.mergeCollectionTwins(api.processGrouping([lib, colTwin, colAlone]));
+check('twin collection card is merged into the library card', merged.length === 2 && !merged.some(c => c.Id === colTwin.Id));
+check('library card carries the collection name', merged.find(c => c.Id === lib.Id).AlsoIn.join() === 'Classiques');
+check('collection card without a library twin stays', merged.some(c => c.Id === colAlone.Id));
+check('the bell counts the title once', merged.filter(c => c.IsNew).length === 2);
+check('merged card shows ADDED TO next to NEW', api.collectionBadgeTexts(merged.find(c => c.Id === lib.Id)).join() === 'ADDED TO Classiques');
+check('three collections show two names and a count', api.collectionBadgeTexts({ AlsoIn: ['A', 'B', 'C', 'D'] }).join() === 'ADDED TO A,ADDED TO B,+2');
+check('dismissing the library card takes its twin too', api.twinIdsOf([lib.Id]).join() === colTwin.Id);
+check('a library card without twin takes nothing more', api.twinIdsOf(['zzzz']).length === 0);
+const seenLib = { ...lib, IsNew: false };
+api.setData([seenLib, colTwin]);
+const seenMerged = api.mergeCollectionTwins(api.processGrouping([seenLib, colTwin]));
+check('a seen merged card has no NEW but keeps the collection badge', !api.showsBadge(seenMerged[0]) && api.collectionBadgeTexts(seenMerged[0]).length === 1);
+api.setData([]);
+check('with no collection notification nothing changes', api.mergeCollectionTwins([lib]).length === 1);
+// Episodes: a library group and a collection group for the same series merge as well.
+const mkEp = (id, cat, extra = {}) => ({ Id: id, Type: 'Episode', SeriesId: 'S1', SeriesName: 'Show', Category: cat, IndexNumber: 1, ParentIndexNumber: 1, IsNew: true, DateCreated: new Date(now - 500).toISOString(), ...extra });
+const eps = [mkEp('e0000001-0000-0000-0000-000000000001', 'Séries'), mkEp('e0000002-0000-0000-0000-000000000002', 'Séries'),
+    mkEp('col:ccc:e0000001-0000-0000-0000-000000000001', 'Classiques', { RealItemId: 'e0000001-0000-0000-0000-000000000001' }),
+    mkEp('col:ccc:e0000002-0000-0000-0000-000000000002', 'Classiques', { RealItemId: 'e0000002-0000-0000-0000-000000000002' })];
+api.setData(eps);
+const epCards = api.mergeCollectionTwins(api.processGrouping(eps));
+check('two groups of the same episodes become one card', epCards.length === 1 && epCards[0].IsGroup && epCards[0].AlsoIn.join() === 'Classiques');
+// Fetch and Clear, run on client.js with a stand-in localStorage and fetch.
+const fcode = [grab('    const clearAllNotifications', '    const clearCategoryNotifications'), grab('    const fetchData', '    const loadFromCache')].join('\n');
+const mkFetch = (res) => {
+    const store = new Map(); const calls = [];
+    const ls = { getItem: k => store.has(k) ? store.get(k) : null, setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) };
+    const f = new Function('S', `let isFetching = false, lastFetchTime = 0, firstLoadDone = S.firstLoadDone, currentData = S.currentData, groupedData = [], allCards = [], previousDataIds = new Set(), pollTimeout = null, retryDelay = 2000, lastPulseTime = 0;
+        const localStorage = S.ls, document = { getElementById: () => null, querySelector: () => null }, setTimeout = (fn, ms) => { S.calls.push('retry'); return 1; }, clearTimeout = () => {};
+        const nsKey = k => 'ns-' + k, getUserId = () => 'u1', serverUrl = p => p, getAuthHeaders = () => ({}), updateBadge = () => {}, updateList = () => {}, markVisibleAsRead = () => {}, recalculateNewStatus = () => {};
+        const fetch = async () => S.res; ${fcode}; return { resetThrottle: () => { lastFetchTime = 0; }, fetchData, clearAllNotifications, get firstLoadDone() { return firstLoadDone; } };`);
+    const S = { ls, calls, res, firstLoadDone: false, currentData: [] };
+    return { store, calls, S, api: f(S) };
+};
+{
+    const r = mkFetch({ status: 304, ok: false, headers: { get: () => null } });
+    r.store.set('ns-etag', '"x"');
+    await r.api.fetchData();
+    check('a 304 on a never-loaded bell asks again', r.calls.includes('retry') && !r.store.has('ns-etag'));
+    // An empty list that did load: its 304 is the answer, not a reason to refetch.
+    const r2 = mkFetch({ status: 200, ok: true, json: async () => [], headers: { get: () => '"e1"' } });
+    await r2.api.fetchData();
+    r2.S.res = { status: 304, ok: false, headers: { get: () => null } }; r2.api.resetThrottle(); r2.calls.length = 0;
+    await r2.api.fetchData();
+    check('a 304 after an empty list was loaded does not loop', !r2.calls.includes('retry') && r2.store.has('ns-etag'));
+    const r3 = mkFetch({ ok: true, status: 200 });
+    r3.store.set('ns-data', '[{"Id":"a"}]'); r3.store.set('ns-data-ts', '1'); r3.store.set('ns-etag', '"x"');
+    await r3.api.clearAllNotifications();
+    check('Clear also empties the stored list', !r3.store.has('ns-data') && !r3.store.has('ns-data-ts') && !r3.store.has('ns-etag'));
+}
+// TV: the remote's focus after the last card goes, and syntax the Chromium 56 of older TVs rejects.
+const restore = new Function(grab('    const tvRestoreIndex', '    // A redraw replaces the elements') + '; return tvRestoreIndex;')();
+const row = (cls) => [{ classList: { contains: c => c === cls } }];
+const rowsNow = [row('filter-pill'), row('dropdown-item'), row('dropdown-item'), row('footer-tools')];
+check('after the last card goes, focus stops on a card, not on "Clear list"', restore(rowsNow, 4, 1) === 2);
+check('a focus left on the footer stays there', restore(rowsNow, 3, 1) === 3);
+check('focus on a middle card stays', restore(rowsNow, 2, 1) === 2);
+check('first open lands on the first card', restore(rowsNow, null, 1) === 1);
+// The panel's keyboard handler, cut out of client.js and run against stand-in elements.
+const keysCode = grab('    const isTvLayout', '    // syncOnly');
+const mkKeys = ({ tv, display = 'flex', els = [], active = null }) => {
+    const S = { closed: 0, bellFocus: 0, handler: null, active };
+    const bell = { focus() { S.bellFocus++; } };
+    const drop = { style: { display }, contains: x => els.indexOf(x) !== -1, querySelectorAll: sel => sel.indexOf('.hero-section') === 0 ? els : [] };
+    const doc = { documentElement: { classList: { contains: () => tv } }, getElementById: id => id === 'notification-dropdown' ? drop : (id === 'netflix-bell' ? bell : null), get activeElement() { return S.active; } };
+    new Function('S', 'window', 'document', 'closeDropdown', keysCode)(S, { addEventListener: (t, fn) => { S.handler = fn; } }, doc, () => { S.closed++; });
+    S.press = (keyCode, extra) => {
+        const e = Object.assign({ keyCode, key: keyCode === 13 ? 'Enter' : (keyCode === 32 ? ' ' : ''), repeat: false, target: S.active, prevented: false, stopped: false, preventDefault() { this.prevented = true; }, stopImmediatePropagation() { this.stopped = true; } }, extra);
+        S.handler(e);
+        return e;
+    };
+    return S;
+};
+const mkCard = (cls) => ({ clicks: 0, click() { this.clicks++; }, contains(x) { return x === this; }, classList: { contains: c => c === cls }, matches(s) { return s.split(', ').indexOf('.' + cls) !== -1; }, focus() {}, scrollIntoView() {}, querySelector: () => null });
+{
+    const empty = mkKeys({ tv: true });
+    const down = empty.press(40);
+    check('TV, empty panel: the arrows are not swallowed', !down.prevented && !down.stopped);
+    const ok = empty.press(13);
+    check('TV, empty panel: OK closes it and returns the focus to the bell', empty.closed === 1 && empty.bellFocus === 1 && ok.prevented);
+}
+const withCard = (tv) => { const c = mkCard('dropdown-item'); const k = mkKeys({ tv, els: [c], active: c }); k.card = c; return k; };
+check('TV, a card: the arrows are still taken by the panel', withCard(true).press(40).prevented);
+{
+    const k = withCard(true);
+    const held = k.press(13, { repeat: true });
+    check('TV, a held OK does not click again', k.card.clicks === 0 && held.prevented);
+    k.press(13);
+    check('TV, OK opens the focused card once', k.card.clicks === 1);
+}
+// The system's long-press click (seen on the Philips, no key event reaches the page) lands on the first
+// card right after the panel opened: the card click is ignored in TV mode for a moment after opening.
+check('TV, a card click right after the panel opened is ignored (held OK echo)',
+    /panelOpenedAt = Date\.now\(\)/.test(src) && /isTvLayout\(\) && Date\.now\(\) - panelOpenedAt < 600\) return;/.test(src));
+// Keyboard on a computer: Escape closes the panel, Enter and Space act on a card, and the cards can be reached.
+{
+    const k = withCard(false);
+    const esc = k.press(27, { key: 'Escape' });
+    check('PC, Escape closes the panel and returns the focus to the bell', k.closed === 1 && k.bellFocus === 1 && esc.prevented);
+    k.press(13);
+    check('PC, Enter on a card clicks it', k.card.clicks === 1);
+    const sp = k.press(32);
+    check('PC, Space on a card clicks it without scrolling the page', k.card.clicks === 2 && sp.prevented);
+    k.press(13, { repeat: true });
+    check('PC, a held Enter clicks once', k.card.clicks === 2);
+    const pill = mkCard('filter-pill');
+    const onPill = k.press(13, { target: pill });
+    check('PC, Enter on a pill is left to the pill', pill.clicks === 0 && !onPill.prevented);
+    const shut = mkKeys({ tv: false, display: 'none' });
+    shut.press(27, { key: 'Escape' });
+    check('PC, Escape does nothing while the panel is closed', shut.closed === 0);
+}
+check('TV, Escape still closes the panel', (() => { const k = withCard(true); k.press(27); return k.closed === 1 && k.bellFocus === 1; })());
+check('cards and footer take the focus on every layout', /const cardStop = ' tabindex="0"';/.test(src) && !/tvStop/.test(src) && src.includes('class="footer-tools"${cardStop}') && src.includes('class="hero-section"${cardStop}'));
+check('the panel is a labelled dialog', src.includes("drop.setAttribute('role', 'dialog')") && src.includes("drop.setAttribute('aria-label', T.header)"));
+check('the bell says it opens a dialog and whether it is open', src.includes("bellBtn.setAttribute('aria-haspopup', 'dialog')") && src.includes("bell.setAttribute('aria-expanded', 'false')") && src.includes("bellBtn.setAttribute('aria-expanded', 'true')"));
+check('a keyboard click on the bell moves the focus into the panel', /e\.detail === 0 && !isTvLayout\(\)/.test(src));
+// Screen readers: decoration is hidden, the favorite star is named, in the three languages.
+check('the favorite star is an image named "Favorites" on the cards and the large card', (src.match(/<span class="ns-fav" role="img" aria-label="\$\{T\.filterFav\}">★<\/span>/g) || []).length === 2 && !/<span class="ns-fav">/.test(src));
+check('the star label exists in fr, en and pt', ['Favoris', 'Favorites', 'Favoritos'].every(t => src.includes('filterFav: "' + t + '"')));
+check('the swipe-delete strip and the placeholder icon are hidden from screen readers', src.includes('<div class="swipe-delete" aria-hidden="true">') && src.includes('<span class="material-icons" aria-hidden="true" style="color:#555;font-size:24px;">'));
+check('the thumbnail has an empty alt', /<img data-src="\$\{imgUrl\}" alt="" /.test(src));
+const codeOnly = src.split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n')
+    .replace(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g, '""').replace(/\/\/[^\n]*/g, '');
+check('no ?? (Chromium 56)', !/\?\?/.test(codeOnly));
+check('no ?. (Chromium 56)', !/\?\.[A-Za-z_$[(]/.test(codeOnly));
+check('no object spread (Chromium 56)', !/\{\s*\.\.\.[A-Za-z_$]/.test(codeOnly));
+// An upgrade card says what changed: "1080p → 4K" joins its subtitle.
+const wud = new Function('escapeHtml', grab('    const withUpgradeDetail', '    // Every episode number') + '; return withUpgradeDetail;')(s => String(s).replace(/</g, '&lt;'));
+check('an upgrade with a detail adds it to the subtitle', wud({ IsUpgrade: true, UpgradeDetail: '1080p → 4K' }, '2020') === '2020 • 1080p → 4K');
+check('with no subtitle the detail stands alone', wud({ IsUpgrade: true, UpgradeDetail: '1080p → 4K' }, '') === '1080p → 4K');
+check('a new card never shows a detail', wud({ IsUpgrade: false, UpgradeDetail: '1080p → 4K' }, '2020') === '2020');
+check('an upgrade without detail is unchanged', wud({ IsUpgrade: true }, '2020') === '2020');
+const upEp = (id, d) => ({ Id: id, Type: 'Episode', SeriesId: 'S9', SeriesName: 'Show', Category: 'Séries', IndexNumber: 1, ParentIndexNumber: 1, IsUpgrade: true, UpgradeKind: 'quality', UpgradeDetail: d, DateCreated: new Date(now - 100).toISOString() });
+const same = api.processGrouping([upEp('a1', '1080p → 4K'), upEp('a2', '1080p → 4K')]);
+check('a group of identical upgrades keeps the detail', same.length === 1 && same[0].UpgradeDetail === '1080p → 4K');
+const mixed = api.processGrouping([upEp('b1', '1080p → 4K'), upEp('b2', '720p → 1080p')]);
+check('a group of different upgrades shows none', mixed.length === 1 && !mixed[0].UpgradeDetail);
+// The large card keeps its title and subtitle on one line each, cut with an ellipsis.
+const heroRule = (cls) => (src.match(new RegExp('\.' + cls + ' \{[^}]*\}')) || [''])[0];
+check('hero title stays on one line with an ellipsis', /white-space: nowrap/.test(heroRule('hero-title')) && /text-overflow: ellipsis/.test(heroRule('hero-title')));
+check('hero subtitle stays on one line with an ellipsis', /white-space: nowrap/.test(heroRule('hero-sub')) && /text-overflow: ellipsis/.test(heroRule('hero-sub')));
+check('hero markup uses those classes', src.includes('class="hero-title"') && src.includes('class="hero-sub"'));
+// The admin page carries the single "favorites in the bell" switch, in the three languages, saved and loaded.
+const page = fs.readFileSync(new URL('../../ConfigurationPage.html', import.meta.url), 'utf8');
+check('the one favorites switch is on the admin page', (page.match(/id="favoritesToggle"/g) || []).length === 1);
+check('the switch is translated in fr, en and pt', ['Favoris dans la cloche', 'Favorites in the Bell', 'Favoritos no sino'].every(t => page.includes('favTitle: "' + t + '"')));
+check('the switch is loaded and saved', page.includes('this.config.FavoritesInBell === true') && page.includes('this.config.FavoritesInBell = '));
+// The panel takes the page's font, and the bell shows a focus outline on TV only.
+const dropRule = (src.match(/#notification-dropdown \{[^}]*\}/) || [''])[0];
+check('the panel follows the font of the page', /font-family: inherit;/.test(dropRule) && !src.includes("Noto Sans"));
+check('the bell has a white 3px outline on focus in the TV layout', /\.layout-tv #netflix-bell:focus:not\(\.ns-themed-focus\) \{ outline: 3px solid #fff !important;/.test(src)); // !important: Jellyfin sets outline: none !important on .paper-icon-button-light
+check('a theme that marks the focused button itself (raised z-index) keeps the outline off', src.includes("classList.toggle('ns-themed-focus', (parseInt(getComputedStyle(bellBtn).zIndex, 10) || 0) > 0)"));
+check('that outline is for the TV layout only', !/(^|[^-])#netflix-bell:focus/m.test(src.replace(/\.layout-tv #netflix-bell:focus:not\(\.ns-themed-focus\)/g, '')));
+// D15 to D17: switches by keyboard, labels in the language, clear without the device clock.
+check('Clear sends no date from the device clock', !/NotifySync\/Clear\/[^`]*\?date=/.test(src) && !/Clear[^\n]*toISOString/.test(src));
+for (const id of ['favoritesToggle', 'enableDeletedToggle']) {
+    const tag = (page.match(new RegExp('<div id="' + id + '"[^>]*>')) || [''])[0];
+    check(id + ' is a keyboard switch', /role="switch"/.test(tag) && /tabindex="0"/.test(tag) && /aria-labelledby="/.test(tag) && /event\.key==='Enter'\|\|event\.key===' '/.test(tag));
+}
+check('switches show a focus outline', /\.ns-toggle:focus-visible \{ outline: 2px solid var\(--ns-accent\)/.test(page));
+check('the page has no hard-coded English accessible name left', !/aria-label="(Move up|Move down|Delete)"/.test(page) && /aria-label="' \+ CT\.moveUp/.test(page));
+check('the three languages carry the page labels', ['Monter', 'Move up', 'Subir'].every(t => page.includes('moveUp: "' + t + '"')) && ['Supprimer', 'Delete', 'Excluir'].every(t => page.includes('removeLabel: "' + t + '"')));
+check('the bell label comes from the dictionary', src.includes("setAttribute('aria-label', T.bellLabel)") && ['Notifications', 'Notificações'].every(t => src.includes('bellLabel: "' + t + '"')));
+// The hero's badges sit in their own row, not inline above the title (a gap showed under the pill).
+check('hero badges are in a flex row of their own', /\.ns-hero-badges \{ display: flex;/.test(src) && src.includes('<div class="ns-hero-badges">'));
+check('the hero markup no longer sets badges inline before the title', !/<div class="hero-content">\$\{showsBadge/.test(src));
+// Admin page a11y: the quota slider shows its focus and is named, its value is an <output>.
+check('quota slider thumb shows a focus ring (webkit and moz)', /\.ns-slider:focus-visible::-webkit-slider-thumb \{[^}]*outline: 2px solid var\(--ns-accent\)/.test(page) && /\.ns-slider:focus-visible::-moz-range-thumb \{[^}]*outline: 2px solid var\(--ns-accent\)/.test(page));
+check('quota slider is named by the setting title', /<input type="range" id="maxItemsSlider"[^>]*aria-labelledby="i18n-quotaTitle"/.test(page) && page.includes('id="i18n-quotaTitle"'));
+check('quota value is an <output> tied to the slider', /<output id="maxItemsValue"[^>]*for="maxItemsSlider"/.test(page));
+// Admin page a11y: tabs say which one is selected and what they control.
+const tabNames = ['settings', 'libraries', 'collections', 'categories', 'deletions'];
+check('each tab has aria-selected and aria-controls to its panel', tabNames.every(n => new RegExp('<button type="button" class="ns-tab[^"]*" data-tab="' + n + '" role="tab" aria-selected="(true|false)" aria-controls="ns-panel-' + n + '"').test(page) && new RegExp('<div class="ns-panel[^"]*" data-panel="' + n + '" id="ns-panel-' + n + '" role="tabpanel"').test(page)));
+check('only the first tab starts selected', (page.match(/class="ns-tab[^"]*"[^>]*aria-selected="true"/g) || []).length === 1 && /class="ns-tab active" data-tab="settings" role="tab" aria-selected="true"/.test(page));
+check('switching tabs moves aria-selected with the active class', /classList\.toggle\('active', on\);\s*t\.setAttribute\('aria-selected', on\)/.test(page));
+// Admin page a11y: the toast is announced.
+check('the toast is a polite live region', /<div id="ns-toast" class="ns-toast" role="status" aria-live="polite"/.test(page));
+const grab2 = (start, end) => { const a = page.indexOf(start); const b = page.indexOf(end, a); if (a < 0 || b < 0) throw new Error('missing ' + start); return page.slice(a, b); };
+// Admin page a11y: the confirmation window is a dialog, focus goes in on Cancel, Escape closes, focus comes back.
+check('the confirmation window is a modal dialog named by its title', /<div class="ns-modal" role="dialog" aria-modal="true" aria-labelledby="ns-modal-title"/.test(page));
+const confirmFn = grab2('function showConfirm', 'const NotifySyncConf');
+check('the dialog opens on Cancel', /page\.querySelector\('#ns-modal-cancel'\)\.focus\(\)/.test(confirmFn));
+check('Escape closes the dialog', /backdrop\.onkeydown = [^;]*'Escape'/.test(confirmFn.replace(/\s+/g, ' ')));
+check('focus returns to the element that opened it', /const opener = document\.activeElement/.test(confirmFn) && /opener\.focus\(\)/.test(confirmFn));
+// Admin page a11y: the history columns sort by keyboard and say how they are sorted.
+const renderFn = grab2('renderDeletedItems: function', 'pageItems.forEach((item, i)');
+check('every sortable header is focusable and carries aria-sort', (renderFn.match(/<th [^\n]*data-col="/g) || []).length === 7 && (renderFn.match(/<th [^\n]*data-col="[^\n]*' \+ sortAttrs\(/g) || []).length === 7 && /aria-sort="' \+ \(c === col \? \(dir === 'asc' \? 'ascending' : 'descending'\) : 'none'\)/.test(renderFn) && /tabindex="0"/.test(renderFn));
+const wireFn = grab2("// Wire sort handlers", '// Pagination handlers');
+check('Enter and Space sort a header', /th\.onkeydown = [^;]*'Enter'[^;]*' '/.test(wireFn.replace(/\s+/g, ' ')) && /th\.click\(\)/.test(wireFn));
+check('focus stays on the header after the table is redrawn', /th\[data-col="' \+ newCol/.test(wireFn) && /again\.focus\(\)/.test(wireFn));
+check('sortable headers show a focus outline', /\.ns-table th:focus-visible \{ outline: 2px solid var\(--ns-accent\)/.test(page));
+// Reduced motion and unshared names (audit 2026-11-22).
+check('settings page: reduced motion switches the panel animation and the transitions off',
+    /@media \(prefers-reduced-motion: reduce\)[^}]*\.ns-panel \{ animation: none; \}/.test(page));
+check('settings page: its keyframes are not named like the fadein of jellyfin-web', /@keyframes ns-fadein/.test(page) && !/@keyframes fadein/.test(page));
+check('the short-screen rules apply to the panel only, not to any page element with these classes',
+    /#notification-dropdown \.hero-section \{ height: 110px !important/.test(src) && /#notification-dropdown \.list-container \{ flex: 1/.test(src) && !/^\s*\.hero-section \{ height: 110px/m.test(src));
+check('bell: reduced motion also covers the badge, the pills and the bell', /\.ns-badge, \.filter-pill, #netflix-bell \{ transition: none; \}/.test(src));
+api.setData([]);
+console.log(fail ? fail + ' test(s) failed.' : 'All tests passed.');
+process.exit(fail ? 1 : 0);

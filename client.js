@@ -1,7 +1,9 @@
-/* NOTIFYSYNC V5.8.4.0 */
+/* NOTIFYSYNC V6.0.2.9 (Jellyfin 12) */
 (function () {
     let currentData = [];
     let groupedData = [];
+    // Every card, before the quota: what clearing, dismissing and the Favorites filter work on.
+    let allCards = [];
     let firstLoadDone = false;
     let isFetching = false;
     let retryDelay = 2000;
@@ -20,11 +22,20 @@
     // on every refresh, recreating every <img> with it, several times an hour.
     let lastRenderedHtml = null;
 
+    // Where the server's API lives. In a browser the page comes from the server itself, so this
+    // is the address the bell always called; in a TV app the page ships inside the app, and a
+    // bare path would never reach Jellyfin.
+    const serverUrl = (path) => {
+        const client = window.ApiClient;
+        const base = client && client.serverAddress ? (client.serverAddress() || '') : '';
+        return base.replace(/\/+$/, '') + path;
+    };
+
     const markReadOnServer = async (itemIds) => {
         const userId = getUserId();
         if (!userId || !itemIds || itemIds.length === 0) return;
         try {
-            const res = await fetch(`/NotifySync/MarkRead?userId=${userId}`, {
+            const res = await fetch(serverUrl(`/NotifySync/MarkRead?userId=${userId}`), {
                 method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(itemIds)
             });
             // On failure (e.g. 429 when a late fill re-marks within the server's 500ms
@@ -39,7 +50,7 @@
         const userId = getUserId();
         if (!userId || !itemId) return false;
         try {
-            const res = await fetch(`/NotifySync/Dismiss/${userId}/${itemId}`, {
+            const res = await fetch(serverUrl(`/NotifySync/Dismiss/${userId}/${itemId}`), {
                 method: 'POST', headers: getAuthHeaders()
             });
             return res.ok;
@@ -50,7 +61,7 @@
         const userId = getUserId();
         if (!userId || !itemIds || itemIds.length === 0) return false;
         try {
-            const res = await fetch(`/NotifySync/BulkDismiss/${userId}`, {
+            const res = await fetch(serverUrl(`/NotifySync/BulkDismiss/${userId}`), {
                 method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(itemIds)
             });
             return res.ok;
@@ -59,10 +70,18 @@
 
     let userLang = navigator.language || 'en';
     const strings = {
-        fr: { header: "Quoi de neuf ?", empty: "Vous êtes à jour !", loading: "Chargement…", clearAll: "Vider la liste", clearCat: "Vider", dismiss: "Retirer", badgeNew: "NOUVEAU", badgeUpgrade: "MAJ", eps: "épisodes", eps1: "épisode", epPrefix: "Ép.", tracks: "pistes", tracks1: "piste", filterAll: "Tout", filterMovie: "Films", filterSeries: "Séries", filterMusic: "Musique", filterOther: "Autre", filterFav: "Favoris", kindQuality: "Qualité", kindCodec: "Codec", kindAudio: "Audio", kindAll: "Tout", season: "Saison", secToday: "Aujourd'hui", secWeek: "Cette semaine", secOlder: "Plus ancien" },
-        en: { header: "What's New?", empty: "You're all caught up!", loading: "Loading…", clearAll: "Clear list", clearCat: "Clear", dismiss: "Dismiss", badgeNew: "NEW", badgeUpgrade: "UPD", eps: "episodes", eps1: "episode", epPrefix: "Ep.", tracks: "tracks", tracks1: "track", filterAll: "All", filterMovie: "Movies", filterSeries: "Series", filterMusic: "Music", filterOther: "Other", filterFav: "Favorites", kindQuality: "Quality", kindCodec: "Codec", kindAudio: "Audio", kindAll: "All", season: "Season", secToday: "Today", secWeek: "This week", secOlder: "Earlier" }
+        fr: { header: "Quoi de neuf ?", empty: "Vous êtes à jour !", loading: "Chargement…", clearAll: "Vider la liste", bellLabel: "Notifications", clearCat: "Vider", dismiss: "Retirer", badgeNew: "NOUVEAU", badgeAdded: "AJOUTÉ", badgeAddedTo: "AJOUTÉ À", badgeUpgrade: "MAJ", eps: "épisodes", eps1: "épisode", epPrefix: "Ép.", tracks: "pistes", tracks1: "piste", filterAll: "Tout", filterMovie: "Films", filterSeries: "Séries", filterMusic: "Musique", filterOther: "Autre", filterFav: "Favoris", kindQuality: "Qualité", kindCodec: "Codec", kindAudio: "Audio", kindAll: "Tout", season: "Saison", secToday: "Aujourd'hui", secWeek: "Cette semaine", secOlder: "Plus ancien" },
+        en: { header: "What's New?", empty: "You're all caught up!", loading: "Loading…", clearAll: "Clear list", bellLabel: "Notifications", clearCat: "Clear", dismiss: "Dismiss", badgeNew: "NEW", badgeAdded: "ADDED", badgeAddedTo: "ADDED TO", badgeUpgrade: "UPD", eps: "episodes", eps1: "episode", epPrefix: "Ep.", tracks: "tracks", tracks1: "track", filterAll: "All", filterMovie: "Movies", filterSeries: "Series", filterMusic: "Music", filterOther: "Other", filterFav: "Favorites", kindQuality: "Quality", kindCodec: "Codec", kindAudio: "Audio", kindAll: "All", season: "Season", secToday: "Today", secWeek: "This week", secOlder: "Earlier" },
+        pt: { header: "Novidades", empty: "Você está em dia!", loading: "Carregando…", clearAll: "Limpar lista", bellLabel: "Notificações", clearCat: "Limpar", dismiss: "Dispensar", badgeNew: "NOVO", badgeAdded: "ADICIONADO", badgeAddedTo: "ADICIONADO A", badgeUpgrade: "ATUAL.", eps: "episódios", eps1: "episódio", epPrefix: "Ep.", tracks: "faixas", tracks1: "faixa", filterAll: "Tudo", filterMovie: "Filmes", filterSeries: "Séries", filterMusic: "Música", filterOther: "Outros", filterFav: "Favoritos", kindQuality: "Qualidade", kindCodec: "Codec", kindAudio: "Áudio", kindAll: "Tudo", season: "Temporada", secToday: "Hoje", secWeek: "Esta semana", secOlder: "Mais antigos" }
     };
-    let T = strings[userLang.startsWith('fr') ? 'fr' : 'en'];
+    // A locale ("pt-BR", "fr-FR", "en-US"…) to a table above; English otherwise.
+    const langKey = (lang) => {
+        const l = (lang || '').toLowerCase();
+        if (l.startsWith('pt')) return 'pt';
+        if (l.startsWith('fr')) return 'fr';
+        return 'en';
+    };
+    let T = strings[langKey(userLang)];
 
     // Locale-aware date/time formatters, rebuilt when the Jellyfin language changes.
     // Intl picks the right convention per locale (FR → "14:30" 24h, EN → "2:30 PM").
@@ -79,7 +98,7 @@
             const userId = getUserId();
             if (!userId) return;
             const jfLang = localStorage.getItem(userId + '-language') || userLang;
-            const key = jfLang.startsWith('fr') ? 'fr' : 'en';
+            const key = langKey(jfLang);
             if (T !== strings[key]) {
                 T = strings[key];
                 userLang = jfLang;
@@ -131,16 +150,25 @@
 
     const getAuthHeaders = () => {
         if (!window.ApiClient) return {};
+        const token = window.ApiClient.accessToken();
         return {
             'Content-Type': 'application/json',
-            'X-Emby-Token': window.ApiClient.accessToken()
+            // Jellyfin 12 disabled the deprecated X-Emby-Token header auth. The
+            // MediaBrowser Authorization scheme is accepted by 10.x and 12 alike;
+            // the legacy header is kept as a harmless fallback for older servers.
+            // The token alone: Jellyfin then takes the client, device and version from
+            // the device the token belongs to. Naming our own ("Web", our version) made
+            // it overwrite the user's browser in Dashboard > Devices, and rewrite that
+            // device in its database each time the browser and the bell took turns.
+            'Authorization': 'MediaBrowser Token="' + token + '"',
+            'X-Emby-Token': token
         };
     };
 
     const injectStyles = () => {
         if (document.getElementById('notifysync-css')) return;
         const css = `
-            :root { --ns-red: #e50914; --ns-upgrade: #2196F3; --ns-glass: rgba(20, 20, 20, 0.98); --ns-blur: 16px; --ns-border: rgba(255,255,255,0.15); }
+            :root { --ns-red: #e50914; --ns-upgrade: #1976D2; --ns-collection: #7e57c2; --ns-glass: rgba(20, 20, 20, 0.98); --ns-blur: 16px; --ns-border: rgba(255,255,255,0.15); }
             #netflix-bell { background:0 0;border:none;cursor:pointer;color:inherit;position:relative; transition: transform 0.2s; width:35px;height:35px;overflow:visible;display:inline-flex!important;align-items:center;justify-content:center; }
             #netflix-bell:active { transform: scale(0.9); }
             .ns-badge {
@@ -153,14 +181,14 @@
                 transform: scale(0.5); pointer-events: none;
             }
             .ns-badge.visible { opacity: 1; transform: scale(1); }
-            #notify-backdrop { position: fixed; inset: 0; z-index: 999998; display: none; }
+            #notify-backdrop { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 999998; display: none; }
             #notification-dropdown {
                 position: fixed; top: 70px; right: 20px; width: 380px; max-width: 90vw;
                 background: var(--ns-glass); backdrop-filter: blur(var(--ns-blur)); -webkit-backdrop-filter: blur(var(--ns-blur));
                 border: 1px solid var(--ns-border); border-radius: 12px;
                 box-shadow: 0 20px 60px rgba(0,0,0,0.6);
                 z-index: 999999; display: none;
-                font-family: 'Noto Sans', sans-serif;
+                font-family: inherit;
                 animation: slideDown 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
                 overflow: hidden;
                 flex-direction: column;
@@ -169,8 +197,8 @@
             @media (max-width: 600px) { #notification-dropdown { top: 60px; right: 10px; left: 10px; width: auto; max-width: none; } }
             @media (max-height: 500px) {
                 #notification-dropdown { top: 10px; bottom: 10px; right: 20px; left: auto; width: 400px; max-height: none; }
-                .hero-section { height: 110px !important; flex-shrink: 0; }
-                .list-container { flex: 1; overflow-y: auto; max-height: none !important; }
+                #notification-dropdown .hero-section { height: 110px !important; flex-shrink: 0; }
+                #notification-dropdown .list-container { flex: 1; overflow-y: auto; max-height: none !important; }
             }
             @media (max-height: 500px) and (max-width: 600px) { #notification-dropdown { left: 10px; right: 10px; width: auto; } }
             @keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
@@ -181,7 +209,7 @@
             .dismiss-btn { position:absolute; top:6px; right:6px; background:rgba(255,255,255,0.1); border:none; color:#888; cursor:pointer; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; line-height:1; opacity:0; transition:opacity 0.2s, background 0.2s; z-index:2; padding:0; font-family:'Material Icons'; }
             .dropdown-item:hover .dismiss-btn { opacity:1; }
             .dismiss-btn:hover { background:rgba(255,255,255,0.2); color:#fff; }
-            @media (pointer: coarse) { .dismiss-btn { opacity:0.6; } .dismiss-btn::after { content:''; position:absolute; inset:-10px; border-radius:50%; } }
+            @media (pointer: coarse) { .dismiss-btn { opacity:0.6; } .dismiss-btn::after { content:''; position:absolute; top:-10px; right:-10px; bottom:-10px; left:-10px; border-radius:50%; } }
             .dismiss-btn:focus-visible { opacity:1; outline:2px solid #fff; outline-offset:2px; }
             @keyframes dismissSlide { to { opacity:0; transform:translateX(50px); height:0; padding:0; margin:0; overflow:hidden; } }
             .dismissing { animation: dismissSlide 0.3s ease-out forwards; }
@@ -190,19 +218,25 @@
             .dropdown-item.swiping .swipe-delete { opacity:1; pointer-events:auto; }
             .dropdown-header { display:flex; justify-content:space-between; padding:16px 20px; border-bottom: 1px solid var(--ns-border); background: rgba(0,0,0,0.3); align-items:center; flex-shrink: 0; }
             .header-title { font-weight: 700; font-size: 15px; letter-spacing: 0.5px; }
-            .filter-bar { padding: 10px 20px; display: flex; gap: 8px; border-bottom: 1px solid var(--ns-border); overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
+            .filter-bar { padding: 10px 20px; display: flex; border-bottom: 1px solid var(--ns-border); overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
+            .filter-bar > * + * { margin-left: 8px; }
             .filter-pill { font-size: 11px; padding: 4px 12px; border-radius: 20px; background: rgba(255,255,255,0.05); cursor: pointer; transition: all 0.2s; border: 1px solid transparent; white-space: nowrap; position: relative; user-select: none; -webkit-user-select: none; }
             .filter-pill.active { background: #fff; color: #000; font-weight: 700; box-shadow: 0 0 10px rgba(255,255,255,0.2); }
             .list-container { max-height: 500px; overflow-y: auto; -webkit-overflow-scrolling: touch; content-visibility: auto; contain-intrinsic-size: 500px; flex: 1; }
             .dropdown-item { display:flex; padding:12px 20px; border-bottom:1px solid var(--ns-border); cursor:pointer; transition: background .2s; position: relative; overflow: hidden; }
             .dropdown-item:hover { background: rgba(255,255,255,0.08); }
-            .item-badge { display: none; font-size: 9px; font-weight: bold; padding: 2px 5px; border-radius: 3px; color: #fff; line-height: 1; letter-spacing: 0.5px; width: fit-content; margin-bottom: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); text-transform: uppercase; }
+            .ns-badge-row { display: flex; flex-wrap: wrap; margin-bottom: -2px; margin-right: -4px; min-width: 0; }
+            .ns-badge-row .item-badge { margin: 0 4px 4px 0; }
+            .dropdown-item .item-badge.collection { display: block; background: var(--ns-collection); box-shadow: 0 1px 3px rgba(126,87,194,0.5); }
+            .item-badge { display: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; font-weight: bold; padding: 2px 5px; border-radius: 3px; color: #fff; line-height: 1; letter-spacing: 0.5px; width: fit-content; margin-bottom: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); text-transform: uppercase; }
             .style-new .item-badge { display: block; background: var(--ns-red); box-shadow: 0 1px 3px rgba(229,9,20,0.5); }
             .style-new { box-shadow: inset 3px 0 0 var(--ns-red); }
-            .style-upgrade .item-badge { display: block; background: var(--ns-upgrade); box-shadow: 0 1px 3px rgba(33,150,243,0.5); }
+            .style-upgrade .item-badge { display: block; background: var(--ns-upgrade); box-shadow: 0 1px 3px rgba(25,118,210,0.5); }
             .style-upgrade { box-shadow: inset 3px 0 0 var(--ns-upgrade); }
+            .style-collection .item-badge { display: block; background: var(--ns-collection); box-shadow: 0 1px 3px rgba(126,87,194,0.5); }
+            .style-collection { box-shadow: inset 3px 0 0 var(--ns-collection); }
             .thumb-wrapper { width:90px; height:50px; margin-right:15px; flex-shrink:0; background:#222; border-radius:6px; overflow:hidden; display:flex; justify-content:center; align-items:center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); position:relative; }
-            .dropdown-thumb { width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 0.3s; position:absolute; inset:0; z-index:1; }
+            .dropdown-thumb { width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 0.3s; position:absolute; top:0; right:0; bottom:0; left:0; z-index:1; }
             .dropdown-thumb.music { object-fit:contain; }
             .dropdown-thumb.loaded { opacity:1; }
             .dropdown-info { flex:1; display:flex; flex-direction:column; justify-content:center; min-width: 0; }
@@ -214,20 +248,41 @@
             .hero-section .dismiss-btn { top:10px; right:10px; background:rgba(0,0,0,0.5); color:#fff; z-index:3; }
             .hero-section:hover .dismiss-btn { opacity:1; }
             .hero-section .dismiss-btn:hover { background:rgba(229,9,20,0.8); }
-            .hero-bg { position: absolute; inset: 0; background-size: cover; background-position: center center; transition: transform 5s ease; background-color: #1a1a2e; }
-            .hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, var(--ns-glass) 5%, transparent 100%); }
+            .hero-bg { position: absolute; top: 0; right: 0; bottom: 0; left: 0; background-size: cover; background-position: center center; transition: transform 5s ease; background-color: #1a1a2e; }
+            .hero-overlay { position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: linear-gradient(to top, var(--ns-glass) 5%, transparent 100%); }
             .hero-content { position: relative; z-index: 2; padding: 20px; width: 100%; }
-            .hero-badge { background: var(--ns-red); color: #fff; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 3px; display: inline-block; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); text-transform: uppercase; }
+            .hero-badge { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: top; background: var(--ns-red); color: #fff; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 3px; display: inline-block; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); text-transform: uppercase; }
+            /* One line each, cut with an ellipsis: a long episode title used to grow upward out of the 160px banner and push the badge off its top edge. */
+            .hero-content { box-sizing: border-box; min-width: 0; }
+            .hero-title { font-size: 18px; font-weight: 700; text-shadow: 0 2px 4px #000; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .hero-sub { font-size: 12px; opacity: 0.8; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .ns-hero-badges { display: flex; flex-wrap: wrap; align-items: flex-start; margin-bottom: 1px; margin-right: -4px; }
+            .ns-hero-badges .hero-badge, .ns-hero-badges .hero-badge-upgrade { margin: 0 4px 4px 0; line-height: 1.3; }
+            .hero-badge.collection { background: var(--ns-collection); }
             .hero-badge-upgrade { background: var(--ns-upgrade); color: #fff; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 3px; display: inline-block; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); text-transform: uppercase; }
             .footer-tools { padding: 10px; text-align: center; border-top: 1px solid var(--ns-border); font-size: 11px; color: #888; cursor: pointer; transition: color 0.2s; flex-shrink: 0; }
             .footer-tools:hover { color: #fff; text-decoration: underline; }
-            .ns-section { font-size: 11px; color: #999; letter-spacing: 1.1px; text-transform: uppercase; padding: 12px 20px 4px; display: flex; align-items: center; gap: 8px; user-select: none; }
-            .ns-section::after { content: ''; flex: 1; height: 1px; background: var(--ns-border); }
+            .ns-section { font-size: 11px; color: #999; letter-spacing: 1.1px; text-transform: uppercase; padding: 12px 20px 4px; display: flex; align-items: center; user-select: none; }
+            .ns-section::after { content: ''; margin-left: 8px; flex: 1; height: 1px; background: var(--ns-border); }
             .ns-fav { color: #f0a92d; font-size: 11px; vertical-align: 1px; }
+            .layout-tv #netflix-bell { width: auto; height: auto; }
+            .layout-tv #netflix-bell .ns-badge { top: calc(50% - 1.2em); right: calc(50% - 1.2em); font-size: 0.6em; line-height: 1.3; min-width: 1.3em; padding: 0 0.4em; box-sizing: border-box; text-align: center; border-radius: 1em; }
+            .layout-tv #notification-dropdown { transform: scale(1.5); transform-origin: top right; max-height: calc(80vh / 1.5); animation-name: nsSlideDownTv; }
+            @keyframes nsSlideDownTv { from { opacity:0; transform:translateY(-10px) scale(1.5); } to { opacity:1; transform:scale(1.5); } }
+            /* The bell itself, reached by the remote: the same white 3 px outline as the cards. The page sets outline: none !important on header buttons, so this one needs !important too. */
+            .layout-tv #netflix-bell:focus:not(.ns-themed-focus) { outline: 3px solid #fff !important; outline-offset: 2px; }
+            .layout-tv #notification-dropdown .filter-pill:focus, .layout-tv #notification-dropdown .footer-tools:focus { outline: 3px solid #fff; outline-offset: -3px; }
+            .layout-tv #notification-dropdown .filter-pill.active:focus { outline-offset: 2px; }
+            .layout-tv #notification-dropdown .hero-section:focus, .layout-tv #notification-dropdown .dropdown-item:focus { outline: none; }
+            .layout-tv #notification-dropdown .hero-section:focus::after, .layout-tv #notification-dropdown .dropdown-item:focus::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; border: 3px solid #fff; pointer-events: none; z-index: 4; }
+            .layout-tv #notification-dropdown .dropdown-item:focus, .layout-tv #notification-dropdown .footer-tools:focus { background: rgba(255,255,255,0.12); color: #fff; }
+            .layout-tv #notification-dropdown .dropdown-item:focus .dismiss-btn, .layout-tv #notification-dropdown .hero-section:focus .dismiss-btn { opacity: 0.8; }
+            .layout-tv #notification-dropdown .dismiss-btn:focus { opacity: 1; background: #fff; color: #000; outline: none; }
             @media (prefers-reduced-motion: reduce) {
-                #notification-dropdown, .ns-pulse, .ns-pulse .ns-badge { animation: none; }
+                #notification-dropdown, .layout-tv #notification-dropdown, .ns-pulse, .ns-pulse .ns-badge { animation: none; }
                 .dismissing { animation-duration: 0.01ms; }
                 .dropdown-item { transition: none; }
+                .ns-badge, .filter-pill, #netflix-bell { transition: none; }
             }
         `;
         const style = document.createElement('style'); style.id = 'notifysync-css'; style.textContent = css; document.head.appendChild(style);
@@ -299,14 +354,31 @@
         return seasonsLabel ? `${seasonsLabel} • ${detail}` : detail;
     };
 
+    // An upgrade says what changed in the file when the names told: "1080p → 4K".
+    const withUpgradeDetail = (item, sub) => (item.IsUpgrade && item.UpgradeDetail ? (sub ? sub + ' • ' : '') + escapeHtml(item.UpgradeDetail) : sub);
+
+    // Every episode number a file holds: one, or a run for a file named "S01E01-E02",
+    // which Jellyfin keeps as a single episode with an end number.
+    const episodeSpan = (e) => {
+        const a = e.IndexNumber, b = e.IndexNumberEnd;
+        if (!Number.isInteger(a) || !Number.isInteger(b) || b <= a || b - a > 50) return [a];
+        const run = [];
+        for (let n = a; n <= b; n++) run.push(n);
+        return run;
+    };
+
+    const BATCH_GAP_MS = 60 * 60 * 1000;
     const processGrouping = (items) => {
         const seriesMap = new Map();
         const result = [];
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
             if ((item.Type === 'Episode' && item.SeriesId) || (item.Type === 'Audio' && item.SeriesId)) {
-                let group = seriesMap.get(item.SeriesId);
-                if (!group) { group = []; seriesMap.set(item.SeriesId, group); }
+                // Keyed by category too: a series a monitored collection holds would otherwise
+                // pour its collection episodes into the library's card for the same series.
+                const key = item.Category + '|' + item.SeriesId;
+                let group = seriesMap.get(key);
+                if (!group) { group = []; seriesMap.set(key, group); }
                 group.push(item);
             } else { result.push(item); }
         }
@@ -327,16 +399,34 @@
             // plus one per upgrade reason). Each card needs an identity of its own — they
             // used to share the series id, so removing one took the others down with it and
             // only one of them left the screen.
-            const subsets = [['new', newEps], ...Array.from(upgradesByKind.entries())];
-            subsets.forEach(([subsetKey, subset]) => {
+            // Only what arrived together shares a card: a gap of more than an hour starts a new
+            // one. A weekly show left unwatched for three weeks read "Ep. 1-3" at the time of
+            // the third, as if three episodes had just landed (seen on a 12.2 server); a whole
+            // season imported at once still makes a single card.
+            const batches = [];
+            [['new', newEps], ...Array.from(upgradesByKind.entries())].forEach(([kindKey, list]) => {
+                let batch = null;
+                list.forEach(e => {
+                    const t = new Date(e.DateCreated).getTime();
+                    if (!batch || batch.oldest - t > BATCH_GAP_MS) {
+                        batch = { key: kindKey + '#' + e.Id, items: [], oldest: t };
+                        batches.push([batch.key, batch.items]);
+                    }
+                    batch.items.push(e);
+                    batch.oldest = t;
+                });
+            });
+            batches.forEach(([subsetKey, subset]) => {
                 if (subset.length === 0) return;
                 const latest = subset[0];
                 const hasNew = subset.some(e => e.IsNew);
                 if (subset.length > 1) {
                     // Label covers the whole group: badges no longer fade, so every
-                    // member is current and the count == the group size.
+                    // member is current. The count is the episodes the files hold, a
+                    // double-episode file counting for two.
                     const seasons = subset.map(e => e.ParentIndexNumber);
-                    const episodes = subset.map(e => e.IndexNumber);
+                    const episodes = [];
+                    subset.forEach(e => episodes.push(...episodeSpan(e)));
                     const seriesKey = latest.SeriesId || latest.Id;
                     // Open what the card actually announces. "Season 4 • Ep. 1-12" should land
                     // on that season, not on the series — which is what music already did, a
@@ -346,11 +436,26 @@
                     // Id stays the series id — grouping and the favorite lookup key on it.
                     // CardId addresses this card alone, MemberIds says exactly what it stands
                     // for, and NavId is where a click goes.
-                    result.push({ ...latest, IsGroup: true, GroupCount: subset.length, Name: latest.SeriesName || latest.Name, Id: seriesKey, NavId: oneSeason ? latest.SeasonId : seriesKey, CardId: seriesKey + '#' + subsetKey, MemberIds: subset.map(e => e.Id), IsNew: hasNew, Seasons: seasons, Episodes: episodes, IsFavorite: subset.some(e => e.IsFavorite) });
+                    result.push(Object.assign({}, latest, { IsGroup: true, GroupCount: episodes.length, Name: latest.SeriesName || latest.Name, Id: seriesKey, NavId: oneSeason ? latest.SeasonId : seriesKey, CardId: seriesKey + '#' + subsetKey, MemberIds: subset.map(e => e.Id), IsNew: hasNew, Seasons: seasons, Episodes: episodes, IsFavorite: subset.some(e => e.IsFavorite), UpgradeDetail: subset.every(e => e.UpgradeDetail === latest.UpgradeDetail) ? latest.UpgradeDetail : undefined }));
                 } else { result.push(latest); }
             });
         });
         return result.sort((a, b) => new Date(b.DateCreated) - new Date(a.DateCreated));
+    };
+
+    // "Quota per Category" reads as what the bell shows: that many cards per category. The
+    // server keeps that many titles, and a series split into one card per arrival can hold
+    // several, so 10 titles drew 14 cards. The newest cards stay; the rest wait on the server
+    // and come back as cards are dismissed. A server that sends no quota cuts nothing.
+    const capCardsPerCategory = (cards) => {
+        const quota = cards.length > 0 ? cards[0].CardQuota : null;
+        if (!Number.isInteger(quota) || quota < 1) return cards;
+        const shown = new Map();
+        return cards.filter(c => {
+            const n = (shown.get(c.Category) || 0) + 1;
+            shown.set(c.Category, n);
+            return n <= quota;
+        });
     };
 
     // The categories present, in the order the bell shows its filters: first the ones the
@@ -372,15 +477,22 @@
         if (!userId) return;
 
         try {
-            const res = await fetch(`/NotifySync/Clear/${userId}?date=${encodeURIComponent(new Date().toISOString())}`, { method: 'POST', headers: getAuthHeaders() });
+            // No date sent: the server clears up to its own clock. The device's could be behind
+            // and leave recent additions visible.
+            const res = await fetch(serverUrl(`/NotifySync/Clear/${userId}`), { method: 'POST', headers: getAuthHeaders() });
             if (!res.ok) return;
         } catch (e) { return; }
 
         currentData = [];
         groupedData = [];
+        allCards = [];
         previousDataIds = new Set();
         lastFetchTime = 0;
+        // The stored copy goes too: left behind, it is read back on the next load as if the
+        // cleared cards were still there.
         localStorage.removeItem(nsKey('etag'));
+        localStorage.removeItem(nsKey('data'));
+        localStorage.removeItem(nsKey('data-ts'));
         updateBadge();
         const drop = document.getElementById('notification-dropdown');
         if (drop) updateList(drop);
@@ -392,17 +504,23 @@
 
         // '__fav' is the virtual favorites filter, not a real category.
         const matches = category === '__fav' ? (i) => i.IsFavorite : (i) => i.Category === category;
-        // Dismiss by CARD id (group id = SeriesId, or the item id for singles): the
-        // server expands each id to all its episodes, so we send a handful of ids
-        // instead of the raw episode list — which for a big category (long-running
-        // anime: maxItems series × up to 500 episodes) blows past the server's
-        // 500-item bulk cap and makes the whole clear silently fail.
-        const idsToDismiss = (groupedData || []).filter(matches).map(i => i.Id);
+        // Dismiss each card's own members, as dismissing a single card does. A group card's
+        // id is its series id, which the server expands to every notification of that series,
+        // including one filed under another category (a monitored collection): clearing one
+        // tab took cards out of another. Sent in batches, under the server's 500-id cap.
+        // Every card of the category, not only the ones on screen: the quota hides the older
+        // ones, and clearing must take them too or they would step up into the emptied tab.
+        const idsToDismiss = [];
+        allCards.filter(matches).forEach(c => {
+            if (c.MemberIds && c.MemberIds.length) idsToDismiss.push(...c.MemberIds);
+            else idsToDismiss.push(c.Id);
+        });
         if (idsToDismiss.length === 0) return;
 
-        // Dismiss all items in a single bulk request
-        const success = await bulkDismissOnServer(idsToDismiss);
-        if (!success) return;
+        for (let at = 0; at < idsToDismiss.length; at += 500) {
+            const success = await bulkDismissOnServer(idsToDismiss.slice(at, at + 500));
+            if (!success) return;
+        }
 
         // Remove from local data
         currentData = currentData.filter(i => !matches(i));
@@ -449,7 +567,8 @@
         // Today/This week/Earlier sections and the timestamp — so it's a pure type
         // marker shown on every item, no per-item flag needed.
         currentData.forEach(item => { item.IsNew = !item.IsRead; });
-        groupedData = processGrouping(currentData);
+        allCards = processGrouping(currentData);
+        groupedData = capCardsPerCategory(allCards);
         updateBadge();
     };
 
@@ -460,7 +579,7 @@
     const markVisibleAsRead = () => {
         const unreadIds = [];
         currentData.forEach(i => {
-            if (!i.IsRead) { i.IsRead = true; unreadIds.push(i.Id); }
+            if (!i.IsRead) { i.IsRead = true; unreadSeen.add(i.Id); unreadIds.push(i.Id); }
         });
         if (unreadIds.length > 0) {
             const badge = document.querySelector('.ns-badge');
@@ -491,9 +610,9 @@
             const headers = getAuthHeaders();
             if (lastEtag) headers['If-None-Match'] = lastEtag;
 
-            const res = await fetch(`/NotifySync/Data?userId=${userId}`, { headers: headers });
+            const res = await fetch(serverUrl(`/NotifySync/Data?userId=${userId}`), { headers: headers });
 
-            if (res.status === 304 && currentData.length === 0) {
+            if (res.status === 304 && currentData.length === 0 && !firstLoadDone) {
                 // "Nothing changed" only means something if we still hold what it refers to.
                 // After a restart the list starts empty, and an event-driven fetch — a
                 // reconnect, the app coming back to the foreground — can land before the
@@ -505,6 +624,9 @@
                 lastFetchTime = 0;
                 if (pollTimeout) clearTimeout(pollTimeout);
                 pollTimeout = setTimeout(fetchData, 50); // isFetching clears in finally first
+                // Leaving now keeps lastFetchTime at 0: stamped below, it made the 3 s throttle
+                // swallow this very retry.
+                return;
             }
             else if (res.status === 304) {
                 // Data unchanged, recalculate with existing state
@@ -563,21 +685,8 @@
 
     const loadFromCache = () => {
         try {
-            // Helper: read from scoped key, fallback to legacy unscoped key + migrate
-            const getWithLegacy = (k) => {
-                const scoped = nsKey(k);
-                let val = localStorage.getItem(scoped);
-                if (val) return val;
-                const legacy = `ns-${k}`;
-                if (legacy !== scoped) {
-                    val = localStorage.getItem(legacy);
-                    if (val) { localStorage.setItem(scoped, val); localStorage.removeItem(legacy); }
-                }
-                return val;
-            };
-
             // Check TTL (1 hour max)
-            const cachedTime = parseInt(getWithLegacy('data-ts') || '0');
+            const cachedTime = parseInt(localStorage.getItem(nsKey('data-ts')) || '0');
             if (Date.now() - cachedTime > 3600000) {
                 localStorage.removeItem(nsKey('data'));
                 localStorage.removeItem(nsKey('etag'));
@@ -585,7 +694,7 @@
                 return;
             }
 
-            const cached = getWithLegacy('data');
+            const cached = localStorage.getItem(nsKey('data'));
             if (cached) {
                 try {
                     currentData = JSON.parse(cached);
@@ -597,8 +706,6 @@
                 // nothing, and would earn a 304 that leaves the bell empty.
                 localStorage.removeItem(nsKey('etag'));
             }
-            // Migrate legacy etag if present
-            getWithLegacy('etag');
         } catch (e) { }
     };
 
@@ -607,7 +714,8 @@
         if (!bell) return;
         let badge = bell.querySelector('.ns-badge');
         if (!badge) { badge = document.createElement('div'); badge.className = 'ns-badge'; bell.appendChild(badge); }
-        const count = groupedData.filter(i => i.IsNew).length;
+        // Titles, not cards: a title a collection also announces is counted once, as in "All".
+        const count = mergeCollectionTwins(groupedData).filter(i => i.IsNew).length;
         if (count > 0) { badge.innerText = count > 9 ? '9+' : count; badge.classList.add('visible'); }
         else { badge.classList.remove('visible'); }
     };
@@ -629,21 +737,196 @@
         return T.kindAll;
     };
 
+    // Opening the bell marks everything read at once, which would wipe any sign of what was
+    // new before the user had looked. The ids marked read during this opening are kept here
+    // until the panel closes, so their cards keep their NEW badge for as long as they are on screen.
+    const unreadSeen = new Set();
+    const isUnreadCard = (item) => !!item.IsNew || (item.MemberIds || [item.Id]).some(id => unreadSeen.has(id));
+
+    // A title a monitored collection announces carries a synthetic id ("col:{collection}:{item}");
+    // a group card keeps its members' ids in MemberIds.
+    const isCollectionCard = (item) => (item.MemberIds || [String(item.Id)]).some(id => String(id).startsWith('col:'));
+
+    // The NEW badge says "you have not seen this yet" (issue #12), so it goes once the card has
+    // been seen in the bell. The badges that describe an event — an upgrade, an addition to a
+    // collection — stay: they remain true after the look.
+    const showsBadge = (item) => !!item.IsUpgrade || isCollectionCard(item) || isUnreadCard(item);
+
     // Returns the full badge text including the upgrade kind suffix when applicable.
     // Examples: "MAJ Qualité", "UPD Codec", or just "MAJ"/"UPD"/"NOUVEAU"/"NEW".
+    // A collection title is not new to the server, only to the collection: "ADDED TO Marvel"
+    // where the collection is not already the open tab, "ADDED" inside it (issue #12).
     const upgradeBadgeText = (item) => {
+        if (!item.IsUpgrade && isCollectionCard(item)) {
+            return activeFilter === item.Category ? T.badgeAdded : `${T.badgeAddedTo} ${item.Category}`;
+        }
         if (!item.IsUpgrade) return T.badgeNew;
         const kind = upgradeKindLabel(item);
         return kind ? `${T.badgeUpgrade} ${kind}` : T.badgeUpgrade;
     };
 
+    // A title announced twice — by its library, and by a monitored collection that holds it —
+    // is one card in "All": the library's, which says what happened to the server, carrying the
+    // collection's name as a second badge. The collection's own tab keeps its card. Hidden only
+    // when every title of the collection card has its library card on screen.
+    const normId = (id) => String(id).replace(/-/g, '').toLowerCase();
+    const mergeCollectionTwins = (cards) => {
+        const collectionOf = new Map();
+        currentData.forEach(i => {
+            if (String(i.Id).startsWith('col:') && i.RealItemId) collectionOf.set(i.Id, { real: normId(i.RealItemId), name: i.Category });
+        });
+        if (collectionOf.size === 0) return cards;
+        const libraryCardOf = new Map();
+        cards.forEach(c => {
+            if (!isCollectionCard(c)) (c.MemberIds || [c.Id]).forEach(id => libraryCardOf.set(normId(id), c));
+        });
+        const alsoIn = new Map();
+        const kept = cards.filter(c => {
+            if (!isCollectionCard(c)) return true;
+            const members = (c.MemberIds || [c.Id]).map(id => collectionOf.get(id));
+            if (!members.every(m => m && libraryCardOf.has(m.real))) return true;
+            members.forEach(m => {
+                const twin = libraryCardOf.get(m.real);
+                if (!alsoIn.has(twin)) alsoIn.set(twin, []);
+                if (alsoIn.get(twin).indexOf(m.name) === -1) alsoIn.get(twin).push(m.name);
+            });
+            return false;
+        });
+        return kept.map(c => (alsoIn.has(c) ? Object.assign({}, c, { AlsoIn: alsoIn.get(c) }) : c));
+    };
+
+    // The collection notifications that stand for the same titles as these library ones:
+    // dismissing the library card in "All" takes them too, or they would come back as a card
+    // of their own.
+    const twinIdsOf = (memberIds) => {
+        const wanted = new Set(memberIds.map(normId));
+        return currentData
+            .filter(i => String(i.Id).startsWith('col:') && i.RealItemId && wanted.has(normId(i.RealItemId)))
+            .map(i => i.Id);
+    };
+
+    // The collection badges of a merged card: the first two by name, the rest as a count.
+    const collectionBadgeTexts = (item) => {
+        const names = item.AlsoIn || [];
+        const texts = names.slice(0, 2).map(n => `${T.badgeAddedTo} ${n}`);
+        if (names.length > 2) texts.push(`+${names.length - 2}`);
+        return texts;
+    };
+
     const formatEpisodeTitle = (item) => {
         const s = item.ParentIndexNumber ? `S${item.ParentIndexNumber.toString().padStart(2, '0')}` : '';
-        const e = item.IndexNumber ? `E${item.IndexNumber.toString().padStart(2, '0')}` : '';
+        const end = Number.isInteger(item.IndexNumberEnd) && item.IndexNumberEnd > item.IndexNumber
+            ? `-E${item.IndexNumberEnd.toString().padStart(2, '0')}` : '';
+        const e = item.IndexNumber ? `E${item.IndexNumber.toString().padStart(2, '0')}${end}` : '';
         const se = (s || e) ? `${s}${e}` : '';
         if (se && item.Name.indexOf(se) !== -1) return item.Name;
         return se ? `${se} - ${item.Name}` : item.Name;
     };
+
+    // ---- TV remote ----------------------------------------------------------
+    // In Jellyfin's TV mode the remote moves the focus with the arrows, and Jellyfin's own
+    // navigation knows nothing of the open bell: it carries the focus to the page behind, and
+    // Back leaves the page. While the bell is open in TV mode it takes the remote itself: up
+    // and down through the list, left and right along the categories or to a card's ✕, OK to
+    // open, Back to close. Outside TV mode none of this runs.
+    const isTvLayout = () => document.documentElement.classList.contains('layout-tv');
+    const TV_BACK_KEYS = [10009, 461, 27]; // Tizen, webOS, Escape
+
+    // One row per stop, top to bottom: the categories when there is a choice, the large card,
+    // each card, the footer.
+    const tvRows = (drop) => {
+        const rows = [];
+        const pills = Array.from(drop.querySelectorAll('.filter-pill'));
+        if (pills.length > 1) rows.push(pills);
+        drop.querySelectorAll('.hero-section, .dropdown-item, .footer-tools').forEach(el => rows.push([el]));
+        return rows;
+    };
+    let tvFocusRow = null; // null = the first card, where the bell opens
+    let panelOpenedAt = 0; // when the panel last opened, to tell a held OK's echo from a choice
+    const focusTv = (el) => {
+        if (!el) return;
+        try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
+        el.scrollIntoView({ block: 'nearest' });
+    };
+
+    // Which row takes the focus back. When the list shrank under the focus (the last card was
+    // taken out), the nearest row left is the footer, "Clear list": a stray OK there would
+    // empty everything. Stop on the card above it instead.
+    const tvRestoreIndex = (rows, wanted, first) => {
+        let i = Math.min(wanted === null ? first : wanted, rows.length - 1);
+        const shrunk = wanted !== null && wanted > rows.length - 1;
+        if (shrunk && i > 0 && rows[i].length === 1 && rows[i][0].classList.contains('footer-tools')) i--;
+        return i;
+    };
+
+    // A redraw replaces the elements under the focus: put it back on the same row, or the
+    // nearest one left.
+    const restoreTvFocus = (drop) => {
+        if (!drop || drop.style.display !== 'flex' || !isTvLayout() || drop.contains(document.activeElement)) return;
+        const rows = tvRows(drop);
+        if (!rows.length) return;
+        const first = rows.length > 1 && rows[0].length > 1 ? 1 : 0;
+        const row = rows[tvRestoreIndex(rows, tvFocusRow, first)];
+        focusTv(row.find(p => p.classList.contains('active')) || row[0]);
+    };
+
+    // Outside TV mode the panel is a dialog: Escape closes it and gives the focus back to the
+    // bell; Enter and Space act on a card or the footer as a click does (the pills and the ✕
+    // buttons answer for themselves).
+    const panelKeys = (e) => {
+        if (e.keyCode === 27 || e.key === 'Escape') {
+            e.preventDefault();
+            closeDropdown();
+            const bell = document.getElementById('netflix-bell');
+            if (bell) bell.focus();
+            return;
+        }
+        const t = e.target;
+        if ((e.key === 'Enter' || e.key === ' ') && t && t.matches && t.matches('.hero-section, .dropdown-item, .footer-tools')) {
+            e.preventDefault();
+            if (!e.repeat) t.click();
+        }
+    };
+
+    window.addEventListener('keydown', (e) => {
+        const drop = document.getElementById('notification-dropdown');
+        if (!drop || drop.style.display !== 'flex') return;
+        if (!isTvLayout()) { panelKeys(e); return; }
+        const key = e.keyCode;
+        const back = TV_BACK_KEYS.indexOf(key) !== -1;
+        if (!back && [13, 37, 38, 39, 40].indexOf(key) === -1) return;
+        // An empty panel has nothing to move over: the arrows are left alone, OK closes it.
+        const rows = back ? null : tvRows(drop);
+        if (rows && !rows.length && key !== 13) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        if (back || (rows && !rows.length)) {
+            closeDropdown();
+            const bell = document.getElementById('netflix-bell');
+            if (bell) bell.focus();
+            return;
+        }
+        const active = document.activeElement;
+        if (key === 13) {
+            // A held OK repeats: it opens or dismisses once, not once per repeat.
+            if (!e.repeat && active && drop.contains(active)) active.click();
+            return;
+        }
+        const r = rows.findIndex(row => row.some(el => el === active || el.contains(active)));
+        if (r === -1) { restoreTvFocus(drop); return; }
+        const row = rows[r];
+        const onDismiss = active.classList.contains('dismiss-btn');
+        if (key === 37 || key === 39) {
+            if (row.length > 1) focusTv(row[row.indexOf(active) + (key === 39 ? 1 : -1)]);
+            else if (key === 39 && !onDismiss) focusTv(row[0].querySelector('.dismiss-btn'));
+            else if (key === 37 && onDismiss) focusTv(row[0]);
+            return;
+        }
+        const to = r + (key === 40 ? 1 : -1);
+        if (!rows[to]) return;
+        tvFocusRow = to;
+        focusTv(rows[to].find(p => p.classList.contains('active')) || rows[to][0]);
+    }, true);
 
     // syncOnly: recompute and record what the list *should* look like without touching the
     // DOM. Used after a card is taken out in place, so the next refresh recognises the DOM
@@ -651,8 +934,20 @@
     const updateList = (drop, syncOnly) => {
         if (!drop) return;
         const container = drop.querySelector('.list-container');
+        // The cards and the footer take the focus, so the remote and the keyboard can reach them.
+        const cardStop = ' tabindex="0"';
+        // The chosen filter outlives its cards: once the last one of the category, or the last
+        // favorite, is watched or dismissed, its button leaves the bar but the bell went on
+        // filtering on it and read "You're all caught up!" over other categories' cards.
+        if (activeFilter === '__fav' ? !allCards.some(i => i.IsFavorite)
+            : activeFilter !== 'All' && !groupedData.some(i => i.Category === activeFilter)) {
+            activeFilter = 'All';
+        }
         let filtered = groupedData || [];
-        if (activeFilter === '__fav') filtered = filtered.filter(i => i.IsFavorite);
+        if (activeFilter === 'All') filtered = mergeCollectionTwins(filtered);
+        // Favorites are picked from every card, not from those the quota left on screen: an
+        // older favorite pushed out of its category by newer titles still belongs here.
+        if (activeFilter === '__fav') filtered = capCardsPerCategory(allCards.filter(i => i.IsFavorite));
         else if (activeFilter !== 'All') filtered = filtered.filter(i => i.Category === activeFilter);
         const filterBar = drop.querySelector('.filter-bar');
         // Category pills only earn their place when they add a distinction:
@@ -668,7 +963,7 @@
         let pillsHtml = catList.map(c => `<div class="filter-pill ${activeFilter === c ? 'active' : ''}" data-category="${escapeHtml(c)}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">${T['filter' + c] || escapeHtml(c)}</div>`).join('');
         // Favorites pill — only rendered when the list actually contains favorites,
         // so users who never favorite anything don't get a dead filter.
-        if (groupedData.some(i => i.IsFavorite)) {
+        if (allCards.some(i => i.IsFavorite)) {
             pillsHtml += `<div class="filter-pill ${activeFilter === '__fav' ? 'active' : ''}" data-category="__fav" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">${T.filterFav}</div>`;
         }
         filterBar.innerHTML = pillsHtml;
@@ -678,9 +973,19 @@
         filterBar.querySelectorAll('.filter-pill').forEach(pill => {
             pill.onclick = () => document.dispatchEvent(new CustomEvent('ns-filter', { detail: pill.dataset.category }));
         });
+        // The chosen filter stays in view when the bar overflows.
+        const activePill = filterBar.querySelector('.filter-pill.active');
+        if (activePill && filterBar.scrollWidth > filterBar.clientWidth) {
+            const bar = filterBar.getBoundingClientRect(), pill = activePill.getBoundingClientRect();
+            // The TV layout scales the dropdown: screen pixels back to the bar's own pixels.
+            const scale = bar.width / filterBar.offsetWidth || 1;
+            if (pill.left < bar.left || pill.right > bar.right) {
+                filterBar.scrollLeft += ((pill.left - bar.left) - (bar.width - pill.width) / 2) / scale;
+            }
+        }
 
         if (filtered.length === 0) {
-            const emptyHtml = `<div style="padding:60px 20px;text-align:center;color:#666;font-style:italic;">${firstLoadDone ? T.empty : T.loading}</div>`;
+            const emptyHtml = `<div style="padding:60px 20px;text-align:center;color:#9a9a9a;font-style:italic;">${firstLoadDone ? T.empty : T.loading}</div>`;
             if (syncOnly) { lastRenderedHtml = emptyHtml; return; }
             // A leftover card in the DOM means it is not showing the empty state at all,
             // whatever we last recorded — draw it.
@@ -708,16 +1013,23 @@
             if (!isGroup && hero.Type === 'Episode') {
                 heroTitle = escapeHtml(formatEpisodeTitle(hero)); heroSub = escapeHtml(hero.SeriesName);
             } else {
-                heroSub = escapeHtml(String(hero.ProductionYear ?? ''));
+                // A lone track names its album: a year alone says nothing of what arrived.
+                heroSub = escapeHtml(hero.Type === 'Audio' && hero.SeriesName ? hero.SeriesName : String(hero.ProductionYear == null ? '' : hero.ProductionYear));
             }
             if (isGroup) {
                 heroSub = groupSubtitle(hero);
             }
+            heroSub = withUpgradeDetail(hero, heroSub);
 
+            // The badges share one row of their own: set inline above the title they sat on a line
+            // box as tall as the page's text (taller still on TV), and left a gap under the pill.
+            const heroBadgeList = (showsBadge(hero) ? [`<span class="${hero.IsUpgrade ? 'hero-badge-upgrade' : (isCollectionCard(hero) ? 'hero-badge collection' : 'hero-badge')}" title="${escapeHtml(upgradeBadgeText(hero))}">${escapeHtml(upgradeBadgeText(hero))}</span>`] : [])
+                .concat(collectionBadgeTexts(hero).map(t => `<span class="hero-badge collection" title="${escapeHtml(t)}">${escapeHtml(t)}</span>`));
+            const heroBadges = heroBadgeList.length ? `<div class="ns-hero-badges">${heroBadgeList.join('')}</div>` : '';
             const safeHeroId = escapeHtml(hero.CardId || hero.Id);
             const heroNavId = escapeHtml(hero.NavId || hero.RealItemId || hero.Id);
             const heroFallbackImg = client.getUrl(`Items/${encodeURIComponent(hero.SeriesId || heroItemId)}/Images/Primary?quality=70&fillWidth=380&fillHeight=160&format=webp`);
-            htmlParts.push(`<div class="hero-section" onclick="document.dispatchEvent(new CustomEvent('ns-navigate', {detail: '${heroNavId}'}))"><div class="hero-bg"><img src="${escapeHtml(heroImg)}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="if(this.dataset.fb){this.src=this.dataset.fb;this.removeAttribute('data-fb')}else{this.style.display='none'}" data-fb="${escapeHtml(heroFallbackImg)}"></div><div class="hero-overlay"></div><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('ns-dismiss', {detail: '${safeHeroId}'}))">close</button><div class="hero-content">${hero.IsUpgrade ? `<span class="hero-badge-upgrade">${escapeHtml(upgradeBadgeText(hero))}</span>` : `<span class="hero-badge">${T.badgeNew}</span>`}<div style="font-size:18px;font-weight:700;text-shadow:0 2px 4px #000;line-height:1.2;">${heroTitle}${hero.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div style="font-size:12px;opacity:0.8;margin-top:4px">${timeAgo(hero.DateCreated)} &bull; ${heroSub}</div></div></div>`);
+            htmlParts.push(`<div class="hero-section"${cardStop} data-nav="${heroNavId}"><div class="hero-bg"><img src="${escapeHtml(heroImg)}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="if(this.dataset.fb){this.src=this.dataset.fb;this.removeAttribute('data-fb')}else{this.style.display='none'}" data-fb="${escapeHtml(heroFallbackImg)}"></div><div class="hero-overlay"></div><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" data-dismiss="${safeHeroId}">close</button><div class="hero-content">${heroBadges}<div class="hero-title">${heroTitle}${hero.IsFavorite ? ` <span class="ns-fav" role="img" aria-label="${T.filterFav}">★</span>` : ''}</div><div class="hero-sub">${timeAgo(hero.DateCreated)}${heroSub ? ` &bull; ${heroSub}` : ''}</div></div></div>`);
         }
 
         let curSection = null;
@@ -733,21 +1045,25 @@
             const imgUrl = client.getUrl(`Items/${encodeURIComponent(imgItemId)}/Images/Primary?tag=${encodeURIComponent(item.PrimaryImageTag || '')}&${isMusic ? 'fillHeight=100&fillWidth=100' : 'fillHeight=112&fillWidth=200'}&quality=80&format=webp`);
             const fallbackUrl = item.SeriesId ? client.getUrl(`Items/${encodeURIComponent(item.SeriesId)}/Images/Primary?${isMusic ? 'fillHeight=100&fillWidth=100' : 'fillHeight=112&fillWidth=200'}&quality=80&format=webp`) : '';
 
-            let title = escapeHtml(item.Name), sub = escapeHtml(String(item.ProductionYear ?? ''));
+            let title = escapeHtml(item.Name), sub = escapeHtml(isMusic && item.SeriesName ? item.SeriesName : String(item.ProductionYear == null ? '' : item.ProductionYear));
             if (!isGroup && item.Type === 'Episode') { title = escapeHtml(formatEpisodeTitle(item)); sub = escapeHtml(item.SeriesName); }
             if (isGroup) { sub = groupSubtitle(item); }
+            sub = withUpgradeDetail(item, sub);
 
             const safeId = escapeHtml(item.CardId || item.Id);
             const navId = escapeHtml(item.NavId || item.RealItemId || item.Id);
-            const badgeHtml = `<span class="item-badge">${escapeHtml(upgradeBadgeText(item))}</span>`;
-            htmlParts.push(`<div class="dropdown-item ${item.IsUpgrade ? 'style-upgrade' : 'style-new'}" data-item-id="${safeId}" onclick="document.dispatchEvent(new CustomEvent('ns-navigate', {detail: '${navId}'}))"><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" onclick="event.stopPropagation(); document.dispatchEvent(new CustomEvent('ns-dismiss', {detail: '${safeId}'}))">close</button><div class="swipe-delete">${T.dismiss}</div><div class="thumb-wrapper"><img data-src="${imgUrl}" decoding="async" class="dropdown-thumb ${isMusic ? 'music' : ''}" loading="lazy" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.removeAttribute('data-fallback')}else{this.style.display='none'}" data-fallback="${fallbackUrl}"><span class="material-icons" style="color:#555;font-size:24px;">${isMusic ? 'album' : 'movie'}</span></div><div class="dropdown-info">${badgeHtml}<div class="dropdown-title" title="${title}">${title}${item.IsFavorite ? ' <span class="ns-fav">★</span>' : ''}</div><div class="dropdown-subtitle" title="${sub}"><span class="sub-time">${timeAgo(item.DateCreated)} &bull;</span><span class="sub-text">${sub}</span></div></div></div>`);
+            const badgeText = escapeHtml(upgradeBadgeText(item));
+            const ownBadge = showsBadge(item) ? `<span class="item-badge" title="${badgeText}">${badgeText}</span>` : '';
+            const collectionBadges = collectionBadgeTexts(item).map(t => `<span class="item-badge collection" title="${escapeHtml(t)}">${escapeHtml(t)}</span>`).join('');
+            const badgeHtml = collectionBadges ? `<div class="ns-badge-row">${ownBadge}${collectionBadges}</div>` : ownBadge;
+            htmlParts.push(`<div class="dropdown-item ${item.IsUpgrade ? 'style-upgrade' : (isCollectionCard(item) ? 'style-collection' : 'style-new')}" data-item-id="${safeId}"${cardStop} data-nav="${navId}"><button class="dismiss-btn" title="${T.dismiss}" aria-label="${T.dismiss}" data-dismiss="${safeId}">close</button><div class="swipe-delete" aria-hidden="true">${T.dismiss}</div><div class="thumb-wrapper"><img data-src="${imgUrl}" alt="" decoding="async" class="dropdown-thumb ${isMusic ? 'music' : ''}" loading="lazy" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.removeAttribute('data-fallback')}else{this.style.display='none'}" data-fallback="${fallbackUrl}"><span class="material-icons" aria-hidden="true" style="color:#555;font-size:24px;">${isMusic ? 'album' : 'movie'}</span></div><div class="dropdown-info">${badgeHtml}<div class="dropdown-title" title="${title}">${title}${item.IsFavorite ? ` <span class="ns-fav" role="img" aria-label="${T.filterFav}">★</span>` : ''}</div><div class="dropdown-subtitle" title="${sub}"><span class="sub-time">${timeAgo(item.DateCreated)}${sub ? ' &bull;' : ''}</span><span class="sub-text">${sub}</span></div></div></div>`);
         });
 
         if (activeFilter === 'All') {
-            htmlParts.push(`<div class="footer-tools" data-action="clearall">${T.clearAll}</div>`);
+            htmlParts.push(`<div class="footer-tools"${cardStop} data-action="clearall">${T.clearAll}</div>`);
         } else {
             const catLabel = activeFilter === '__fav' ? T.filterFav : (T['filter' + activeFilter] || escapeHtml(activeFilter));
-            htmlParts.push(`<div class="footer-tools" data-action="clearcat" data-category="${escapeHtml(activeFilter)}">${T.clearCat} ${catLabel}</div>`);
+            htmlParts.push(`<div class="footer-tools"${cardStop} data-action="clearcat" data-category="${escapeHtml(activeFilter)}">${T.clearCat} ${catLabel}</div>`);
         }
         const finalHtml = htmlParts.join('');
 
@@ -781,6 +1097,7 @@
                 }
             };
         }
+        if (!syncOnly) restoreTvFocus(drop);
     };
 
     let _swipeHandlers = null;
@@ -871,6 +1188,9 @@
         const back = document.getElementById('notify-backdrop');
         if (drop) drop.style.display = 'none';
         if (back) back.style.display = 'none';
+        const bell = document.getElementById('netflix-bell');
+        if (bell) bell.setAttribute('aria-expanded', 'false');
+        unreadSeen.clear();
         recalculateNewStatus(); // Clear badges for next open
     };
 
@@ -880,6 +1200,8 @@
 
         if (!drop) {
             drop = document.createElement('div'); drop.id = 'notification-dropdown';
+            drop.setAttribute('role', 'dialog');
+            drop.setAttribute('aria-label', T.header);
             document.body.appendChild(drop);
 
             if (!eventsRegistered) {
@@ -909,8 +1231,10 @@
                     // is what this did — also removed the OTHER cards of the same series,
                     // on the server as well: dismissing a batch of new episodes silently
                     // took away the upgrade card the user had deliberately left alone.
-                    const card = (groupedData || []).find(c => (c.CardId || c.Id) === cardId);
-                    const memberIds = (card && card.MemberIds && card.MemberIds.length) ? card.MemberIds : [cardId];
+                    const card = (allCards || []).find(c => (c.CardId || c.Id) === cardId);
+                    let memberIds = (card && card.MemberIds && card.MemberIds.length) ? card.MemberIds : [cardId];
+                    // In "All" a library card also stands for the collection cards merged into it.
+                    if (activeFilter === 'All' && card && !isCollectionCard(card)) memberIds = memberIds.concat(twinIdsOf(memberIds));
 
                     // Drop it from local state now instead of after the round-trip, so the
                     // list settles at the speed of the animation rather than the network's.
@@ -921,13 +1245,18 @@
                     currentData = currentData.filter(i => memberIds.indexOf(i.Id) === -1);
                     recalculateNewStatus();
 
+                    // A card the quota kept back steps into the freed place, and only a real
+                    // redraw shows it: taking the card out in place left the list one short
+                    // until the next refresh.
+                    const stepsUp = allCards.length > groupedData.length;
+
                     setTimeout(() => {
                         const d = document.getElementById('notification-dropdown');
-                        if (removeCardInPlace(cardId)) {
+                        if (!stepsUp && removeCardInPlace(cardId)) {
                             // The DOM is now one card ahead of what we recorded. Bring the
                             // record in line without redrawing, so the next refresh sees the
                             // list as current instead of rebuilding it.
-                            if (d) updateList(d, true);
+                            if (d) { updateList(d, true); restoreTvFocus(d); }
                             return;
                         }
 
@@ -956,6 +1285,35 @@
 
             drop.innerHTML = `<div class="dropdown-header"><span class="header-title">${T.header}</span></div><div class="filter-bar"></div><div class="list-container"></div>`;
             lastRenderedHtml = null; // the list container is brand new — nothing drawn yet
+            // A mouse wheel only scrolls up and down: with many categories the filter bar
+            // overflows sideways, and a mouse alone could not reach the last ones.
+            // One listener for every card. The ids used to sit inside onclick="…'id'…"
+            // strings: HTML-escaping does not protect a JavaScript string there, since the
+            // browser decodes &#039; back into a quote before running it. Data attributes
+            // carry them as plain text.
+            const listEl = drop.querySelector('.list-container');
+            listEl.addEventListener('click', (e) => {
+                const dismissBtn = e.target.closest('[data-dismiss]');
+                if (dismissBtn && listEl.contains(dismissBtn)) {
+                    e.stopPropagation();
+                    document.dispatchEvent(new CustomEvent('ns-dismiss', { detail: dismissBtn.dataset.dismiss }));
+                    return;
+                }
+                const card = e.target.closest('[data-nav]');
+                // Held OK: the bell opens the panel and the focus lands on the first card, then the
+                // system's long-press click (no key event reaches the page) opens that card. A
+                // click this soon after the panel opened is that echo, not a choice.
+                if (card && isTvLayout() && Date.now() - panelOpenedAt < 600) return;
+                if (card && listEl.contains(card)) {
+                    document.dispatchEvent(new CustomEvent('ns-navigate', { detail: card.dataset.nav }));
+                }
+            });
+            const filterBarEl = drop.querySelector('.filter-bar');
+            filterBarEl.addEventListener('wheel', (e) => {
+                if (Math.abs(e.deltaY) <= Math.abs(e.deltaX) || filterBarEl.scrollWidth <= filterBarEl.clientWidth) return;
+                e.preventDefault();
+                filterBarEl.scrollLeft += e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+            }, { passive: false });
         }
         if (!backdrop) { const b = document.createElement('div'); b.id = 'notify-backdrop'; b.onclick = closeDropdown; document.body.appendChild(b); }
 
@@ -980,23 +1338,186 @@
             positionDropdown(drop);
             document.getElementById('notify-backdrop').style.display = 'block';
             drop.style.display = 'flex';
+            const bellBtn = document.getElementById('netflix-bell');
+            if (bellBtn) bellBtn.setAttribute('aria-expanded', 'true');
+            panelOpenedAt = Date.now();
+            tvFocusRow = null;
+            restoreTvFocus(drop);
         } else { closeDropdown(); }
     };
 
+    // ---- Bell installation --------------------------------------------------
+    // Two worlds:
+    //  * Legacy header (Jellyfin <=10.11 and legacy pages): a VISIBLE .headerRight
+    //    exists -> prepend the bell inside it (safe, non-React DOM).
+    //  * Jellyfin 12 React/MUI app bar: the legacy containers still exist in the
+    //    DOM but are hidden (0x0), and the visible bar is React-managed. The bell is
+    //    inserted into the bar just before the search icon (installBell, further down),
+    //    with the classes of that neighbour so MUI styles it the same, and the observer
+    //    puts it back if React re-renders the bar. The dropdown lives in <body>.
+    // offsetParent is null for position:fixed elements (the app bar IS fixed), so
+    // visibility is checked via computed display/visibility + a real rect.
+    const isVisible = (el) => {
+        if (!el) return false;
+        const r = el.getBoundingClientRect();
+        if (r.height <= 0 || r.width <= 0) return false;
+        const cs = getComputedStyle(el);
+        return cs.display !== 'none' && cs.visibility !== 'hidden';
+    };
+
+    const findVisibleLegacyHeader = () => {
+        const sels = ['.headerRight'];
+        for (const s of sels) {
+            const el = document.querySelector(s);
+            if (el && el.offsetParent !== null) return el;
+        }
+        return null;
+    };
+
+    // Leftmost icon button of the bar's right-hand cluster — the bell is inserted
+    // just before it. Scan ICON buttons only: a generic button/a scan also catches
+    // the nav links (Favoris, library tabs), which sit past the viewport midpoint
+    // on wide screens and would drag the anchor far too far left.
+    const findRightIconAnchor = (bar) => {
+        const vw = document.documentElement.clientWidth || window.innerWidth;
+        let controls = bar.querySelectorAll('.MuiIconButton-root, .paper-icon-button-light');
+        if (!controls.length) controls = bar.querySelectorAll('button, a');
+        let best = null, bestLeft = null;
+        controls.forEach(el => {
+            if (el.id === 'netflix-bell') return;
+            const q = el.getBoundingClientRect();
+            if (!q.width || !q.height || q.left <= vw / 2) return;
+            if (bestLeft === null || q.left < bestLeft) { bestLeft = q.left; best = el; }
+        });
+        return best;
+    };
+
+    // Which bar should host the bell right now.
+    //  - legacy visible header (<=10.11 and legacy pages)
+    //  - during playback: the video OSD header ONLY (never the app bar, which stays
+    //    mounted behind the video). When the controls are auto-hidden we return null
+    //    so the bell simply stays inside the hidden OSD and rides along with it.
+    //  - otherwise: the main app bar.
+    const findBellHost = () => {
+        const legacy = findVisibleLegacyHeader();
+        if (legacy) return { kind: 'legacy', container: legacy, anchor: null };
+        const osds = Array.from(document.querySelectorAll('.osdHeader'));
+        if (osds.length) {
+            const osd = osds.find(isVisible);
+            if (!osd) return null;
+            const a = findRightIconAnchor(osd);
+            return a ? { kind: 'osd', anchor: a } : null;
+        }
+        const appBar = document.querySelector('.MuiAppBar-root');
+        if (isVisible(appBar)) {
+            const a = findRightIconAnchor(appBar);
+            if (a) return { kind: 'appbar', anchor: a };
+        }
+        return null;
+    };
+
+    const currentHostKind = (bell) => {
+        if (!bell || !bell.isConnected) return null;
+        if (bell.closest('.osdHeader')) return 'osd';
+        if (bell.closest('.MuiAppBar-root')) return 'appbar';
+        return 'legacy';
+    };
+
+    const isAdminRoute = () => {
+        const route = (location.hash + ' ' + location.pathname).toLowerCase();
+        // The metadata manager is a TOP-LEVEL route in 12, not a child of /dashboard —
+        // verified in the web bundle's route table, where it is rendered right after
+        // the "admin-dashboard-link" entry of the admin menu. It was the only admin
+        // page the bell still installed on.
+        return route.indexOf('dashboard') !== -1
+            || route.indexOf('metadata') !== -1
+            || route.indexOf('configurationpage') !== -1;
+    };
+
+    // The pages for someone not signed in: the list Jellyfin's own app bar uses to drop its
+    // buttons (PUBLIC_PATHS in the 12 web client's router).
+    const PUBLIC_ROUTES = ['/addserver', '/selectserver', '/login', '/forgotpassword', '/forgotpasswordpin',
+        '/wizardremoteaccess', '/wizardfinish', '/wizardlibrary', '/wizardsettings', '/wizardstart', '/wizarduser'];
+    const isPublicRoute = () => PUBLIC_ROUTES.indexOf(location.hash.replace(/^#!?/, '').split('?')[0].toLowerCase()) !== -1;
+
     const installBell = () => {
-        const header = document.querySelector('.headerRight') || document.querySelector('.headerButtons-right') || document.querySelector('.emby-header-right') || document.querySelector('.skinHeader-content');
-        if (!header || document.getElementById('netflix-bell')) {
-            if (document.getElementById('netflix-bell') && observerInstance) { observerInstance.disconnect(); observerInstance = null; monitorBellDisappearance(); }
+        const existing = document.getElementById('netflix-bell');
+
+        // No bell on admin pages — on <=10.11 this is implicit (.headerRight is absent from
+        // the admin area) — nor on a public page, nor without a signed-in user. The app bar
+        // keeps its right-hand box mounted on the login page and only takes its own buttons
+        // out of it, so the bell a signed-in page had placed there stayed behind: alone on
+        // the login screen after a sign-out or an expired session (seen on a 12.1 server).
+        if (isAdminRoute() || isPublicRoute() || !getUserId()) {
+            if (existing) existing.remove();
+            const openDrop = document.getElementById('notification-dropdown');
+            if (openDrop && openDrop.style.display === 'flex') closeDropdown();
             return;
         }
+
+        // Cheap early-exit — this runs on every observer tick, so it must not force
+        // layout when there's nothing to do. Only an app-bar <-> player-OSD swap
+        // requires a real re-install; the anchor scan below (getBoundingClientRect)
+        // is skipped otherwise.
+        if (existing && existing.isConnected) {
+            const inPlayer = !!document.querySelector('.osdHeader');
+            const kind = currentHostKind(existing);
+            if (inPlayer ? kind === 'osd' : kind !== 'osd') return;
+        }
+
+        const host = findBellHost();
+        // Nothing to host it right now (e.g. player controls auto-hidden): leave the
+        // bell exactly where it is — inside the hidden bar it hides along with it.
+        if (!host) return;
+        // Already sitting in the right bar: nothing to do.
+        if (existing && currentHostKind(existing) === host.kind) return;
+        if (existing) existing.remove();
+
         injectStyles();
         const bellBtn = document.createElement('button');
         bellBtn.id = 'netflix-bell';
-        bellBtn.className = 'paper-icon-button-light headerButton headerButtonRight';
-        bellBtn.setAttribute('aria-label', 'Notifications');
-        bellBtn.innerHTML = '<span class="material-icons notifications"></span>';
-        bellBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); toggleDropdown(); };
-        header.prepend(bellBtn);
+        bellBtn.type = 'button';
+        bellBtn.setAttribute('aria-label', T.bellLabel);
+        bellBtn.setAttribute('aria-haspopup', 'dialog');
+        bellBtn.setAttribute('aria-expanded', 'false');
+        bellBtn.onclick = (e) => {
+            e.preventDefault(); e.stopPropagation(); toggleDropdown();
+            // Opened from the keyboard (a click with no pointer): the focus goes into the panel.
+            const drop = document.getElementById('notification-dropdown');
+            const first = e.detail === 0 && !isTvLayout() && drop && drop.style.display === 'flex' ? drop.querySelector('.hero-section, .dropdown-item') : null;
+            if (first) first.focus();
+        };
+        // A theme that already marks a focused header button (ElegantFin's white disc) raises its
+        // z-index above 0, a property that is not animated: read it on focus and leave the outline to the
+        // theme, so the bell looks like its neighbours.
+        bellBtn.addEventListener('focus', () => bellBtn.classList.toggle('ns-themed-focus', (parseInt(getComputedStyle(bellBtn).zIndex, 10) || 0) > 0));
+
+        if (host.kind === 'legacy') {
+            bellBtn.className = 'paper-icon-button-light headerButton headerButtonRight';
+            bellBtn.innerHTML = '<span class="material-icons notifications"></span>';
+            host.container.prepend(bellBtn);
+        } else {
+            // Inserted INTO the bar, like the legacy path — the bell then flows with
+            // the other icons: native alignment, no positioning math, and it shows or
+            // hides exactly when its bar does (including the player's auto-hiding
+            // OSD). Copy the neighbouring icon button's classes so MUI styles and
+            // sizes it identically (emotion class names are hashed, so they can't be
+            // hardcoded), and let those dimensions win over our own 35px rule.
+            bellBtn.className = host.anchor.className;
+            bellBtn.style.width = 'auto';
+            bellBtn.style.height = 'auto';
+            // Inline SVG (same glyph as the sidebar swap): React pages may not ship
+            // the Material Icons ligature font, an SVG always renders. Reuse the
+            // neighbour's SvgIcon classes so MUI sizes the glyph exactly like the
+            // other icons — a hardcoded 24px box made the button 48px against their
+            // 46px and left the narrow bell glyph looking loosely spaced.
+            const refSvg = host.anchor.querySelector('svg');
+            const svgCls = refSvg ? (refSvg.getAttribute('class') || '') : '';
+            bellBtn.innerHTML = svgCls
+                ? '<svg class="' + svgCls + '" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="' + NS_NOTIFICATIONS_PATH + '"/></svg>'
+                : '<svg viewBox="0 0 24 24" width="24" height="24" style="fill:currentColor;display:block;" aria-hidden="true"><path d="' + NS_NOTIFICATIONS_PATH + '"/></svg>';
+            host.anchor.parentElement.insertBefore(bellBtn, host.anchor);
+        }
         loadFromCache();
 
         // Initial fetch attempt
@@ -1030,19 +1551,21 @@
         }
     };
 
-    const monitorBellDisappearance = () => {
-        const obs = new MutationObserver(() => { if (!document.getElementById('netflix-bell')) { obs.disconnect(); startMainObserver(); } });
-        obs.observe(document.body, { childList: true, subtree: true });
-    };
-
-    let _installDebounce = null;
+    let _installThrottle = null;
     const startMainObserver = () => {
         observerInstance = new MutationObserver(() => {
-            if (_installDebounce) clearTimeout(_installDebounce);
-            _installDebounce = setTimeout(() => {
+            // Throttle (fixed 50ms window), NOT a trailing debounce. React mounts the
+            // bar's icons one by one during boot (search, then cast once a device is
+            // detected, then the avatar); a trailing debounce was rearmed by each of
+            // them, so the bell only landed ~200ms after the LAST icon and visibly
+            // trailed the others. A throttle runs on schedule instead of waiting for
+            // silence, so the bell appears alongside them.
+            if (_installThrottle) return;
+            _installThrottle = setTimeout(() => {
+                _installThrottle = null;
                 installBell();
                 installAdminSidebarIcon();
-            }, 200);
+            }, 50);
         });
         // childList: catches node add/remove (SPA navigation, lazy renders).
         // attributes + attributeFilter[d]: catches in-place SVG path updates when
@@ -1082,6 +1605,74 @@
         }
     };
 
+    // --- Real-time socket ----------------------------------------------------
+    // Jellyfin 12 removed the legacy `api_key` query auth on /socket: the old
+    // apiclient's own websocket is REFUSED by the server (observed
+    // NS_ERROR_WEBSOCKET_CONNECTION_REFUSED), while the modern SDK connects fine
+    // with the `ApiKey` parameter (observed HTTP 101). On <=10.11 the legacy
+    // socket opens by itself and feeds window.Events — nothing to do there. A 12
+    // client that offers subscribe() is listened to instead (see ensureWs). Only
+    // when neither exists, open OUR OWN socket with the accepted parameter and
+    // feed the same handler — including the KeepAlive protocol (the server
+    // closes clients that don't answer ForceKeepAlive).
+    let nsWs = null;
+    let nsWsKeepAlive = null;
+    const openOwnWebSocket = () => {
+        if (nsWs && (nsWs.readyState === WebSocket.CONNECTING || nsWs.readyState === WebSocket.OPEN)) return;
+        const token = window.ApiClient && window.ApiClient.accessToken && window.ApiClient.accessToken();
+        if (!token) return;
+        try {
+            const base = (window.ApiClient.serverAddress ? window.ApiClient.serverAddress() : location.origin).replace(/^http/i, 'ws');
+            const ws = new WebSocket(base + '/socket?ApiKey=' + encodeURIComponent(token));
+            nsWs = ws;
+            ws.onmessage = (ev) => {
+                let msg = null;
+                try { msg = JSON.parse(ev.data); } catch (e) { return; }
+                if (!msg) return;
+                if (msg.MessageType === 'ForceKeepAlive') {
+                    if (nsWsKeepAlive) clearInterval(nsWsKeepAlive);
+                    const period = Math.max(5, (msg.Data || 60) / 2) * 1000;
+                    nsWsKeepAlive = setInterval(() => {
+                        try { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ MessageType: 'KeepAlive' })); } catch (e) { /* dropped */ }
+                    }, period);
+                    return;
+                }
+                onWebSocketMessage(null, msg);
+            };
+            ws.onclose = () => {
+                if (nsWsKeepAlive) { clearInterval(nsWsKeepAlive); nsWsKeepAlive = null; }
+                if (nsWs === ws) nsWs = null;
+                // Reconnection happens via ensureWs() callers (authenticated,
+                // visibilitychange, 5-min poll).
+            };
+        } catch (e) { nsWs = null; }
+    };
+
+    // The 12 web client receives server messages on its own socket and hands them out
+    // through apiClient.subscribe(). Listen there whenever it exists, and never open a
+    // second socket next to it: the server sends a session's messages to ONE socket only,
+    // the most recently active (WebSocketController.SendMessage in 12.2), so with ours
+    // open, SyncPlay updates and remote commands kept landing on the bell's socket and
+    // were lost — the app never learned it had joined a group (seen on a 12.2 server).
+    const subscribedClients = new WeakSet();
+    const ensureWs = () => {
+        try {
+            const client = window.ApiClient;
+            if (client && typeof client.subscribe === 'function') {
+                if (!subscribedClients.has(client)) {
+                    subscribedClients.add(client);
+                    ['LibraryChanged', 'UserDataChanged'].forEach(type => {
+                        client.subscribe([type], (msg) => onWebSocketMessage(null, { MessageType: type, Data: msg && msg.Data }));
+                    });
+                }
+                if (nsWs) nsWs.close();
+                return;
+            }
+            if (client && typeof client.isWebSocketOpen === 'function' && client.isWebSocketOpen()) return;
+            openOwnWebSocket();
+        } catch (e) { /* non-critical */ }
+    };
+
     const setupEvents = () => {
         if (window.Events && window.ApiClient) {
             // Jellyfin's web client announces every server message as 'message' — the event its
@@ -1091,6 +1682,7 @@
             // are listened to; the handler debounces, so a client emitting both costs one fetch.
             window.Events.on(window.ApiClient, "message", onWebSocketMessage);
             window.Events.on(window.ApiClient, "websocketmessage", onWebSocketMessage);
+            ensureWs();
 
             // Detect Jellyfin user language preference
             detectJellyfinLang();
@@ -1098,6 +1690,7 @@
             // Re-fetch data instantly when user logs in or reconnects
             window.Events.on(window.ApiClient, "authenticated", () => {
                 retryDelay = 1000;
+                ensureWs();
                 detectJellyfinLang();
                 fetchData();
             });
@@ -1114,12 +1707,14 @@
     });
 
     // Background polling every 5 min to catch metadata updates (images, etc.)
-    setInterval(() => { if (!document.hidden && !isFetching) fetchData(); }, 300000);
+    // Also re-ensures the websocket (auto-heal if the connection dropped).
+    setInterval(() => { if (!document.hidden && !isFetching) { ensureWs(); fetchData(); } }, 300000);
 
     // Handle SPA navigation visibility changes
     document.addEventListener("visibilitychange", () => {
         if (!document.hidden) {
             retryDelay = 1000;
+            ensureWs();
             detectJellyfinLang();
             fetchData();
         }
@@ -1132,6 +1727,29 @@
         const drop = document.getElementById('notification-dropdown');
         if (drop && drop.style.display === 'flex') positionDropdown(drop);
     });
+
+    // Route changes: re-evaluate the bell and close an open dropdown (standard
+    // notification-panel UX). React Router navigates via history.pushState, which
+    // fires NEITHER hashchange NOR popstate — no event covers every path, so a
+    // cheap 500ms URL watcher is the only deterministic hook. hashchange is kept
+    // for the paths that do fire it (back/forward, manual URL edits) to react
+    // instantly.
+    const onRouteChange = () => {
+        installBell();
+        // The new page's bar is mounted by React a few frames later; without a short
+        // burst of re-checks the bell lands visibly after the other icons.
+        [50, 150, 300, 600].forEach(d => setTimeout(installBell, d));
+        const drop = document.getElementById('notification-dropdown');
+        if (drop && drop.style.display === 'flex') closeDropdown();
+    };
+    window.addEventListener('hashchange', onRouteChange);
+    // URL watcher only — entering/leaving the player mounts/unmounts the OSD header,
+    // which the MutationObserver already catches (childList), so no layout polling
+    // is needed on top of it.
+    let _lastHref = location.href;
+    setInterval(() => {
+        if (location.href !== _lastHref) { _lastHref = location.href; onRouteChange(); }
+    }, 500);
 
     setupEvents();
     startMainObserver();

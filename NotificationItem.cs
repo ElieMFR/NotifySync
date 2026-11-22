@@ -82,6 +82,13 @@ namespace NotifySync
         public int? IndexNumber { get; set; }
 
         /// <summary>
+        /// Gets or sets the last episode number of a file holding several episodes
+        /// ("S01E01-E02"), or null for a single one.
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? IndexNumberEnd { get; set; }
+
+        /// <summary>
         /// Gets or sets the parent index number (season number).
         /// </summary>
         public int? ParentIndexNumber { get; set; }
@@ -112,6 +119,15 @@ namespace NotifySync
         public int? CategoryOrder { get; set; }
 
         /// <summary>
+        /// Gets or sets how many cards the bell shows per category — the admin's "Quota per
+        /// Category". The server keeps that many titles; the bell splits a series into one card
+        /// per arrival, so it is the bell that cuts the cards down to the same number.
+        /// Transient per-response property set during API response building, not persisted.
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? CardQuota { get; set; }
+
+        /// <summary>
         /// Gets or sets the real Jellyfin item ID for synthetic notifications (e.g. collection items).
         /// When <see cref="Id"/> is a synthetic key like "col:{collectionId}:{itemId}", this stores
         /// the actual Jellyfin item ID so permission and played-status checks can resolve the real item.
@@ -132,6 +148,13 @@ namespace NotifySync
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? UpgradeKind { get; set; }
+
+        /// <summary>
+        /// Gets or sets the resolution change an upgrade carries, as shown on the card ("1080p → 4K"),
+        /// or null when the file names do not say both resolutions.
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? UpgradeDetail { get; set; }
 
         /// <summary>
         /// Gets or sets the file path of the media source, used for upgrade detection.

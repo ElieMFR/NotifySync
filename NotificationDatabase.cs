@@ -80,10 +80,12 @@ namespace NotifySync
                             BackdropImageTags TEXT,
                             PrimaryImageTag TEXT,
                             IndexNumber INTEGER,
+                            IndexNumberEnd INTEGER,
                             ParentIndexNumber INTEGER,
                             IsUpgrade INTEGER NOT NULL DEFAULT 0,
                             FilePath TEXT,
                             UpgradeKind TEXT,
+                            UpgradeDetail TEXT,
                             Size INTEGER
                         );
                         CREATE INDEX IF NOT EXISTS idx_notifications_date ON Notifications(DateCreated DESC);
@@ -144,12 +146,26 @@ namespace NotifySync
                 MigrateAddColumn(connection, "Notifications", "IsUpgrade", "INTEGER NOT NULL DEFAULT 0");
                 MigrateAddColumn(connection, "Notifications", "FilePath", "TEXT");
                 MigrateAddColumn(connection, "Notifications", "UpgradeKind", "TEXT");
+                MigrateAddColumn(connection, "Notifications", "UpgradeDetail", "TEXT");
                 MigrateAddColumn(connection, "Notifications", "Size", "INTEGER");
+                MigrateAddColumn(connection, "Notifications", "IndexNumberEnd", "INTEGER");
                 MigrateAddColumn(connection, "DeletedItems", "IndexNumber", "INTEGER");
                 MigrateAddColumn(connection, "DeletedItems", "ParentIndexNumber", "INTEGER");
                 MigrateAddColumn(connection, "DeletedItems", "FilePath", "TEXT");
                 MigrateAddColumn(connection, "DeletedItems", "MatchedNotificationId", "TEXT");
                 MigrateAddColumn(connection, "DeletedItems", "Size", "INTEGER");
+
+                // After the migrations, which add MatchedNotificationId to older databases.
+                // Dropping a notification clears it by these columns one id at a time, and
+                // without an index each UPDATE walked the whole table (EXPLAIN QUERY PLAN:
+                // SCAN DeletedItems).
+                using (var indexCmd = connection.CreateCommand())
+                {
+                    indexCmd.CommandText = @"
+                        CREATE INDEX IF NOT EXISTS idx_deleted_matched ON DeletedItems(MatchedNotificationId);
+                        CREATE INDEX IF NOT EXISTS idx_deleted_item ON DeletedItems(ItemId);";
+                    indexCmd.ExecuteNonQuery();
+                }
 
                 // Drop columns no longer consumed by the slim classifier. Phase B Lite
                 // (VideoWidth/Height/Container/MediaBitrate) was tried and removed;
@@ -311,13 +327,13 @@ namespace NotifySync
                 INSERT OR REPLACE INTO Notifications (
                     Id, RealItemId, Name, Category, SeriesName, SeriesId, SeasonId, DateCreated,
                     Type, RunTimeTicks, ProductionYear, BackdropImageTags,
-                    PrimaryImageTag, IndexNumber, ParentIndexNumber,
-                    IsUpgrade, FilePath, UpgradeKind, Size
+                    PrimaryImageTag, IndexNumber, IndexNumberEnd, ParentIndexNumber,
+                    IsUpgrade, FilePath, UpgradeKind, UpgradeDetail, Size
                 ) VALUES (
                     @Id, @RealItemId, @Name, @Category, @SeriesName, @SeriesId, @SeasonId, @DateCreated,
                     @Type, @RunTimeTicks, @ProductionYear, @Backdrop,
-                    @Primary, @Index, @ParentIndex,
-                    @IsUpgrade, @FilePath, @UpgradeKind, @Size
+                    @Primary, @Index, @IndexEnd, @ParentIndex,
+                    @IsUpgrade, @FilePath, @UpgradeKind, @UpgradeDetail, @Size
                 )";
 
             var pId = cmd.Parameters.Add("@Id", SqliteType.Text);
@@ -334,10 +350,12 @@ namespace NotifySync
             var pBack = cmd.Parameters.Add("@Backdrop", SqliteType.Text);
             var pPrim = cmd.Parameters.Add("@Primary", SqliteType.Text);
             var pIdx = cmd.Parameters.Add("@Index", SqliteType.Integer);
+            var pIdxEnd = cmd.Parameters.Add("@IndexEnd", SqliteType.Integer);
             var pPIdx = cmd.Parameters.Add("@ParentIndex", SqliteType.Integer);
             var pUpgrade = cmd.Parameters.Add("@IsUpgrade", SqliteType.Integer);
             var pFilePath = cmd.Parameters.Add("@FilePath", SqliteType.Text);
             var pUpgradeKind = cmd.Parameters.Add("@UpgradeKind", SqliteType.Text);
+            var pUpgradeDetail = cmd.Parameters.Add("@UpgradeDetail", SqliteType.Text);
             var pSize = cmd.Parameters.Add("@Size", SqliteType.Integer);
 
             void Bind(NotificationItem item)
@@ -356,10 +374,12 @@ namespace NotifySync
                 pBack.Value = JsonSerializer.Serialize(item.BackdropImageTags ?? new List<string>(), PluginJsonContext.Default.ListString);
                 pPrim.Value = (object?)item.PrimaryImageTag ?? DBNull.Value;
                 pIdx.Value = (object?)item.IndexNumber ?? DBNull.Value;
+                pIdxEnd.Value = (object?)item.IndexNumberEnd ?? DBNull.Value;
                 pPIdx.Value = (object?)item.ParentIndexNumber ?? DBNull.Value;
                 pUpgrade.Value = item.IsUpgrade ? 1 : 0;
                 pFilePath.Value = (object?)item.FilePath ?? DBNull.Value;
                 pUpgradeKind.Value = (object?)item.UpgradeKind ?? DBNull.Value;
+                pUpgradeDetail.Value = (object?)item.UpgradeDetail ?? DBNull.Value;
                 pSize.Value = (object?)item.Size ?? DBNull.Value;
             }
 
@@ -587,9 +607,11 @@ namespace NotifySync
                 int oIsUpgrade = reader.GetOrdinal("IsUpgrade");
                 int oFilePath = reader.GetOrdinal("FilePath");
                 int oUpgradeKind = TryGetOrdinal(reader, "UpgradeKind");
+                int oUpgradeDetail = TryGetOrdinal(reader, "UpgradeDetail");
                 int oSize = TryGetOrdinal(reader, "Size");
                 int oRealItemId = TryGetOrdinal(reader, "RealItemId");
                 int oSeasonId = TryGetOrdinal(reader, "SeasonId");
+                int oIndexEnd = TryGetOrdinal(reader, "IndexNumberEnd");
 
                 while (reader.Read())
                 {
@@ -609,10 +631,12 @@ namespace NotifySync
                         BackdropImageTags = reader.IsDBNull(oBackdrop) ? new List<string>() : JsonSerializer.Deserialize(reader.GetString(oBackdrop), PluginJsonContext.Default.ListString) ?? new List<string>(),
                         PrimaryImageTag = reader.IsDBNull(oPrimary) ? null : reader.GetString(oPrimary),
                         IndexNumber = reader.IsDBNull(oIndex) ? null : reader.GetInt32(oIndex),
+                        IndexNumberEnd = (oIndexEnd < 0 || reader.IsDBNull(oIndexEnd)) ? null : reader.GetInt32(oIndexEnd),
                         ParentIndexNumber = reader.IsDBNull(oParentIndex) ? null : reader.GetInt32(oParentIndex),
                         IsUpgrade = !reader.IsDBNull(oIsUpgrade) && reader.GetInt32(oIsUpgrade) != 0,
                         FilePath = reader.IsDBNull(oFilePath) ? null : reader.GetString(oFilePath),
                         UpgradeKind = (oUpgradeKind < 0 || reader.IsDBNull(oUpgradeKind)) ? null : reader.GetString(oUpgradeKind),
+                        UpgradeDetail = (oUpgradeDetail < 0 || reader.IsDBNull(oUpgradeDetail)) ? null : reader.GetString(oUpgradeDetail),
                         Size = (oSize < 0 || reader.IsDBNull(oSize)) ? null : reader.GetInt64(oSize)
                     });
                 }
@@ -717,34 +741,6 @@ namespace NotifySync
         }
 
         /// <summary>
-        /// Marks a single notification as dismissed for a user.
-        /// </summary>
-        /// <param name="userId">The normalized user identifier.</param>
-        /// <param name="notificationId">The notification ID to dismiss.</param>
-        public void SetItemDismissed(string userId, string notificationId)
-        {
-            try
-            {
-                using var connection = new SqliteConnection(_connectionString);
-                connection.Open();
-                using var cmd = connection.CreateCommand();
-                cmd.CommandText = @"
-                    INSERT INTO UserNotificationState (UserId, NotificationId, IsDismissed, DismissedAt)
-                    VALUES (@UserId, @NotifId, 1, @Now)
-                    ON CONFLICT(UserId, NotificationId)
-                    DO UPDATE SET IsDismissed = 1, DismissedAt = @Now";
-                cmd.Parameters.AddWithValue("@UserId", userId);
-                cmd.Parameters.AddWithValue("@NotifId", notificationId);
-                cmd.Parameters.AddWithValue("@Now", DateTime.UtcNow.ToString("O"));
-                cmd.ExecuteNonQuery();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "NotifySync: Error dismissing notification {NotifId} for {UserId}.", notificationId, userId);
-            }
-        }
-
-        /// <summary>
         /// Marks multiple notifications as dismissed for a user in a single transaction.
         /// </summary>
         /// <param name="userId">The normalized user identifier.</param>
@@ -812,6 +808,130 @@ namespace NotifySync
             catch (Exception ex)
             {
                 _logger.LogError(ex, "NotifySync: Error deleting states for notification {NotifId}.", notificationId);
+            }
+        }
+
+        /// <summary>
+        /// Records that a removed item came back elsewhere as the item a notification now points
+        /// at. The deletion log then shows it as replaced, and the new copy is never taken for a
+        /// move again — a metadata refresh in the days after would otherwise drop it.
+        /// </summary>
+        /// <param name="itemId">The id of the item that was removed.</param>
+        /// <param name="notificationId">The notification of the copy that took its place.</param>
+        public void MarkDeletedItemMatched(string itemId, string notificationId)
+        {
+            try
+            {
+                using var connection = new SqliteConnection(_connectionString);
+                connection.Open();
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "UPDATE DeletedItems SET MatchedNotificationId = @NotifId WHERE ItemId = @ItemId AND MatchedNotificationId IS NULL";
+                cmd.Parameters.AddWithValue("@NotifId", notificationId);
+                cmd.Parameters.AddWithValue("@ItemId", itemId);
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "NotifySync: Error marking deleted item {ItemId} as replaced.", itemId);
+            }
+        }
+
+        /// <summary>
+        /// Reads every user's state for one notification, so it can travel with the notification
+        /// when its title moves to another library.
+        /// </summary>
+        /// <param name="notificationId">The notification whose states to read.</param>
+        /// <returns>One entry per user who read or dismissed it.</returns>
+        public IReadOnlyList<NotificationUserState> GetStatesForNotification(string notificationId)
+        {
+            var result = new List<NotificationUserState>();
+            try
+            {
+                using var connection = new SqliteConnection(_connectionString);
+                connection.Open();
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "SELECT UserId, IsRead, IsDismissed, ReadAt, DismissedAt FROM UserNotificationState WHERE NotificationId = @NotifId";
+                cmd.Parameters.AddWithValue("@NotifId", notificationId);
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    result.Add(new NotificationUserState
+                    {
+                        UserId = reader.GetString(0),
+                        IsRead = reader.GetInt32(1) != 0,
+                        IsDismissed = reader.GetInt32(2) != 0,
+                        ReadAt = reader.IsDBNull(3) ? null : reader.GetString(3),
+                        DismissedAt = reader.IsDBNull(4) ? null : reader.GetString(4)
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "NotifySync: Error reading states for notification {NotifId}.", notificationId);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Gives a notification the states of the one it takes over from: what a user read stays
+        /// read and what they dismissed stays dismissed, whichever of the two copies they acted on.
+        /// </summary>
+        /// <param name="notificationId">The notification that inherits the states.</param>
+        /// <param name="states">The states of the notification it takes over from.</param>
+        public void MergeStates(string notificationId, IReadOnlyList<NotificationUserState> states)
+        {
+            if (states.Count == 0)
+            {
+                return;
+            }
+
+            try
+            {
+                using var connection = new SqliteConnection(_connectionString);
+                connection.Open();
+                using var transaction = connection.BeginTransaction();
+                try
+                {
+                    using var cmd = connection.CreateCommand();
+                    cmd.Transaction = transaction;
+                    cmd.CommandText = @"
+                        INSERT INTO UserNotificationState (UserId, NotificationId, IsRead, IsDismissed, ReadAt, DismissedAt)
+                        VALUES (@UserId, @NotifId, @IsRead, @IsDismissed, @ReadAt, @DismissedAt)
+                        ON CONFLICT(UserId, NotificationId) DO UPDATE SET
+                            IsRead = MAX(IsRead, excluded.IsRead),
+                            IsDismissed = MAX(IsDismissed, excluded.IsDismissed),
+                            ReadAt = COALESCE(ReadAt, excluded.ReadAt),
+                            DismissedAt = COALESCE(DismissedAt, excluded.DismissedAt)";
+                    var pUserId = cmd.Parameters.Add("@UserId", SqliteType.Text);
+                    var pNotifId = cmd.Parameters.Add("@NotifId", SqliteType.Text);
+                    var pIsRead = cmd.Parameters.Add("@IsRead", SqliteType.Integer);
+                    var pIsDismissed = cmd.Parameters.Add("@IsDismissed", SqliteType.Integer);
+                    var pReadAt = cmd.Parameters.Add("@ReadAt", SqliteType.Text);
+                    var pDismissedAt = cmd.Parameters.Add("@DismissedAt", SqliteType.Text);
+                    pNotifId.Value = notificationId;
+
+                    foreach (var state in states)
+                    {
+                        pUserId.Value = state.UserId;
+                        pIsRead.Value = state.IsRead ? 1 : 0;
+                        pIsDismissed.Value = state.IsDismissed ? 1 : 0;
+                        pReadAt.Value = (object?)state.ReadAt ?? DBNull.Value;
+                        pDismissedAt.Value = (object?)state.DismissedAt ?? DBNull.Value;
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "NotifySync: Error carrying states over to notification {NotifId}.", notificationId);
             }
         }
 

@@ -23,7 +23,7 @@
                 --ns-bg: rgba(20, 20, 20, 0.6);
                 --ns-card: rgba(255, 255, 255, 0.04);
                 --ns-card-hover: rgba(255, 255, 255, 0.07);
-                --ns-border: rgba(255, 255, 255, 0.1);
+                --ns-cfg-border: rgba(255, 255, 255, 0.1);
                 --ns-text: #f0f0f0;
                 --ns-text-dim: #9aa0a6;
                 --ns-accent: #00a4dc;
@@ -40,7 +40,7 @@
                 display: flex; align-items: center; gap: 16px;
                 justify-content: center;
                 background: linear-gradient(135deg, rgba(0, 164, 220, 0.15), rgba(33, 150, 243, 0.05));
-                border: 1px solid var(--ns-border);
+                border: 1px solid var(--ns-cfg-border);
                 border-radius: var(--ns-radius);
                 padding: 18px 22px;
                 margin: 24px 0 16px;
@@ -73,7 +73,7 @@
 
             /* Tabs */
             .ns-tabs {
-                display: flex; gap: 4px; border-bottom: 1px solid var(--ns-border);
+                display: flex; gap: 4px; border-bottom: 1px solid var(--ns-cfg-border);
                 margin-bottom: 20px; overflow-x: auto; -webkit-overflow-scrolling: touch;
                 scrollbar-width: thin;
             }
@@ -93,13 +93,13 @@
             .ns-tab.active .ns-tab-count { background: rgba(0, 164, 220, 0.2); color: var(--ns-accent); }
 
             /* Panels */
-            .ns-panel { display: none; animation: fadein 0.2s ease; }
+            .ns-panel { display: none; animation: ns-fadein 0.2s ease; }
             .ns-panel.active { display: block; }
-            @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+            @keyframes ns-fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
             /* Cards (panel sections) */
             .ns-card {
-                background: var(--ns-card); border: 1px solid var(--ns-border);
+                background: var(--ns-card); border: 1px solid var(--ns-cfg-border);
                 border-radius: var(--ns-radius); padding: 18px 20px; margin-bottom: 16px;
             }
             .ns-card-title {
@@ -125,9 +125,12 @@
                 background: var(--ns-accent); cursor: pointer;
                 box-shadow: 0 0 0 4px rgba(0, 164, 220, 0.15);
             }
+            /* The track has no outline (outline: none above): the focus shows on the thumb. */
+            .ns-slider:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--ns-accent); outline-offset: 3px; box-shadow: 0 0 0 7px rgba(0, 164, 220, 0.25); }
+            .ns-slider:focus-visible::-moz-range-thumb { outline: 2px solid var(--ns-accent); outline-offset: 3px; box-shadow: 0 0 0 7px rgba(0, 164, 220, 0.25); }
             .ns-slider-value {
                 min-width: 50px; text-align: center;
-                background: var(--ns-card-hover); border: 1px solid var(--ns-border);
+                background: var(--ns-card-hover); border: 1px solid var(--ns-cfg-border);
                 border-radius: 6px; padding: 6px 10px; font-weight: 600; font-size: 14px;
                 color: var(--ns-text);
             }
@@ -135,7 +138,7 @@
             /* Search input */
             .ns-search {
                 width: 100%; padding: 10px 14px; padding-left: 38px;
-                background: var(--ns-card-hover); border: 1px solid var(--ns-border);
+                background: var(--ns-card-hover); border: 1px solid var(--ns-cfg-border);
                 border-radius: 6px; color: var(--ns-text); font-size: 13px;
                 box-sizing: border-box; transition: border-color 0.2s;
             }
@@ -152,7 +155,7 @@
             }
             .ns-list-actions .ns-counter { color: var(--ns-text-dim); font-size: 12px; margin-right: auto; }
             .ns-mini-btn {
-                background: var(--ns-card-hover); border: 1px solid var(--ns-border);
+                background: var(--ns-card-hover); border: 1px solid var(--ns-cfg-border);
                 color: var(--ns-text); padding: 5px 10px; border-radius: 5px; font-size: 12px;
                 cursor: pointer; transition: all 0.15s;
             }
@@ -231,6 +234,7 @@
                 width: 20px; height: 20px; background: #fff; border-radius: 50%;
                 transition: transform 0.2s;
             }
+            .ns-toggle:focus-visible { outline: 2px solid var(--ns-accent); outline-offset: 3px; }
             .ns-toggle.on { background: var(--ns-accent); }
             .ns-toggle.on::after { transform: translateX(20px); }
 
@@ -241,20 +245,20 @@
             .ns-setting-help { color: var(--ns-text-dim); font-size: 12px; margin-top: 4px; line-height: 1.4; }
             .ns-number-input {
                 width: 100px; padding: 8px 12px;
-                background: var(--ns-card-hover); border: 1px solid var(--ns-border);
+                background: var(--ns-card-hover); border: 1px solid var(--ns-cfg-border);
                 border-radius: 6px; color: var(--ns-text); font-size: 14px;
             }
             .ns-number-input:focus { outline: none; border-color: var(--ns-accent); }
             .ns-textarea {
                 width: 100%; padding: 10px 14px; min-height: 70px;
-                background: var(--ns-card-hover); border: 1px solid var(--ns-border);
+                background: var(--ns-card-hover); border: 1px solid var(--ns-cfg-border);
                 border-radius: 6px; color: var(--ns-text); font-size: 13px;
                 font-family: inherit; resize: vertical; box-sizing: border-box;
             }
             .ns-textarea:focus { outline: none; border-color: var(--ns-accent); }
             .ns-select-input {
                 width: 100%; padding: 8px 12px;
-                background: var(--ns-card-hover); border: 1px solid var(--ns-border);
+                background: var(--ns-card-hover); border: 1px solid var(--ns-cfg-border);
                 border-radius: 6px; color: var(--ns-text); font-size: 13px;
                 box-sizing: border-box;
             }
@@ -279,10 +283,11 @@
             .ns-table th {
                 text-align: left; padding: 10px 12px; color: var(--ns-text-dim);
                 font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
-                background: rgba(0, 0, 0, 0.3); border-bottom: 1px solid var(--ns-border);
+                background: rgba(0, 0, 0, 0.3); border-bottom: 1px solid var(--ns-cfg-border);
                 cursor: pointer; user-select: none; white-space: nowrap;
             }
             .ns-table th:hover { color: var(--ns-text); }
+            .ns-table th:focus-visible { outline: 2px solid var(--ns-accent); outline-offset: -2px; }
             .ns-table th .sort-icon {
                 font-size: 14px !important; vertical-align: middle; opacity: 0.4; margin-left: 2px;
             }
@@ -325,7 +330,7 @@
                 margin-top: 12px;
             }
             .ns-pagination button {
-                background: var(--ns-card-hover); border: 1px solid var(--ns-border);
+                background: var(--ns-card-hover); border: 1px solid var(--ns-cfg-border);
                 color: var(--ns-text); padding: 5px 10px; border-radius: 5px; font-size: 12px;
                 cursor: pointer; min-width: 32px; transition: all 0.15s;
             }
@@ -340,10 +345,10 @@
                 font-size: 14px; font-weight: 500; transition: all 0.15s;
                 border: 1px solid transparent;
             }
-            .ns-action-btn.primary { background: var(--ns-accent); color: #fff; }
-            .ns-action-btn.primary:hover { background: #0084b3; }
+            .ns-action-btn.primary { background: var(--ns-accent); color: #03131a; }
+            .ns-action-btn.primary:hover { background: #33b9e6; }
             .ns-action-btn.secondary {
-                background: transparent; border-color: var(--ns-border); color: var(--ns-text);
+                background: transparent; border-color: var(--ns-cfg-border); color: var(--ns-text);
             }
             .ns-action-btn.secondary:hover { background: var(--ns-card-hover); border-color: var(--ns-accent); }
             .ns-action-btn .material-icons { font-size: 16px !important; }
@@ -355,19 +360,19 @@
             }
             .ns-save-btn {
                 display: inline-flex; align-items: center; gap: 8px;
-                padding: 12px 22px; background: var(--ns-accent); color: #fff;
+                padding: 12px 22px; background: var(--ns-accent); color: #03131a;
                 border: none; border-radius: 30px; cursor: pointer;
                 font-size: 14px; font-weight: 600; box-shadow: 0 4px 14px rgba(0, 164, 220, 0.4);
                 transition: all 0.2s;
             }
-            .ns-save-btn:hover { background: #0084b3; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0, 164, 220, 0.5); }
+            .ns-save-btn:hover { background: #33b9e6; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0, 164, 220, 0.5); }
             .ns-save-btn:active { transform: translateY(0); }
             .ns-save-btn .material-icons { font-size: 18px !important; }
 
             /* Toast notification */
             .ns-toast {
                 position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
-                background: rgba(20, 20, 20, 0.95); border: 1px solid var(--ns-border);
+                background: rgba(20, 20, 20, 0.95); border: 1px solid var(--ns-cfg-border);
                 color: var(--ns-text); padding: 12px 22px; border-radius: 30px;
                 font-size: 14px; font-weight: 500; opacity: 0; pointer-events: none;
                 transition: all 0.3s ease; z-index: 1100; box-shadow: var(--ns-shadow);
@@ -383,12 +388,12 @@
 
             /* Confirmation modal */
             .ns-modal-backdrop {
-                position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6);
+                position: fixed; top: 0; right: 0; bottom: 0; left: 0; background: rgba(0, 0, 0, 0.6);
                 display: none; align-items: center; justify-content: center; z-index: 1200;
             }
             .ns-modal-backdrop.show { display: flex; }
             .ns-modal {
-                background: #1a1a1a; border: 1px solid var(--ns-border);
+                background: #1a1a1a; border: 1px solid var(--ns-cfg-border);
                 border-radius: var(--ns-radius); padding: 22px 24px; max-width: 380px;
                 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
             }
@@ -413,6 +418,10 @@
                 .ns-save-bar { bottom: 12px; right: 12px; }
                 .ns-mapping-form > * { min-width: 100%; }
             }
+            @media (prefers-reduced-motion: reduce) {
+                .ns-panel { animation: none; }
+                .ns-root *, .ns-toast { transition: none !important; }
+            }
         </style>
 
         <div data-role="content">
@@ -425,9 +434,9 @@
                         <div class="ns-header-info">
                             <h2>NotifySync</h2>
                             <a class="ns-version-link" id="ns-version-link"
-                               href="https://github.com/peterdu1109/NotifySync/releases"
+                               href="https://github.com/ElieMFR/NotifySync/releases"
                                target="_blank" rel="noopener"
-                               title="Voir les release notes sur GitHub / View release notes on GitHub">
+                               title="View the release notes on GitHub">
                                 <!-- Filled in from the running plugin. Deliberately empty: a
                                      hardcoded number goes stale at the next release and then
                                      lies about which version is installed. -->
@@ -439,26 +448,26 @@
 
                     <!-- Tab navigation -->
                     <div class="ns-tabs" role="tablist">
-                        <button type="button" class="ns-tab active" data-tab="settings" role="tab">
+                        <button type="button" class="ns-tab active" data-tab="settings" role="tab" aria-selected="true" aria-controls="ns-panel-settings">
                             <span class="material-icons">tune</span>
                             <span id="i18n-tabSettings">Settings</span>
                         </button>
-                        <button type="button" class="ns-tab" data-tab="libraries" role="tab">
+                        <button type="button" class="ns-tab" data-tab="libraries" role="tab" aria-selected="false" aria-controls="ns-panel-libraries">
                             <span class="material-icons">video_library</span>
                             <span id="i18n-tabLibraries">Libraries</span>
                             <span class="ns-tab-count" id="ns-count-libs">0</span>
                         </button>
-                        <button type="button" class="ns-tab" data-tab="collections" role="tab">
+                        <button type="button" class="ns-tab" data-tab="collections" role="tab" aria-selected="false" aria-controls="ns-panel-collections">
                             <span class="material-icons">collections_bookmark</span>
                             <span id="i18n-tabCollections">Collections</span>
                             <span class="ns-tab-count" id="ns-count-cols">0</span>
                         </button>
-                        <button type="button" class="ns-tab" data-tab="categories" role="tab">
+                        <button type="button" class="ns-tab" data-tab="categories" role="tab" aria-selected="false" aria-controls="ns-panel-categories">
                             <span class="material-icons">label</span>
                             <span id="i18n-tabCategories">Categories</span>
                             <span class="ns-tab-count" id="ns-count-maps">0</span>
                         </button>
-                        <button type="button" class="ns-tab" data-tab="deletions" role="tab">
+                        <button type="button" class="ns-tab" data-tab="deletions" role="tab" aria-selected="false" aria-controls="ns-panel-deletions">
                             <span class="material-icons">delete_sweep</span>
                             <span id="i18n-tabDeletions">Deletions</span>
                         </button>
@@ -467,7 +476,7 @@
                     <form id="notifySyncConfigForm">
 
                         <!-- Tab: Settings -->
-                        <div class="ns-panel active" data-panel="settings" role="tabpanel">
+                        <div class="ns-panel active" data-panel="settings" id="ns-panel-settings" role="tabpanel">
 
                             <div class="ns-card">
                                 <h3 class="ns-card-title">
@@ -476,8 +485,20 @@
                                 </h3>
                                 <p class="ns-card-desc" id="i18n-quotaDesc"></p>
                                 <div class="ns-slider-row">
-                                    <input type="range" id="maxItemsSlider" class="ns-slider" min="1" max="50" value="10" />
-                                    <div class="ns-slider-value" id="maxItemsValue">10</div>
+                                    <input type="range" id="maxItemsSlider" class="ns-slider" min="1" max="50" value="10" aria-labelledby="i18n-quotaTitle" />
+                                    <output id="maxItemsValue" class="ns-slider-value" for="maxItemsSlider" aria-live="off">10</output>
+                                </div>
+                            </div>
+
+                            <div class="ns-card">
+                                <h3 class="ns-card-title">
+                                    <span class="material-icons">favorite_border</span>
+                                    <span id="i18n-favTitle">Favorites in the Bell</span>
+                                </h3>
+                                <p class="ns-card-desc" id="i18n-favDesc"></p>
+                                <div class="ns-toggle-row">
+                                    <label id="i18n-favEnable">Show favorites</label>
+                                    <div id="favoritesToggle" class="ns-toggle" role="switch" tabindex="0" aria-checked="false" aria-labelledby="i18n-favEnable" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" onclick="NotifySyncConf.toggleFavorites()"></div>
                                 </div>
                             </div>
 
@@ -510,7 +531,7 @@
                         </div>
 
                         <!-- Tab: Libraries -->
-                        <div class="ns-panel" data-panel="libraries" role="tabpanel">
+                        <div class="ns-panel" data-panel="libraries" id="ns-panel-libraries" role="tabpanel">
                             <div class="ns-card">
                                 <h3 class="ns-card-title">
                                     <span class="material-icons">video_library</span>
@@ -539,7 +560,7 @@
                         </div>
 
                         <!-- Tab: Collections -->
-                        <div class="ns-panel" data-panel="collections" role="tabpanel">
+                        <div class="ns-panel" data-panel="collections" id="ns-panel-collections" role="tabpanel">
                             <div class="ns-card">
                                 <h3 class="ns-card-title">
                                     <span class="material-icons">collections_bookmark</span>
@@ -568,7 +589,7 @@
                         </div>
 
                         <!-- Tab: Categories -->
-                        <div class="ns-panel" data-panel="categories" role="tabpanel">
+                        <div class="ns-panel" data-panel="categories" id="ns-panel-categories" role="tabpanel">
                             <div class="ns-card">
                                 <h3 class="ns-card-title">
                                     <span class="material-icons">label</span>
@@ -597,7 +618,7 @@
                         </div>
 
                         <!-- Tab: Deletions -->
-                        <div class="ns-panel" data-panel="deletions" role="tabpanel">
+                        <div class="ns-panel" data-panel="deletions" id="ns-panel-deletions" role="tabpanel">
                             <div class="ns-card">
                                 <h3 class="ns-card-title">
                                     <span class="material-icons">delete_sweep</span>
@@ -607,7 +628,7 @@
 
                                 <div class="ns-toggle-row">
                                     <label id="i18n-delEnable">Enable deletion tracking</label>
-                                    <div id="enableDeletedToggle" class="ns-toggle" onclick="NotifySyncConf.toggleDeletedTracking()"></div>
+                                    <div id="enableDeletedToggle" class="ns-toggle" role="switch" tabindex="0" aria-checked="false" aria-labelledby="i18n-delEnable" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" onclick="NotifySyncConf.toggleDeletedTracking()"></div>
                                 </div>
 
                                 <div class="ns-setting-row">
@@ -637,14 +658,14 @@
                     </div>
 
                     <!-- Toast notification -->
-                    <div id="ns-toast" class="ns-toast">
+                    <div id="ns-toast" class="ns-toast" role="status" aria-live="polite">
                         <span class="material-icons">check_circle</span>
                         <span class="ns-toast-msg"></span>
                     </div>
 
                     <!-- Confirmation modal -->
                     <div id="ns-modal-backdrop" class="ns-modal-backdrop">
-                        <div class="ns-modal">
+                        <div class="ns-modal" role="dialog" aria-modal="true" aria-labelledby="ns-modal-title">
                             <h3 id="ns-modal-title">Confirm</h3>
                             <p id="ns-modal-message"></p>
                             <div class="ns-modal-actions">
@@ -663,16 +684,24 @@
         </div>
 
         <script type="text/javascript">
+            // Jellyfin runs this script again each time the page is opened. Its declarations
+            // used to sit at the top level, so the second run stopped at once ("cfgStrings has
+            // already been declared") and the new form never got its submit handler. Kept in
+            // a function now; only NotifySyncConf, which the onclick attributes call, is global.
+            (function () {
             const cfgStrings = {
                 fr: {
                     tabSettings: "Paramètres", tabLibraries: "Bibliothèques", tabCollections: "Collections",
                     tabCategories: "Catégories", tabDeletions: "Suppressions",
                     quotaTitle: "Quota par catégorie",
-                    quotaDesc: "Nombre maximum d'entrées par catégorie (Films, Séries, Musique…). Une série entière compte pour une seule entrée, quel que soit le nombre d'épisodes (jusqu'à 500 par série).",
+                    favTitle: "Favoris dans la cloche",
+                    favDesc: "Les films, séries et épisodes en favoris, les épisodes d'une série en favoris et la musique des artistes en favoris ont une étoile et le filtre « Favoris ».",
+                    favEnable: "Afficher les favoris",
+                    quotaDesc: "Nombre maximum de cartes affichées par catégorie (Films, Séries, Musique…). Les épisodes arrivés ensemble forment une seule carte.",
                     libTitle: "Bibliothèques surveillées",
-                    libDesc: "Cochez les bibliothèques qui doivent apparaître dans la cloche de notifications.",
+                    libDesc: "Cochez les bibliothèques qui doivent apparaître dans la cloche de notifications. Tant qu'aucune n'est cochée, la cloche reste vide.",
                     colTitle: "Collections surveillées",
-                    colDesc: "Sélectionnez les collections Jellyfin (BoxSets) à suivre. Scan toutes les 15 min.",
+                    colDesc: "Sélectionnez les collections Jellyfin (BoxSets) à suivre. Analyse toutes les 15 min. Seuls les titres ajoutés après la première analyse sont annoncés, avec le badge « AJOUTÉ À ».",
                     mapTitle: "Mappage des catégories",
                     mapDesc: "Créez des catégories pour renommer ou regrouper vos bibliothèques (ex. Documentaires, Animes). Sans catégorie, une bibliothèque apparaît sous son propre nom. Les flèches fixent l'ordre des filtres dans la cloche.",
                     mapLibLabel: "Bibliothèque source",
@@ -690,8 +719,9 @@
                     successMsg: "Configuration sauvegardée.",
                     refreshSuccessMsg: "Régénération de l'historique lancée. La cloche sera à jour sous peu.",
                     scanColSuccessMsg: "Scan des collections lancé. Les nouvelles notifications apparaîtront sous peu.",
-                    scanColEmptyMsg: "Aucune collection surveillée — cochez-en au moins une dans l'onglet Collections.",
+                    scanColEmptyMsg: "Aucune collection surveillée. Cochez-en au moins une dans l'onglet Collections.",
                     rateLimitMsg: "Patientez 30 secondes entre chaque régénération.",
+                    scanColWaitMsg: "Patientez 30 secondes entre deux scans des collections.",
                     errorMsg: "Erreur. Réessayez.",
                     fetching: "Chargement…",
                     selectLib: "-- Choisir une bibliothèque --",
@@ -714,9 +744,10 @@
                     delStatusMatched: "Remplacé", delStatusOrphan: "Orphelin",
                     delStatusMatchedTitle: "Un nouvel item a remplacé ce fichier supprimé",
                     delStatusOrphanTitle: "Aucun remplacement détecté dans les 7 jours",
+                    versionLinkTitle: "Voir les notes de version sur GitHub",
                     confirmDeleteMappingTitle: "Supprimer le mappage ?",
                     confirmDeleteMappingMsg: "La catégorie \"{cat}\" pour cette bibliothèque sera supprimée.",
-                    cancel: "Annuler", confirm: "Confirmer",
+                    cancel: "Annuler", confirm: "Confirmer", moveUp: "Monter", moveDown: "Descendre", removeLabel: "Supprimer",
                     pageInfo: "Page {page} sur {total}",
                     prevPage: "Précédent", nextPage: "Suivant"
                 },
@@ -724,11 +755,14 @@
                     tabSettings: "Settings", tabLibraries: "Libraries", tabCollections: "Collections",
                     tabCategories: "Categories", tabDeletions: "Deletions",
                     quotaTitle: "Quota per Category",
-                    quotaDesc: "Maximum number of entries per category (Movies, Series, Music…). A whole series counts as a single entry, regardless of episode count (up to 500 per series).",
+                    favTitle: "Favorites in the Bell",
+                    favDesc: "Favorite movies, series and episodes, episodes of a favorite series and music by favorite artists get a star and the \"Favorites\" filter.",
+                    favEnable: "Show favorites",
+                    quotaDesc: "Maximum number of cards shown per category (Movies, Series, Music…). Episodes that arrived together share one card.",
                     libTitle: "Monitored Libraries",
-                    libDesc: "Check the libraries that should appear in the notification bell.",
+                    libDesc: "Check the libraries that should appear in the notification bell. Until one is checked, the bell stays empty.",
                     colTitle: "Monitored Collections",
-                    colDesc: "Select Jellyfin collections (BoxSets) to track. Scanned every 15 min.",
+                    colDesc: "Select Jellyfin collections (BoxSets) to track. Scanned every 15 min. Only titles added after the first scan are announced, with the \"ADDED TO\" badge.",
                     mapTitle: "Category Mapping",
                     mapDesc: "Create categories to rename or group your libraries (e.g. Documentaries, Anime). A library without one appears under its own name. The arrows set the order of the filters in the bell.",
                     mapLibLabel: "Source library",
@@ -746,8 +780,9 @@
                     successMsg: "Configuration saved.",
                     refreshSuccessMsg: "History regeneration started. The bell will be up to date shortly.",
                     scanColSuccessMsg: "Collection scan started. New notifications will appear shortly.",
-                    scanColEmptyMsg: "No collections monitored — pick at least one in the Collections tab.",
+                    scanColEmptyMsg: "No collections monitored. Pick at least one in the Collections tab.",
                     rateLimitMsg: "Please wait 30 seconds between regenerations.",
+                    scanColWaitMsg: "Please wait 30 seconds between two collection scans.",
                     errorMsg: "Error. Please try again.",
                     fetching: "Loading…",
                     selectLib: "-- Choose a library --",
@@ -770,19 +805,89 @@
                     delStatusMatched: "Replaced", delStatusOrphan: "Orphan",
                     delStatusMatchedTitle: "A new item replaced this deleted file",
                     delStatusOrphanTitle: "No replacement detected within 7 days",
+                    versionLinkTitle: "View the release notes on GitHub",
                     confirmDeleteMappingTitle: "Delete this mapping?",
                     confirmDeleteMappingMsg: "The category \"{cat}\" for this library will be removed.",
-                    cancel: "Cancel", confirm: "Confirm",
+                    cancel: "Cancel", confirm: "Confirm", moveUp: "Move up", moveDown: "Move down", removeLabel: "Delete",
                     pageInfo: "Page {page} of {total}",
                     prevPage: "Previous", nextPage: "Next"
+                },
+                pt: {
+                    tabSettings: "Configurações", tabLibraries: "Bibliotecas", tabCollections: "Coleções",
+                    tabCategories: "Categorias", tabDeletions: "Exclusões",
+                    quotaTitle: "Cota por categoria",
+                    favTitle: "Favoritos no sino",
+                    favDesc: "Filmes, séries e episódios favoritos, episódios de uma série favorita e músicas de artistas favoritos recebem uma estrela e o filtro \"Favoritos\".",
+                    favEnable: "Mostrar favoritos",
+                    quotaDesc: "Número máximo de cartões exibidos por categoria (Filmes, Séries, Música…). Os episódios que chegaram juntos formam um único cartão.",
+                    libTitle: "Bibliotecas monitoradas",
+                    libDesc: "Marque as bibliotecas que devem aparecer no sino de notificações. Enquanto nenhuma estiver marcada, o sino fica vazio.",
+                    colTitle: "Coleções monitoradas",
+                    colDesc: "Selecione as coleções do Jellyfin (BoxSets) a acompanhar. Verificação a cada 15 min. Só os títulos adicionados após a primeira verificação são anunciados, com o selo \"ADICIONADO A\".",
+                    mapTitle: "Mapeamento de categorias",
+                    mapDesc: "Crie categorias para renomear ou agrupar suas bibliotecas (ex.: Documentários, Animes). Sem categoria, a biblioteca aparece com o próprio nome. As setas definem a ordem dos filtros no sino.",
+                    mapLibLabel: "Biblioteca de origem",
+                    mapCatLabel: "Nome da categoria de destino",
+                    mapPlaceholder: "ex.: Animes",
+                    addBtn: "Adicionar",
+                    manualTitle: "Seleção manual (IDs ou nomes)",
+                    manualDesc: "Para configurações avançadas (Canais, XFusion). Separe os valores por vírgulas.",
+                    manualPlaceholder: "ID ou nome da biblioteca, separados por vírgula",
+                    saveBtn: "Salvar",
+                    maintTitle: "Manutenção",
+                    maintDesc: "Força uma varredura completa do histórico após alterar bibliotecas ou categorias, ou para ressincronizar as músicas.",
+                    refreshBtn: "Regenerar histórico",
+                    scanColBtn: "Verificar coleções agora",
+                    successMsg: "Configuração salva.",
+                    refreshSuccessMsg: "Regeneração do histórico iniciada. O sino será atualizado em breve.",
+                    scanColSuccessMsg: "Verificação das coleções iniciada. Novas notificações aparecerão em breve.",
+                    scanColEmptyMsg: "Nenhuma coleção monitorada. Marque ao menos uma na aba Coleções.",
+                    rateLimitMsg: "Aguarde 30 segundos entre cada regeneração.",
+                    scanColWaitMsg: "Aguarde 30 segundos entre duas verificações das coleções.",
+                    errorMsg: "Erro. Tente novamente.",
+                    fetching: "Carregando…",
+                    selectLib: "-- Escolha uma biblioteca --",
+                    noLibs: "Nenhuma biblioteca encontrada via API.",
+                    noCollections: "Nenhuma coleção encontrada.",
+                    noMappings: "Nenhuma categoria personalizada definida.",
+                    selectAll: "Marcar tudo", clearAll: "Desmarcar tudo",
+                    counter: "{checked} / {total} selecionadas",
+                    delTitle: "Histórico de exclusões",
+                    delDesc: "Veja os filmes, episódios e faixas de música excluídos recentemente das suas bibliotecas. Necessário para a detecção de atualizações (selo ATUALIZADO): um arquivo substituído é relacionado à sua exclusão nos últimos 7 dias. A retenção (abaixo) só estende por quanto tempo este registro os exibe.",
+                    delEnable: "Ativar o registro de exclusões",
+                    delRetLabel: "Retenção (dias)",
+                    delEmpty: "Nenhuma exclusão registrada.",
+                    delSearchPlaceholder: "Filtrar exclusões…",
+                    libSearchPlaceholder: "Filtrar bibliotecas…",
+                    colSearchPlaceholder: "Filtrar coleções…",
+                    delColName: "Nome", delColType: "Tipo", delColSeries: "Série",
+                    delColYear: "Ano", delColDate: "Excluído em",
+                    delColPath: "Caminho", delColStatus: "Status",
+                    delStatusMatched: "Substituído", delStatusOrphan: "Órfão",
+                    delStatusMatchedTitle: "Um novo item substituiu este arquivo excluído",
+                    delStatusOrphanTitle: "Nenhuma substituição detectada em 7 dias",
+                    versionLinkTitle: "Ver as notas de versão no GitHub",
+                    confirmDeleteMappingTitle: "Excluir este mapeamento?",
+                    confirmDeleteMappingMsg: "A categoria \"{cat}\" desta biblioteca será removida.",
+                    cancel: "Cancelar", confirm: "Confirmar", moveUp: "Subir", moveDown: "Descer", removeLabel: "Excluir",
+                    pageInfo: "Página {page} de {total}",
+                    prevPage: "Anterior", nextPage: "Próxima"
                 }
             };
 
-            let CT = cfgStrings[(navigator.language || 'en').startsWith('fr') ? 'fr' : 'en'];
+            // A locale ("pt-BR", "fr-FR", "en-US"…) to a table above; English otherwise.
+            const cfgLangKey = (lang) => {
+                const l = (lang || '').toLowerCase();
+                if (l.startsWith('pt')) return 'pt';
+                if (l.startsWith('fr')) return 'fr';
+                return 'en';
+            };
+
+            let CT = cfgStrings[cfgLangKey(navigator.language)];
 
             function applyTranslations(page) {
                 const ids = ['tabSettings', 'tabLibraries', 'tabCollections', 'tabCategories', 'tabDeletions',
-                    'quotaTitle', 'quotaDesc', 'libTitle', 'libDesc', 'colTitle', 'colDesc',
+                    'quotaTitle', 'quotaDesc', 'favTitle', 'favDesc', 'favEnable', 'libTitle', 'libDesc', 'colTitle', 'colDesc',
                     'mapTitle', 'mapDesc', 'mapLibLabel', 'mapCatLabel', 'addBtn',
                     'manualTitle', 'manualDesc', 'saveBtn', 'maintTitle', 'maintDesc', 'refreshBtn', 'scanColBtn',
                     'delTitle', 'delDesc', 'delEnable', 'delRetLabel',
@@ -805,6 +910,8 @@
                 if (colSearch) colSearch.placeholder = CT.colSearchPlaceholder;
                 const delSearch = page.querySelector('#delSearch');
                 if (delSearch) delSearch.placeholder = CT.delSearchPlaceholder;
+                const versionLink = page.querySelector('#ns-version-link');
+                if (versionLink) versionLink.title = CT.versionLinkTitle;
             }
 
             // Toast helper
@@ -821,14 +928,20 @@
 
             // Confirmation modal
             function showConfirm(title, message, onConfirm) {
-                const page = document.querySelector('.pluginConfigurationPage');
+                const page = NotifySyncConf.pageEl();
                 const backdrop = page.querySelector('#ns-modal-backdrop');
                 page.querySelector('#ns-modal-title').textContent = title;
                 page.querySelector('#ns-modal-message').textContent = message;
+                const opener = document.activeElement;
                 backdrop.classList.add('show');
-                const close = () => backdrop.classList.remove('show');
+                const close = () => {
+                    backdrop.classList.remove('show');
+                    if (opener && opener.focus) opener.focus();
+                };
                 page.querySelector('#ns-modal-cancel').onclick = close;
                 page.querySelector('#ns-modal-confirm').onclick = () => { close(); onConfirm(); };
+                backdrop.onkeydown = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
+                page.querySelector('#ns-modal-cancel').focus();
             }
 
             const NotifySyncConf = {
@@ -847,6 +960,17 @@
                 libsRendered: false,
                 colsRendered: false,
 
+                // The page this script runs in. jellyfin-web keeps the plugin pages it has
+                // shown in the DOM, so "the first .pluginConfigurationPage" was another plugin's
+                // hidden page whenever that one had been opened first: saving, adding a category,
+                // the deletion switch and select-all all failed until a reload.
+                page: null,
+                pageEl: function () {
+                    if (this.page && this.page.isConnected) return this.page;
+                    const form = document.getElementById('notifySyncConfigForm');
+                    return form ? form.closest('.pluginConfigurationPage') : null;
+                },
+
                 load: async function (page) {
                     // Concurrency guard: Jellyfin's SPA can fire `pageshow` multiple times in
                     // quick succession when navigating between plugin pages. Two overlapping
@@ -854,6 +978,7 @@
                     // would throw. Skip if already loading.
                     if (this._loading) return;
                     this._loading = true;
+                    this.page = page;
 
                     applyTranslations(page);
                     Dashboard.showLoadingMsg();
@@ -869,16 +994,101 @@
                     try {
                         const userId = ApiClient.getCurrentUserId();
                         const jfLang = userId ? (localStorage.getItem(userId + '-language') || navigator.language || 'en') : (navigator.language || 'en');
-                        const newCT = cfgStrings[jfLang.startsWith('fr') ? 'fr' : 'en'];
+                        const newCT = cfgStrings[cfgLangKey(jfLang)];
                         if (newCT !== CT) {
                             CT = newCT;
                             applyTranslations(page);
                         }
                     } catch (e) { /* keep browser lang */ }
 
-                    // Version badge — read from the installed plugin so the page never needs
-                    // a per-release edit. The hardcoded value in the HTML is only a fallback
-                    // if this lookup fails.
+                    // Version badge: filled in the background, nothing below waits for it.
+                    this.renderVersionBadge(page);
+
+                    // Plugin config fetch — this one is required; if it fails, abort load gracefully.
+                    try {
+                        const cfg = await ApiClient.getPluginConfiguration(this.pluginId);
+                        this.config = cfg || {};
+                        this.config.EnabledLibraries = this.config.EnabledLibraries || [];
+                        this.config.CategoryMappings = this.config.CategoryMappings || [];
+                        this.config.ManualLibraryIds = this.config.ManualLibraryIds || [];
+                        this.config.EnabledCollections = this.config.EnabledCollections || [];
+                    } catch (e) {
+                        console.error('NotifySync: getPluginConfiguration failed', e);
+                        this._loading = false;
+                        Dashboard.hideLoadingMsg();
+                        return;
+                    }
+
+                    // Settings panel DOM wiring — each operation guarded so a missing element
+                    // (race with SPA mount) doesn't kill the whole load.
+                    try {
+                        const slider = page.querySelector('#maxItemsSlider');
+                        const sliderValue = page.querySelector('#maxItemsValue');
+                        const max = this.config.MaxItems || 10;
+                        if (slider) {
+                            slider.value = max;
+                            slider.oninput = (e) => { if (sliderValue) sliderValue.textContent = e.target.value; };
+                        }
+                        if (sliderValue) sliderValue.textContent = max;
+
+                        const manual = page.querySelector('#manualLibraryIds');
+                        if (manual) manual.value = this.config.ManualLibraryIds.join(', ');
+
+                        const favArtists = this.config.FavoritesInBell === true;
+                        const favToggle = page.querySelector('#favoritesToggle');
+                        if (favToggle) {
+                            favToggle.classList.toggle('on', favArtists);
+                            favToggle.setAttribute('aria-checked', favArtists);
+                        }
+
+                        const tracking = this.config.EnableDeletedTracking !== false;
+                        const toggle = page.querySelector('#enableDeletedToggle');
+                        if (toggle) {
+                            toggle.classList.toggle('on', tracking);
+                            toggle.setAttribute('aria-checked', tracking);
+                        }
+                        const retention = page.querySelector('#deletedRetentionDays');
+                        if (retention) retention.value = this.config.DeletedRetentionDays || 30;
+
+                        page.querySelectorAll('.ns-tab').forEach(tab => {
+                            tab.onclick = () => this.switchTab(page, tab.dataset.tab);
+                        });
+
+                        const libSearch = page.querySelector('#libSearch');
+                        if (libSearch) libSearch.oninput = (e) => this.filterList(page, 'libs', e.target.value);
+                        const colSearch = page.querySelector('#colSearch');
+                        if (colSearch) colSearch.oninput = (e) => this.filterList(page, 'cols', e.target.value);
+                        const delSearch = page.querySelector('#delSearch');
+                        if (delSearch) delSearch.oninput = () => this.renderDeletedItems(page);
+                    } catch (e) {
+                        console.error('NotifySync: settings DOM wiring failed', e);
+                    }
+
+                    // The settings are usable as soon as the configuration is in. The lists come
+                    // from slower calls — on a real server the libraries and the collection
+                    // search took about 0.4 s each, one after the other, with the whole page
+                    // waiting behind the spinner — so they now load side by side, each filling
+                    // its own tab. Saving early is safe: save() only harvests a list that has
+                    // rendered. A failure is logged and leaves the rest of the page usable.
+                    // The concurrency guard stays up until the lists are in: two renders of
+                    // the same list at once would empty it and fill it twice.
+                    Dashboard.hideLoadingMsg();
+
+                    const mappingList = page.querySelector('#mappingList');
+                    if (mappingList) mappingList.innerHTML = '<div class="ns-empty">' + CT.fetching + '</div>';
+                    await Promise.all([
+                        // The category rows name their library from the libraries list.
+                        safe('renderLibs', () => this.renderLibs(page)).then(() => safe('renderMap', () => this.renderMap(page))),
+                        safe('renderCollections', () => this.renderCollections(page)),
+                        safe('loadDeletedItems', () => this.loadDeletedItems(page))
+                    ]);
+                    this._loading = false;
+                },
+
+                // Version badge — read from the installed plugin so the page never needs
+                // a per-release edit. The hardcoded value in the HTML is only a fallback
+                // if this lookup fails.
+                renderVersionBadge: async function (page) {
                     try {
                         // Two ways in, because getPlugins() is a convenience helper that has
                         // not always existed on every client build — when it is missing the
@@ -915,97 +1125,48 @@
                             const badge = page.querySelector('#ns-version-badge');
                             const link = page.querySelector('#ns-version-link');
                             if (badge) badge.textContent = v;
-                            if (link) link.href = 'https://github.com/peterdu1109/NotifySync/releases/tag/' + v + await this.releaseTagSuffix(me.Version);
+                            if (link) link.href = 'https://github.com/ElieMFR/NotifySync/releases/tag/' + await this.releaseTag(me.Version);
                         }
                     } catch (e) {
                         // Badge stays empty rather than showing a number we cannot vouch for.
                         console.warn('NotifySync: could not read the installed plugin version.', e);
                     }
-
-                    // Plugin config fetch — this one is required; if it fails, abort load gracefully.
-                    try {
-                        const cfg = await ApiClient.getPluginConfiguration(this.pluginId);
-                        this.config = cfg || {};
-                        this.config.EnabledLibraries = this.config.EnabledLibraries || [];
-                        this.config.CategoryMappings = this.config.CategoryMappings || [];
-                        this.config.ManualLibraryIds = this.config.ManualLibraryIds || [];
-                        this.config.EnabledCollections = this.config.EnabledCollections || [];
-                    } catch (e) {
-                        console.error('NotifySync: getPluginConfiguration failed', e);
-                        this._loading = false;
-                        Dashboard.hideLoadingMsg();
-                        return;
-                    }
-
-                    // Settings panel DOM wiring — each operation guarded so a missing element
-                    // (race with SPA mount) doesn't kill the whole load.
-                    try {
-                        const slider = page.querySelector('#maxItemsSlider');
-                        const sliderValue = page.querySelector('#maxItemsValue');
-                        const max = this.config.MaxItems || 10;
-                        if (slider) {
-                            slider.value = max;
-                            slider.oninput = (e) => { if (sliderValue) sliderValue.textContent = e.target.value; };
-                        }
-                        if (sliderValue) sliderValue.textContent = max;
-
-                        const manual = page.querySelector('#manualLibraryIds');
-                        if (manual) manual.value = this.config.ManualLibraryIds.join(', ');
-
-                        const tracking = this.config.EnableDeletedTracking !== false;
-                        const toggle = page.querySelector('#enableDeletedToggle');
-                        if (toggle) {
-                            toggle.classList.toggle('on', tracking);
-                            toggle.setAttribute('aria-checked', tracking);
-                        }
-                        const retention = page.querySelector('#deletedRetentionDays');
-                        if (retention) retention.value = this.config.DeletedRetentionDays || 30;
-
-                        page.querySelectorAll('.ns-tab').forEach(tab => {
-                            tab.onclick = () => this.switchTab(page, tab.dataset.tab);
-                        });
-
-                        const libSearch = page.querySelector('#libSearch');
-                        if (libSearch) libSearch.oninput = (e) => this.filterList(page, 'libs', e.target.value);
-                        const colSearch = page.querySelector('#colSearch');
-                        if (colSearch) colSearch.oninput = (e) => this.filterList(page, 'cols', e.target.value);
-                        const delSearch = page.querySelector('#delSearch');
-                        if (delSearch) delSearch.oninput = () => this.renderDeletedItems(page);
-                    } catch (e) {
-                        console.error('NotifySync: settings DOM wiring failed', e);
-                    }
-
-                    // Each section now runs independently — a failure here is logged and the
-                    // user still sees the rest of the page rendered. No global error toast.
-                    await safe('renderLibs', () => this.renderLibs(page));
-                    await safe('renderCollections', () => this.renderCollections(page));
-                    safe('renderMap', () => this.renderMap(page));
-                    await safe('loadDeletedItems', () => this.loadDeletedItems(page));
-
-                    this._loading = false;
-                    Dashboard.hideLoadingMsg();
                 },
 
                 switchTab: function (page, tabName) {
-                    page.querySelectorAll('.ns-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
+                    page.querySelectorAll('.ns-tab').forEach(t => {
+                        const on = t.dataset.tab === tabName;
+                        t.classList.toggle('active', on);
+                        t.setAttribute('aria-selected', on);
+                    });
                     page.querySelectorAll('.ns-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === tabName));
                 },
 
-                // One version number can be published under four tags: vX.Y.Z.W (stable),
+                // After 6.0.2.0 a release is tagged X.Y.Z.W, or X.Y.Z.W-beta for a beta. Up to
+                // 6.0.2.0 one number could be published under four tags: vX.Y.Z.W (stable),
                 // vX.Y.Z.W-beta, vX.Y.Z.W-jf12 and vX.Y.Z.W-jf12-beta. A beta's number never
                 // ends in .0 and a stable's always does — true of every release since 5.6 — and
                 // the Jellyfin 12 builds are the ones running on a 12.x server. Linking the bare
                 // number sent every beta tester to a 404, and Jellyfin 12 users to the other
                 // build's notes.
-                releaseTagSuffix: async function (version) {
+                releaseTag: async function (version) {
                     const parts = String(version).split('.');
                     const beta = parts.length === 4 && parts[3] !== '0' ? '-beta' : '';
+                    const lastOldStyle = [6, 0, 2, 0];
+                    for (let i = 0; i < 4; i++) {
+                        const n = parseInt(parts[i], 10) || 0;
+                        if (n !== lastOldStyle[i]) {
+                            if (n > lastOldStyle[i]) return String(version) + beta;
+                            break;
+                        }
+                    }
+
                     try {
                         const info = await ApiClient.getJSON(ApiClient.getUrl('System/Info/Public'));
                         const major = parseInt(String((info && info.Version) || '').split('.')[0], 10);
-                        if (major >= 12) return '-jf12' + beta;
+                        if (major >= 12) return 'v' + version + '-jf12' + beta;
                     } catch (e) { /* server version unknown: the 10.11 tag is the likelier one */ }
-                    return beta;
+                    return 'v' + version + beta;
                 },
 
                 updateCounters: function (page) {
@@ -1031,7 +1192,7 @@
                 },
 
                 toggleAll: function (kind, checked) {
-                    const page = document.querySelector('.pluginConfigurationPage');
+                    const page = this.pageEl();
                     const containerId = kind === 'libs' ? '#libraryCheckboxes' : '#collectionCheckboxes';
                     page.querySelectorAll(containerId + ' .ns-check-row:not(.hidden) input[type="checkbox"]').forEach(cb => {
                         cb.checked = checked;
@@ -1039,8 +1200,14 @@
                     this.updateCounters(page);
                 },
 
+                toggleFavorites: function () {
+                    const toggle = this.pageEl().querySelector('#favoritesToggle');
+                    toggle.classList.toggle('on');
+                    toggle.setAttribute('aria-checked', toggle.classList.contains('on'));
+                },
+
                 toggleDeletedTracking: function () {
-                    const page = document.querySelector('.pluginConfigurationPage');
+                    const page = this.pageEl();
                     const toggle = page.querySelector('#enableDeletedToggle');
                     toggle.classList.toggle('on');
                     toggle.setAttribute('aria-checked', toggle.classList.contains('on'));
@@ -1198,15 +1365,15 @@
 
                         row.innerHTML =
                             '<div class="ns-move-controls">' +
-                            '<button type="button" class="ns-icon-btn ns-move-up"' + (isFirst ? ' disabled' : '') + ' aria-label="Move up">' +
+                            '<button type="button" class="ns-icon-btn ns-move-up"' + (isFirst ? ' disabled' : '') + ' aria-label="' + CT.moveUp + '">' +
                             '<span class="material-icons">arrow_upward</span></button>' +
-                            '<button type="button" class="ns-icon-btn ns-move-down"' + (isLast ? ' disabled' : '') + ' aria-label="Move down">' +
+                            '<button type="button" class="ns-icon-btn ns-move-down"' + (isLast ? ' disabled' : '') + ' aria-label="' + CT.moveDown + '">' +
                             '<span class="material-icons">arrow_downward</span></button>' +
                             '</div>' +
                             '<div class="ns-mapping-info">' +
                             '<b></b><span class="ns-mapping-arrow">→</span><span class="ns-mapping-cat"></span>' +
                             '</div>' +
-                            '<button type="button" class="ns-icon-btn ns-delete-btn" aria-label="Delete">' +
+                            '<button type="button" class="ns-icon-btn ns-delete-btn" aria-label="' + CT.removeLabel + '">' +
                             '<span class="material-icons">delete</span>' +
                             '</button>';
 
@@ -1247,7 +1414,7 @@
                 },
 
                 addMapping: function () {
-                    const page = document.querySelector('.pluginConfigurationPage');
+                    const page = this.pageEl();
                     const lib = page.querySelector('#mappingLibrarySelect').value;
                     const cat = page.querySelector('#mappingCategoryInput').value.trim();
                     if (lib && cat) {
@@ -1259,7 +1426,7 @@
 
                 delMap: function (index) {
                     this.config.CategoryMappings.splice(index, 1);
-                    this.renderMap(document.querySelector('.pluginConfigurationPage'));
+                    this.renderMap(this.pageEl());
                 },
 
                 loadDeletedItems: async function (page) {
@@ -1273,7 +1440,7 @@
                         // search could not find the rest. Page through all of them.
                         let all = [];
                         for (let offset = 0; offset < 100000; offset += 500) {
-                            const batch = await ApiClient.ajax({ type: 'GET', url: '/NotifySync/DeletedItems?limit=500&offset=' + offset, dataType: 'json' }) || [];
+                            const batch = await ApiClient.ajax({ type: 'GET', url: ApiClient.getUrl('NotifySync/DeletedItems', { limit: 500, offset: offset }), dataType: 'json' }) || [];
                             all = all.concat(batch);
                             if (batch.length < 500) break;
                         }
@@ -1337,15 +1504,16 @@
                         return '<span class="material-icons sort-icon">' + (dir === 'asc' ? 'arrow_drop_up' : 'arrow_drop_down') + '</span>';
                     };
                     const sortedCls = (c) => c === col ? 'sorted' : '';
+                    const sortAttrs = (c) => ' tabindex="0" aria-sort="' + (c === col ? (dir === 'asc' ? 'ascending' : 'descending') : 'none') + '"';
 
                     let html = '<div class="ns-table-wrap"><table class="ns-table"><thead><tr>';
-                    html += '<th class="' + sortedCls('Name') + '" data-col="Name">' + CT.delColName + sortIcon('Name') + '</th>';
-                    html += '<th class="' + sortedCls('Type') + '" data-col="Type">' + CT.delColType + sortIcon('Type') + '</th>';
-                    html += '<th class="' + sortedCls('SeriesName') + '" data-col="SeriesName">' + CT.delColSeries + sortIcon('SeriesName') + '</th>';
-                    html += '<th class="' + sortedCls('ProductionYear') + '" data-col="ProductionYear">' + CT.delColYear + sortIcon('ProductionYear') + '</th>';
-                    html += '<th class="' + sortedCls('DeletedAt') + '" data-col="DeletedAt">' + CT.delColDate + sortIcon('DeletedAt') + '</th>';
-                    html += '<th data-col="FilePath">' + CT.delColPath + '</th>';
-                    html += '<th data-col="Status">' + CT.delColStatus + '</th>';
+                    html += '<th class="' + sortedCls('Name') + '" data-col="Name"' + sortAttrs('Name') + '>' + CT.delColName + sortIcon('Name') + '</th>';
+                    html += '<th class="' + sortedCls('Type') + '" data-col="Type"' + sortAttrs('Type') + '>' + CT.delColType + sortIcon('Type') + '</th>';
+                    html += '<th class="' + sortedCls('SeriesName') + '" data-col="SeriesName"' + sortAttrs('SeriesName') + '>' + CT.delColSeries + sortIcon('SeriesName') + '</th>';
+                    html += '<th class="' + sortedCls('ProductionYear') + '" data-col="ProductionYear"' + sortAttrs('ProductionYear') + '>' + CT.delColYear + sortIcon('ProductionYear') + '</th>';
+                    html += '<th class="' + sortedCls('DeletedAt') + '" data-col="DeletedAt"' + sortAttrs('DeletedAt') + '>' + CT.delColDate + sortIcon('DeletedAt') + '</th>';
+                    html += '<th data-col="FilePath"' + sortAttrs('FilePath') + '>' + CT.delColPath + '</th>';
+                    html += '<th data-col="Status"' + sortAttrs('Status') + '>' + CT.delColStatus + '</th>';
                     html += '</tr></thead><tbody>';
 
                     pageItems.forEach(item => {
@@ -1408,7 +1576,10 @@
                                 this.delSort.dir = newCol === 'DeletedAt' || newCol === 'ProductionYear' ? 'desc' : 'asc';
                             }
                             this.renderDeletedItems(page);
+                            const again = page.querySelector('th[data-col="' + newCol + '"]');
+                            if (again) again.focus();
                         };
+                        th.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); th.click(); } };
                     });
 
                     // Pagination handlers
@@ -1419,9 +1590,13 @@
                 },
 
                 refreshHistory: async function () {
+                    // The rescan reads the SAVED settings: a library ticked a moment ago without
+                    // Save was ignored, and the choice lost on leaving the page. Save the form
+                    // first, with Save's own checks, and rescan only if that worked.
+                    if (!await this.save({ quiet: true })) return;
                     Dashboard.showLoadingMsg();
                     try {
-                        await ApiClient.ajax({ type: "POST", url: "/NotifySync/Refresh" });
+                        await ApiClient.ajax({ type: "POST", url: ApiClient.getUrl("NotifySync/Refresh") });
                         Dashboard.hideLoadingMsg();
                         showToast(CT.refreshSuccessMsg, 'success');
                     } catch (err) {
@@ -1435,9 +1610,11 @@
                 },
 
                 scanCollectionsNow: async function () {
+                    // Same as the rescan above: the scan reads the SAVED collection list.
+                    if (!await this.save({ quiet: true })) return;
                     Dashboard.showLoadingMsg();
                     try {
-                        const res = await ApiClient.ajax({ type: "POST", url: "/NotifySync/ScanCollections", dataType: 'json' });
+                        const res = await ApiClient.ajax({ type: "POST", url: ApiClient.getUrl("NotifySync/ScanCollections"), dataType: 'json' });
                         Dashboard.hideLoadingMsg();
                         if (res && res.NoCollections) {
                             showToast(CT.scanColEmptyMsg, 'warn');
@@ -1446,14 +1623,18 @@
                         }
                     } catch (err) {
                         Dashboard.hideLoadingMsg();
-                        showToast(CT.errorMsg, 'error');
+                        if (err && err.status === 429) showToast(CT.scanColWaitMsg, 'warn');
+                        else showToast(CT.errorMsg, 'error');
                     }
                 },
 
-                save: async function () {
+                // Returns whether the settings were saved. `quiet` leaves the confirmation to the
+                // caller (Regenerate shows its own).
+                save: async function (options) {
+                    const quiet = !!(options && options.quiet);
                     Dashboard.showLoadingMsg();
                     try {
-                        const page = document.querySelector('.pluginConfigurationPage');
+                        const page = this.pageEl();
 
                         const rawMax = parseInt(page.querySelector('#maxItemsSlider').value, 10);
                         this.config.MaxItems = (isNaN(rawMax) || rawMax < 1) ? 10 : Math.min(rawMax, 50);
@@ -1471,6 +1652,7 @@
                         }
 
                         this.config.EnableDeletedTracking = page.querySelector('#enableDeletedToggle').classList.contains('on');
+                        this.config.FavoritesInBell = page.querySelector('#favoritesToggle').classList.contains('on');
                         const rawRet = parseInt(page.querySelector('#deletedRetentionDays').value, 10);
                         this.config.DeletedRetentionDays = isNaN(rawRet) ? 30 : Math.min(Math.max(rawRet, 7), 365);
 
@@ -1481,26 +1663,41 @@
 
                         const response = await ApiClient.updatePluginConfiguration(this.pluginId, this.config);
                         Dashboard.processPluginConfigurationUpdateResult(response);
-                        showToast(CT.successMsg, 'success');
+                        if (!quiet) showToast(CT.successMsg, 'success');
+                        return true;
                     } catch (err) {
                         console.error('updatePluginConfiguration error', err);
                         showToast(CT.errorMsg, 'error');
+                        return false;
                     } finally {
                         Dashboard.hideLoadingMsg();
                     }
                 }
             };
 
-            document.querySelector('#notifySyncConfigForm').addEventListener('submit', (e) => {
-                e.preventDefault();
-                NotifySyncConf.save();
-            });
+            window.NotifySyncConf = NotifySyncConf;
 
-            document.addEventListener('pageshow', (e) => {
-                if (e.target.classList.contains('pluginConfigurationPage')) {
-                    NotifySyncConf.load(e.target);
-                }
-            });
+            // Wired once, on the document, and handed to the latest NotifySyncConf: a listener
+            // added at each run would load the page once more for every earlier visit.
+            if (!window.notifySyncConfWired) {
+                window.notifySyncConfWired = true;
+
+                document.addEventListener('submit', (e) => {
+                    if (e.target && e.target.id === 'notifySyncConfigForm') {
+                        e.preventDefault();
+                        window.NotifySyncConf.save();
+                    }
+                });
+
+                document.addEventListener('pageshow', (e) => {
+                    // This plugin's page only: every plugin page carries .pluginConfigurationPage,
+                    // and the settings used to load themselves into whichever one was opened.
+                    if (e.target.querySelector && e.target.querySelector('#notifySyncConfigForm')) {
+                        window.NotifySyncConf.load(e.target);
+                    }
+                });
+            }
+            })();
         </script>
     </div>
 </body>

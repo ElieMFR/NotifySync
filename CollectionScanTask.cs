@@ -12,13 +12,13 @@ namespace NotifySync
     public class CollectionScanTask : IScheduledTask
     {
         /// <inheritdoc />
-        public string Name => "NotifySync: Collection Scan";
+        public string Name => TaskTexts.Name(TaskTexts.Task.CollectionScan, Plugin.Instance?.ServerLanguage);
 
         /// <inheritdoc />
         public string Key => "NotifySyncCollectionScanTask";
 
         /// <inheritdoc />
-        public string Description => "Scanne les collections surveillées pour détecter les nouveaux ajouts et créer des notifications.";
+        public string Description => TaskTexts.Description(TaskTexts.Task.CollectionScan, Plugin.Instance?.ServerLanguage);
 
         /// <inheritdoc />
         public string Category => "NotifySync";

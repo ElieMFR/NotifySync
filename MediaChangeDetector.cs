@@ -34,15 +34,20 @@ namespace NotifySync
 
         internal static readonly string[] ResolutionUpTokens1080 = { "1080p" };
 
+        internal static readonly string[] ResolutionTokens720 = { "720p" };
+
         internal static readonly string[] SourceBetterTokens = { "bluray", "blu-ray", "remux", "blueray" };
 
         // Audio-track-added tokens: when any of these appears in the new filename but not
         // in the old one, we flag MAJ • Audio. Covers FR variants (priority for the French
-        // audience), multi-language markers, and generic "dubbed" markers. VOSTFR is NOT
-        // here — it's subtitles-only, not an audio change.
+        // audience), the English and Brazilian dub markers, multi-language markers, and
+        // generic "dubbed" markers. VOSTFR is NOT here — it's subtitles-only, not an audio
+        // change.
         internal static readonly string[] AudioAddedTokens =
         {
             "vff", "vfq", "vfi", "vf", "truefrench", "french",
+            "english", "eng",
+            "dublado", "nacional", "ptbr", "pt-br",
             "multi", "dual",
             "dubbed", "dub"
         };
@@ -120,6 +125,42 @@ namespace NotifySync
             }
 
             return kinds.Count == 0 ? null : string.Join(",", kinds);
+        }
+
+        /// <summary>
+        /// The resolution change between two file paths, as the card shows it ("1080p → 4K"),
+        /// in whichever direction it went; <c>null</c> when either name does not carry a
+        /// resolution or both carry the same one.
+        /// </summary>
+        /// <param name="oldPath">The replaced file's path.</param>
+        /// <param name="newPath">The new file's path.</param>
+        /// <returns>The label, or <c>null</c>.</returns>
+        internal static string? ResolutionChange(string? oldPath, string? newPath)
+        {
+            var before = ResolutionLabel(oldPath);
+            var after = ResolutionLabel(newPath);
+            return before != null && after != null && before != after ? before + " → " + after : null;
+        }
+
+        private static string? ResolutionLabel(string? path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return null;
+            }
+
+            var lower = path.ToLowerInvariant();
+            if (ContainsAnyTag(lower, ResolutionUpTokens4K))
+            {
+                return "4K";
+            }
+
+            if (ContainsAnyTag(lower, ResolutionUpTokens1080))
+            {
+                return "1080p";
+            }
+
+            return ContainsAnyTag(lower, ResolutionTokens720) ? "720p" : null;
         }
 
         /// <summary>
@@ -356,6 +397,70 @@ namespace NotifySync
             return !string.IsNullOrEmpty(removed.Name)
                 && string.Equals(candidate.Name, removed.Name, StringComparison.OrdinalIgnoreCase)
                 && candidate.ProductionYear == removed.ProductionYear;
+        }
+
+        /// <summary>
+        /// True when two notifications describe one file in two places — what moving a title to
+        /// another library leaves behind: the same kind, byte-for-byte the same size, and either
+        /// the same file name or the same title (the same episode of the same series, the same
+        /// film or track). The file name carries an episode whose series Jellyfin has not linked
+        /// yet; the title carries a file renamed on the way.
+        /// </summary>
+        /// <param name="previous">The notification the title had before.</param>
+        /// <param name="current">The notification of the copy that arrived elsewhere.</param>
+        /// <returns><c>true</c> when <paramref name="current"/> is <paramref name="previous"/>, moved.</returns>
+        internal static bool IsSameTitleMoved(NotificationItem previous, NotificationItem current)
+        {
+            if (string.Equals(previous.Id, current.Id, StringComparison.Ordinal)
+                || previous.RealItemId != null
+                || current.RealItemId != null
+                || !string.Equals(previous.Type, current.Type, StringComparison.Ordinal)
+                || !IsSameFileBackAgain(previous.Size, current.Size))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(previous.FilePath)
+                && !string.IsNullOrEmpty(current.FilePath)
+                && string.Equals(FileName(previous.FilePath), FileName(current.FilePath), StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (string.Equals(current.Type, "Episode", StringComparison.Ordinal))
+            {
+                return !string.IsNullOrEmpty(previous.SeriesName)
+                    && string.Equals(previous.SeriesName, current.SeriesName, StringComparison.OrdinalIgnoreCase)
+                    && previous.IndexNumber == current.IndexNumber
+                    && previous.ParentIndexNumber == current.ParentIndexNumber;
+            }
+
+            return !string.IsNullOrEmpty(previous.Name)
+                && string.Equals(previous.Name, current.Name, StringComparison.OrdinalIgnoreCase)
+                && previous.ProductionYear == current.ProductionYear;
+        }
+
+        /// <summary>
+        /// True when a file sits inside a folder, at any depth.
+        /// </summary>
+        /// <param name="filePath">The file.</param>
+        /// <param name="folderPath">The folder.</param>
+        /// <returns><c>true</c> when the file is somewhere under the folder.</returns>
+        internal static bool IsInside(string? filePath, string? folderPath)
+        {
+            if (string.IsNullOrEmpty(filePath) || string.IsNullOrEmpty(folderPath))
+            {
+                return false;
+            }
+
+            string folder = folderPath.Replace('\\', '/').TrimEnd('/') + "/";
+            return filePath.Replace('\\', '/').StartsWith(folder, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string FileName(string path)
+        {
+            string normalized = path.Replace('\\', '/');
+            return normalized.Substring(normalized.LastIndexOf('/') + 1);
         }
     }
 }

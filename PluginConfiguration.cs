@@ -57,6 +57,13 @@ namespace NotifySync
         }
 
         /// <summary>
+        /// Gets or sets a value indicating whether favorites show in the bell: the star and the
+        /// "Favorites" filter, for movies, series and the music of a favorite artist alike. Off by
+        /// default.
+        /// </summary>
+        public bool FavoritesInBell { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether deleted item tracking is enabled.
         /// </summary>
         public bool EnableDeletedTracking { get; set; }

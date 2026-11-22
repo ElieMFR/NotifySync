@@ -9,7 +9,9 @@ using System.Security.Claims;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -71,6 +73,7 @@ namespace NotifySync
         });
 
         private static long _lastRefreshTime;
+        private static long _lastCollectionScanTime;
         private static ILogger<NotifyController>? _staticLogger;
 
         private readonly IUserManager _userManager;
@@ -106,8 +109,7 @@ namespace NotifySync
         [HttpPost("Refresh")]
         public ActionResult Refresh()
         {
-            if (!User.IsInRole("Administrator")
-                && !string.Equals(User.FindFirst("Jellyfin-IsApiKey")?.Value, "true", StringComparison.OrdinalIgnoreCase))
+            if (!AccessRules.IsAdministrator(User))
             {
                 return Forbid();
             }
@@ -172,8 +174,7 @@ namespace NotifySync
         [HttpPost("ScanCollections")]
         public ActionResult ScanCollectionsNow()
         {
-            if (!User.IsInRole("Administrator")
-                && !string.Equals(User.FindFirst("Jellyfin-IsApiKey")?.Value, "true", StringComparison.OrdinalIgnoreCase))
+            if (!AccessRules.IsAdministrator(User))
             {
                 return Forbid();
             }
@@ -183,6 +184,15 @@ namespace NotifySync
             if (NotificationManager.Instance == null)
             {
                 return StatusCode(StatusCodes.Status503ServiceUnavailable, "Manager not initialized.");
+            }
+
+            var nowTicks = DateTime.UtcNow.Ticks;
+            var last = Interlocked.Read(ref _lastCollectionScanTime);
+            if (new TimeSpan(nowTicks - last).TotalSeconds < 30
+                || Interlocked.CompareExchange(ref _lastCollectionScanTime, nowTicks, last) != last)
+            {
+                _logger.LogWarning("NotifySync: Collection scan rate-limited.");
+                return StatusCode(429, "Please wait 30 seconds.");
             }
 
             // Tell the caller upfront when no collection is monitored, so the UI can
@@ -270,7 +280,17 @@ namespace NotifySync
                 }
 
                 // ETag 304 support: if client already has this version, skip serialization
-                var ifNoneMatch = Request.Headers["If-None-Match"].ToString();
+                // Sent quoted, as HTTP requires: a proxy compressing on the fly (nginx with gzip)
+                // drops an unquoted ETag, and the bell then never got a 304 behind it. Read back
+                // without the quotes or a weak marker, so a client still holding an old bare
+                // value keeps matching.
+                var ifNoneMatch = Request.Headers["If-None-Match"].ToString().Trim();
+                if (ifNoneMatch.StartsWith("W/", StringComparison.Ordinal))
+                {
+                    ifNoneMatch = ifNoneMatch.Substring(2);
+                }
+
+                ifNoneMatch = ifNoneMatch.Trim('"');
                 if (!string.IsNullOrEmpty(ifNoneMatch) && ifNoneMatch == hash)
                 {
                     return StatusCode(304);
@@ -280,7 +300,7 @@ namespace NotifySync
 
                 if (UserViewCache.TryGetValue(cacheKey, out var cachedData))
                 {
-                    Response.Headers["ETag"] = hash;
+                    Response.Headers["ETag"] = "\"" + hash + "\"";
                     return new FileContentResult(cachedData, "application/json");
                 }
 
@@ -294,6 +314,10 @@ namespace NotifySync
                 // Load per-user read/dismissed states
                 var userStates = NotificationManager.Instance.Db.GetUserStates(normalizedId);
                 long clearedUntil = NotificationManager.Instance.GetUserCleared(userId);
+
+                // A collection taken out of the settings keeps its rows in the database until the
+                // next regeneration: hidden here, with its tab, as soon as it is unchecked.
+                var monitoredCollections = CollectionRules.MonitoredSet(Plugin.Instance?.Configuration?.EnabledCollections);
 
                 var filtered = new List<NotificationItem>();
                 int filteredNotVisible = 0;
@@ -314,6 +338,11 @@ namespace NotifySync
                         continue;
                     }
 
+                    if (CollectionRules.IsFromUnmonitoredCollection(n.Id, monitoredCollections))
+                    {
+                        continue;
+                    }
+
                     candidates.Add(n);
                 }
 
@@ -323,6 +352,14 @@ namespace NotifySync
                 // cached so each unique series costs at most one extra lookup.
                 var favoriteIds = new HashSet<string>(StringComparer.Ordinal);
                 var seriesFavCache = new Dictionary<string, bool>(StringComparer.Ordinal);
+
+                // One admin switch for every favorite: with it off nothing is starred and the
+                // "Favorites" filter never appears. Music by a favorite artist counts too: the
+                // artists the user favorited are listed with one read-only query, on the first
+                // track met: reading each artist by name would go through GetArtist, which
+                // creates the artist item when the library has none.
+                bool favoritesOn = Plugin.Instance?.Configuration?.FavoritesInBell == true;
+                HashSet<string>? favoriteArtists = null;
 
                 // Phase 2: library lookups only on remaining candidates
                 foreach (var n in candidates)
@@ -368,7 +405,7 @@ namespace NotifySync
                         continue;
                     }
 
-                    if (IsStillResolving(n, item))
+                    if (IsStillResolving(n, item, NotificationManager.Instance.FirstSeen(n.Id)))
                     {
                         continue;
                     }
@@ -379,12 +416,12 @@ namespace NotifySync
                         continue;
                     }
 
-                    bool isFav = userData?.IsFavorite == true;
+                    bool isFav = favoritesOn && userData?.IsFavorite == true;
                     // IsNullOrEmpty is not enough: rows written before 5.7.19 can hold an
                     // all-zeros GUID (an episode scanned before its series was linked), a
                     // non-empty string that GetItemById rejects with ArgumentException —
                     // which aborted the whole response during library scans.
-                    if (!isFav && IsResolvableId(n.SeriesId))
+                    if (favoritesOn && !isFav && IsResolvableId(n.SeriesId))
                     {
                         if (!seriesFavCache.TryGetValue(n.SeriesId, out isFav))
                         {
@@ -392,6 +429,18 @@ namespace NotifySync
                             isFav = seriesItem != null && _userDataManager.GetUserData(user, seriesItem)?.IsFavorite == true;
                             seriesFavCache[n.SeriesId] = isFav;
                         }
+                    }
+
+                    if (favoritesOn && !isFav && item is Audio track)
+                    {
+                        favoriteArtists ??= FavoriteRules.NameSet(
+                            _libraryManager.GetItemList(new InternalItemsQuery(user)
+                            {
+                                IncludeItemTypes = new[] { BaseItemKind.MusicArtist },
+                                IsFavorite = true,
+                                Recursive = true,
+                            }).Select(a => a.Name));
+                        isFav = FavoriteRules.IsByFavoriteArtist(track.Artists.Concat(track.AlbumArtists), favoriteArtists);
                     }
 
                     if (isFav)
@@ -404,6 +453,7 @@ namespace NotifySync
 
                 // Clone only the filtered items and apply per-user read state
                 var categoryOrder = BuildCategoryOrder(Plugin.Instance?.Configuration);
+                int maxItems = Plugin.Instance?.Configuration?.MaxItems ?? 10;
                 var filteredClones = new List<NotificationItem>(filtered.Count);
                 foreach (var n in filtered)
                 {
@@ -412,11 +462,11 @@ namespace NotifySync
                     clone.IsRead = readState.IsRead && !IsBumpedSinceRead(n, readState.ReadAt);
                     clone.IsFavorite = favoriteIds.Contains(clone.Id);
                     clone.CategoryOrder = categoryOrder.TryGetValue(clone.Category, out var rank) ? rank : null;
+                    clone.CardQuota = maxItems;
                     filteredClones.Add(clone);
                 }
 
                 var filteredList = filteredClones.OrderByDescending(n => n.DateCreated).ToList();
-                int maxItems = Plugin.Instance?.Configuration?.MaxItems ?? 10;
                 var quotaResult = CategoryQuotaService.ApplyCategoryQuotas(filteredList, maxItems);
                 filteredList = quotaResult.Kept.ToList();
 
@@ -440,7 +490,7 @@ namespace NotifySync
                     UserViewCache[cacheKey] = serialized;
                 }
 
-                Response.Headers["ETag"] = hash;
+                Response.Headers["ETag"] = "\"" + hash + "\"";
                 return new FileContentResult(serialized, "application/json");
             }
             catch (Exception ex)
@@ -529,7 +579,7 @@ namespace NotifySync
                 }
 
                 var normalizedUserId = NormalizeId(userId);
-                if (IsUserThrottled(normalizedUserId))
+                if (IsUserThrottled(normalizedUserId + ":read"))
                 {
                     return StatusCode(429, "Too many requests.");
                 }
@@ -571,18 +621,22 @@ namespace NotifySync
                 return StatusCode(StatusCodes.Status503ServiceUnavailable, "Manager not initialized.");
             }
 
+            // Each action has its own clock, and dismissing allows a quick succession. Sharing
+            // one 500 ms window with MarkRead turned two swipes in a row — or a swipe right
+            // after opening the bell, which marks everything read — into a 429, and the card
+            // the user had just swiped away came back.
             var normalizedUserId = NormalizeId(userId);
-            if (IsUserThrottled(normalizedUserId))
+            if (IsUserThrottled(normalizedUserId + ":dismiss", 150))
             {
                 return StatusCode(429, "Too many requests.");
             }
 
-            // Resolve group dismiss: if itemId is a SeriesId, find all episode IDs (no clone overhead)
+            // Resolve group dismiss: if itemId is a SeriesId, find all episode IDs (no clone overhead).
+            // One transaction for the lot rather than a connection per episode.
             var idsToDismiss = NotificationManager.Instance.ResolveNotificationIds(itemId);
-
-            foreach (var id in idsToDismiss)
+            if (idsToDismiss.Count > 0)
             {
-                NotificationManager.Instance.Db.SetItemDismissed(normalizedUserId, id);
+                NotificationManager.Instance.Db.BulkSetDismissed(normalizedUserId, idsToDismiss);
             }
 
             NotificationManager.Instance.IncrementUserStateVersion(normalizedUserId);
@@ -673,8 +727,7 @@ namespace NotifySync
         [HttpGet("DeletedItems")]
         public ActionResult GetDeletedItems([FromQuery] int limit = 200, [FromQuery] int offset = 0)
         {
-            if (!User.IsInRole("Administrator")
-                && !string.Equals(User.FindFirst("Jellyfin-IsApiKey")?.Value, "true", StringComparison.OrdinalIgnoreCase))
+            if (!AccessRules.IsAdministrator(User))
             {
                 return Forbid();
             }
@@ -742,19 +795,26 @@ namespace NotifySync
         /// </summary>
         /// <param name="n">The notification to test.</param>
         /// <param name="item">The live Jellyfin item, already resolved for the visibility check.</param>
+        /// <param name="firstSeenUtc">When the bell first saw it; null for one loaded at startup.</param>
         /// <returns><c>true</c> while it should stay out of the bell.</returns>
-        private static bool IsStillResolving(NotificationItem n, BaseItem item)
+        private static bool IsStillResolving(NotificationItem n, BaseItem item, DateTime? firstSeenUtc)
         {
-            // Past the ceiling nothing is held back any longer, whatever state it is in.
-            if (DateTime.UtcNow - n.DateCreated.ToUniversalTime() >= TimeSpan.FromMinutes(ResolveGraceMinutes))
+            // Past the ceiling nothing is held back any longer, whatever state it is in. Counted
+            // from when the bell first saw the item, not from the item's own date: that one is
+            // the file's creation time, often older than the scan that finds it — a download
+            // finished an hour earlier was released at once, half identified.
+            var since = firstSeenUtc ?? n.DateCreated.ToUniversalTime();
+            if (DateTime.UtcNow - since >= TimeSpan.FromMinutes(ResolveGraceMinutes))
             {
                 return false;
             }
 
-            // An episode with no series yet cannot be grouped and has no artwork to show.
+            // An episode with no series yet cannot be grouped and has no artwork to show. Once
+            // linked, its title can still be its file's name — "Breaking Bad - S02E07" — until
+            // Jellyfin's metadata pass reaches the episode itself, moments later.
             if (string.Equals(n.Type, "Episode", StringComparison.Ordinal))
             {
-                return string.IsNullOrEmpty(n.SeriesId);
+                return string.IsNullOrEmpty(n.SeriesId) || IsNamedAfterItsFile(n);
             }
 
             // No external id means Jellyfin has not matched this against a provider yet — the
@@ -779,6 +839,18 @@ namespace NotifySync
             // No artwork yet: the card would be a grey placeholder that fills in shortly.
             return !item.ImageInfos.Any(i => i.Type == ImageType.Primary);
         }
+
+        /// <summary>
+        /// True when the title the bell would show is still the file's name, which a new episode
+        /// carries until Jellyfin applies its metadata. Read from the notification, not from the
+        /// live item: the notification is what the bell displays, and it is refreshed only once
+        /// Jellyfin has saved the item.
+        /// </summary>
+        /// <param name="n">The notification to test.</param>
+        /// <returns><c>true</c> while the title is the file's name.</returns>
+        private static bool IsNamedAfterItsFile(NotificationItem n)
+            => !string.IsNullOrEmpty(n.FilePath)
+                && string.Equals(n.Name, Path.GetFileNameWithoutExtension(n.FilePath), StringComparison.Ordinal);
 
         /// <summary>
         /// True when a title still carries the provider id its folder is named with, which
@@ -841,50 +913,21 @@ namespace NotifySync
 
         private bool IsAuthorizedForUser(string userId)
         {
-            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(currentUserId))
+            var access = AccessRules.CheckUserAccess(User, userId, name => _userManager.GetUserByName(name)?.Id, out var currentUserId);
+            switch (access)
             {
-                currentUserId = User.FindFirst("UserId")?.Value ?? User.Identity?.Name;
-            }
-
-            if (string.IsNullOrEmpty(currentUserId))
-            {
-                _logger.LogWarning("NotifySync: No user identity found in the request principal.");
-                return false;
-            }
-
-            if (!Guid.TryParse(currentUserId, out var currentGuid))
-            {
-                var userByName = _userManager.GetUserByName(currentUserId);
-                if (userByName != null)
-                {
-                    currentGuid = userByName.Id;
-                    currentUserId = currentGuid.ToString("N");
-                }
-                else
-                {
+                case UserAccess.Allowed:
+                    return true;
+                case UserAccess.NoIdentity:
+                    _logger.LogWarning("NotifySync: No user identity found in the request principal.");
+                    return false;
+                case UserAccess.UnknownUser:
                     _logger.LogWarning("NotifySync: Unable to resolve username '{Username}'.", currentUserId);
                     return false;
-                }
+                default:
+                    _logger.LogWarning("NotifySync: Authorization denied. Current: {Current}, Requested: {Requested}.", currentUserId, userId);
+                    return false;
             }
-
-            var normalizedCurrent = NormalizeId(currentUserId);
-            var normalizedRequested = NormalizeId(userId);
-
-            if (normalizedCurrent == normalizedRequested)
-            {
-                return true;
-            }
-
-            var isAdmin = User.IsInRole("Administrator")
-                || string.Equals(User.FindFirst("Jellyfin-IsApiKey")?.Value, "true", StringComparison.OrdinalIgnoreCase);
-            if (isAdmin)
-            {
-                return true;
-            }
-
-            _logger.LogWarning("NotifySync: Authorization denied. Current: {Current}, Requested: {Requested}.", currentUserId, userId);
-            return false;
         }
 
         private static bool IsUserThrottled(string userId, int minIntervalMs = 500)
@@ -908,7 +951,7 @@ namespace NotifySync
             // Periodic purge: remove stale entries older than 60 seconds
             if (UserActionThrottle.Count > 100)
             {
-                foreach (var kvp in UserActionThrottle.ToList())
+                foreach (var kvp in UserActionThrottle)
                 {
                     if ((now - kvp.Value) > 60_000)
                     {
@@ -927,7 +970,11 @@ namespace NotifySync
         internal static void InvalidateUserCache(string userId)
         {
             var prefix = userId + "_";
-            foreach (var kvp in UserViewCache.ToList())
+            // Enumerate the dictionary itself, never a ToList() copy: ToList sizes its array from
+            // Count, then copies, and another request writing in between made the copy fail —
+            // ArgumentException or NullReferenceException, and the bell got a 500 (three times in
+            // three days on a 12.2 server). The enumerator is safe while others add and remove.
+            foreach (var kvp in UserViewCache)
             {
                 if (kvp.Key.StartsWith(prefix, StringComparison.Ordinal))
                 {
