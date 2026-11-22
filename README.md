@@ -60,7 +60,7 @@ NotifySync adds a notification bell to Jellyfin, like on streaming platforms. Yo
 > [!IMPORTANT]
 > **Requirements:**
 > * Jellyfin **12.x** with NotifySync **6.x**
-> * Jellyfin **10.11.x**: NotifySync **5.8.4.0**, no longer updated
+> * Jellyfin **10.11.x**: NotifySync **5.8.4.0**, frozen
 > * The **File Transformation** plugin, or a manual edit (see [Without File Transformation](#without-file-transformation))
 
 ### Steps
@@ -201,7 +201,7 @@ NotifySync ajoute à Jellyfin une cloche de notifications, comme sur les platefo
 > [!IMPORTANT]
 > **Prérequis :**
 > * Jellyfin **12.x** avec NotifySync **6.x**
-> * Jellyfin **10.11.x** : NotifySync **5.8.4.0**, plus mise à jour
+> * Jellyfin **10.11.x** : NotifySync **5.8.4.0**, version figée
 > * L'extension **File Transformation**, ou une modification manuelle (voir [Sans File Transformation](#sans-file-transformation))
 
 ### Étapes
