@@ -84,6 +84,12 @@ NotifySync adds a notification bell to Jellyfin, like on streaming platforms. Yo
 3.  Restart Jellyfin, then `Ctrl+F5` in your browser.
 4.  In **Dashboard → Plugins → NotifySync**, check the libraries to monitor, click **Save**, then **Regenerate history**. The bell stays empty until a library is checked.
 
+> [!NOTE]
+> **Beta channel (Jellyfin 12 only).** Versions still to be validated are published on a separate repository before they reach stable. To test them, add it the same way as in step 1:
+> ```
+> https://raw.githubusercontent.com/ElieMFR/NotifySync/refs/heads/main/repository-12-beta.json
+> ```
+
 ### Without File Transformation
 
 Skip File Transformation in steps 1 and 2: add and install **NotifySync** only. Before step 3, add the bell to Jellyfin's page yourself with the command for your system:
@@ -226,6 +232,12 @@ NotifySync ajoute à Jellyfin une cloche de notifications, comme sur les platefo
 2.  Dans **Extensions**, filtre **Disponible**, installez **NotifySync** et **File Transformation**.
 3.  Redémarrez Jellyfin, puis `Ctrl+F5` dans votre navigateur.
 4.  Dans **Tableau de bord → Extensions → NotifySync**, cochez les bibliothèques à surveiller, cliquez sur **Sauvegarder** puis **Régénérer l'historique**. La cloche reste vide tant qu'aucune bibliothèque n'est cochée.
+
+> [!NOTE]
+> **Canal bêta (Jellyfin 12 uniquement).** Les versions encore à valider sont publiées sur un dépôt à part avant de passer en stable. Pour les tester, ajoutez-le comme à l'étape 1 :
+> ```
+> https://raw.githubusercontent.com/ElieMFR/NotifySync/refs/heads/main/repository-12-beta.json
+> ```
 
 ### Sans File Transformation
 

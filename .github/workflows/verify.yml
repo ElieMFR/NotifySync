@@ -1,11 +1,11 @@
-# Checks every push and pull request on the Jellyfin 12 line: builds without warnings, flags
+# Checks every push and pull request on the main branch: builds without warnings, flags
 # vulnerable packages, runs the tests and checks the bell's script. Publishes nothing.
 name: Verify
 on:
   push:
-    branches: [jellyfin-12]
+    branches: [main]
   pull_request:
-    branches: [jellyfin-12]
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
