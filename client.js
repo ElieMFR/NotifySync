@@ -873,9 +873,12 @@
         const key = e.keyCode;
         const back = TV_BACK_KEYS.indexOf(key) !== -1;
         if (!back && [13, 37, 38, 39, 40].indexOf(key) === -1) return;
+        // An empty panel has nothing to move over: the arrows are left alone, OK closes it.
+        const rows = back ? null : tvRows(drop);
+        if (rows && !rows.length && key !== 13) return;
         e.preventDefault();
         e.stopImmediatePropagation();
-        if (back) {
+        if (back || (rows && !rows.length)) {
             closeDropdown();
             const bell = document.getElementById('netflix-bell');
             if (bell) bell.focus();
@@ -886,7 +889,6 @@
             if (active && drop.contains(active)) active.click();
             return;
         }
-        const rows = tvRows(drop);
         const r = rows.findIndex(row => row.some(el => el === active || el.contains(active)));
         if (r === -1) { restoreTvFocus(drop); return; }
         const row = rows[r];

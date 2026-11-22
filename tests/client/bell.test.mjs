@@ -100,6 +100,31 @@ check('after the last card goes, focus stops on a card, not on "Clear list"', re
 check('a focus left on the footer stays there', restore(rowsNow, 3, 1) === 3);
 check('focus on a middle card stays', restore(rowsNow, 2, 1) === 2);
 check('first open lands on the first card', restore(rowsNow, null, 1) === 1);
+// The panel's keyboard handler, cut out of client.js and run against stand-in elements.
+const keysCode = grab('    const isTvLayout', '    // syncOnly');
+const mkKeys = ({ tv, display = 'flex', els = [], active = null }) => {
+    const S = { closed: 0, bellFocus: 0, handler: null, active };
+    const bell = { focus() { S.bellFocus++; } };
+    const drop = { style: { display }, contains: x => els.indexOf(x) !== -1, querySelectorAll: sel => sel.indexOf('.hero-section') === 0 ? els : [] };
+    const doc = { documentElement: { classList: { contains: () => tv } }, getElementById: id => id === 'notification-dropdown' ? drop : (id === 'netflix-bell' ? bell : null), get activeElement() { return S.active; } };
+    new Function('S', 'window', 'document', 'closeDropdown', keysCode)(S, { addEventListener: (t, fn) => { S.handler = fn; } }, doc, () => { S.closed++; });
+    S.press = (keyCode, extra) => {
+        const e = Object.assign({ keyCode, key: keyCode === 13 ? 'Enter' : (keyCode === 32 ? ' ' : ''), repeat: false, target: S.active, prevented: false, stopped: false, preventDefault() { this.prevented = true; }, stopImmediatePropagation() { this.stopped = true; } }, extra);
+        S.handler(e);
+        return e;
+    };
+    return S;
+};
+const mkCard = (cls) => ({ clicks: 0, click() { this.clicks++; }, contains(x) { return x === this; }, classList: { contains: c => c === cls }, matches(s) { return s.split(', ').indexOf('.' + cls) !== -1; }, focus() {}, scrollIntoView() {}, querySelector: () => null });
+{
+    const empty = mkKeys({ tv: true });
+    const down = empty.press(40);
+    check('TV, empty panel: the arrows are not swallowed', !down.prevented && !down.stopped);
+    const ok = empty.press(13);
+    check('TV, empty panel: OK closes it and returns the focus to the bell', empty.closed === 1 && empty.bellFocus === 1 && ok.prevented);
+}
+const withCard = (tv) => { const c = mkCard('dropdown-item'); const k = mkKeys({ tv, els: [c], active: c }); k.card = c; return k; };
+check('TV, a card: the arrows are still taken by the panel', withCard(true).press(40).prevented);
 const codeOnly = src.split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n')
     .replace(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g, '""').replace(/\/\/[^\n]*/g, '');
 check('no ?? (Chromium 56)', !/\?\?/.test(codeOnly));
