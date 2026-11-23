@@ -17,9 +17,9 @@
     <NuGetAuditMode>direct</NuGetAuditMode>
 
     <!-- Versioning & Metadata -->
-    <AssemblyVersion>6.0.2.11</AssemblyVersion>
-    <FileVersion>6.0.2.11</FileVersion>
-    <Version>6.0.2.11</Version>
+    <AssemblyVersion>6.0.2.12</AssemblyVersion>
+    <FileVersion>6.0.2.12</FileVersion>
+    <Version>6.0.2.12</Version>
     <Authors>ElieM, Peterdu1109</Authors>
     <Company>NotifySync</Company>
     <Product>NotifySync</Product>
