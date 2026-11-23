@@ -150,5 +150,30 @@ foreach (var file in new[] { "meta.json", "repository.json", "repository-12-beta
     Check($"{file} carries the three texts of the plugin page", System.IO.File.Exists(path) && System.IO.File.ReadAllText(path).Contains(threeTexts.Replace("\n", "\\n"), StringComparison.Ordinal));
 }
 
+// A replaced movie that Jellyfin names or dates differently must still be matched to its deleted file
+// (measured 2026-11-23 on a real server: Radarr upgraded two films, both stayed "new" in the bell).
+// Values below are the ones read from that server: same folder, new name and/or new year.
+{
+    var dbDir = Path.Combine(Path.GetTempPath(), "notifysync-test-" + Guid.NewGuid().ToString("N"));
+    var db = new NotificationDatabase(dbDir, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
+    const string zw = "​";
+    db.SaveDeletedItem("i-lilo", "Lilo et Stitch", "Movie", null, 2002, null, null, "/disk/Film/" + zw + "Lilo and Stitch (2002) {tmdb-11544}/Lilo and Stitch (2002) [MULTI VFF] [Bluray-1080p] [x264] [FR+EN].mkv", null);
+    db.SaveDeletedItem("i-snow", "Blanche-Neige et les Sept Nains", "Movie", null, 1938, null, null, "/disk/Film/" + zw + "Snow White and the Seven Dwarfs (1938) {tmdb-408}/Snow White and the Seven Dwarfs (1938) [MULTI VFF] [Bluray-1080p] [x264] [EN+FR].mkv", null);
+    db.SaveDeletedItem("i-other", "Autre film", "Movie", null, 2001, null, null, "/disk/Film/" + zw + "Autre film (2001) {tmdb-1}/Autre film (2001) [x264].mkv", null);
+    Check("a replaced movie is matched when its name and year are unchanged", db.TryGetDeletedMatch("Autre film", "Movie", 2001) != null);
+    Check("a replaced movie is matched by its folder when Jellyfin changed the name and the year (Lilo)",
+        db.TryGetDeletedMatch("Lilo & Stitch", "Movie", 2025, null, null, null, "/disk/Film/" + zw + "Lilo and Stitch (2002) {tmdb-11544}/Lilo and Stitch (2002) [MULTI VFF] [Bluray-1080p] [x265] [FR+EN].mkv") is { ItemId: "i-lilo" });
+    Check("a replaced movie is matched by its folder when Jellyfin changed the year (Snow White)",
+        db.TryGetDeletedMatch("Blanche-Neige et les sept nains", "Movie", 1937, null, null, null, "/disk/Film/" + zw + "Snow White and the Seven Dwarfs (1938) {tmdb-408}/Snow White and the Seven Dwarfs (1938) [MULTI VFF] [Bluray-1080p] [x265] [FR+EN].mkv") is { ItemId: "i-snow" });
+    Check("another film in another folder is not matched", db.TryGetDeletedMatch("Un autre titre", "Movie", 1999, null, null, null, "/disk/Film/Un autre titre (1999) {tmdb-9}/Un autre titre (1999) [x265].mkv") == null);
+    Check("a folder shared by many films proves nothing", db.TryGetDeletedMatch("Un autre titre", "Movie", 1999, null, null, null, "/disk/Film/Un autre titre.mkv") == null);
+    Check("without a path the movie is still matched by name and year only", db.TryGetDeletedMatch("Un autre titre", "Movie", 1999) == null);
+    Check("an episode is never matched by its folder", db.TryGetDeletedMatch("Lilo & Stitch", "Episode", 2025, "Serie", 1, 1, "/disk/Film/" + zw + "Lilo and Stitch (2002) {tmdb-11544}/Lilo and Stitch (2002) [x265].mkv") == null);
+    Check("movie folder key ignores the invisible characters and the case", MediaChangeDetector.MovieFolderKey("/d/" + zw + "Lilo and Stitch (2002) {TMDB-11544}/f.mkv") == "lilo and stitch (2002) {tmdb-11544}");
+    Check("movie folder key is null for a plain shared folder", MediaChangeDetector.MovieFolderKey("/d/Films/f.mkv") == null);
+    Check("movie folder key reads Windows paths", MediaChangeDetector.MovieFolderKey(@"D:\Films\Heat (1995)\Heat.mkv") == "heat (1995)");
+    try { Directory.Delete(dbDir, true); } catch { /* the pooled connection may still hold the file */ }
+}
+
 Console.WriteLine(failed == 0 ? "All tests passed." : failed + " test(s) failed.");
 return failed == 0 ? 0 : 1;

@@ -25,11 +25,16 @@
     <Compile Include="../../FavoriteRules.cs" />
     <Compile Include="../../PluginConfiguration.cs" />
     <Compile Include="../../CategoryMapping.cs" />
+    <Compile Include="../../NotificationDatabase.cs" />
+    <Compile Include="../../DeletedItemRecord.cs" />
+    <Compile Include="../../NotificationUserState.cs" />
+    <Compile Include="../../PluginJsonContext.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Jellyfin.Controller" Version="12.0.0" />
     <PackageReference Include="Jellyfin.Model" Version="12.0.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.9" />
   </ItemGroup>
 
 </Project>

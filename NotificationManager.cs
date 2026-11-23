@@ -382,14 +382,14 @@ namespace NotifySync
         /// and <see cref="OnItemUpdated"/> (metadata-refresh recovery) so ClassifyUpgrade
         /// can compare the new file against the path of the file that was just deleted.
         /// </summary>
-        private DeletedItemRecord? TryGetDeletedMatchRecord(string name, string type, int? year, string? seriesName, int? indexNumber, int? parentIndexNumber)
+        private DeletedItemRecord? TryGetDeletedMatchRecord(string name, string type, int? year, string? seriesName, int? indexNumber, int? parentIndexNumber, string? filePath = null)
         {
             if (Plugin.Instance?.Configuration?.EnableDeletedTracking != true)
             {
                 return null;
             }
 
-            return _db.TryGetDeletedMatch(name, type, year, seriesName, indexNumber, parentIndexNumber);
+            return _db.TryGetDeletedMatch(name, type, year, seriesName, indexNumber, parentIndexNumber, filePath);
         }
 
         /// <summary>
@@ -1036,7 +1036,8 @@ namespace NotifySync
                                 updatedNotif.ProductionYear,
                                 updatedNotif.SeriesName,
                                 updatedNotif.IndexNumber,
-                                updatedNotif.ParentIndexNumber);
+                                updatedNotif.ParentIndexNumber,
+                                updatedNotif.FilePath);
 
                             // The old copy of a title whose notification followed it here: that
                             // deletion is already explained, by this very notification.
@@ -1312,7 +1313,8 @@ namespace NotifySync
                             notif.ProductionYear,
                             notif.SeriesName,
                             notif.IndexNumber,
-                            notif.ParentIndexNumber);
+                            notif.ParentIndexNumber,
+                            notif.FilePath);
 
                         _logger.LogDebug(
                             "NotifySync ProcessBuffer: {Name} | type={Type} | series={Series} | S{Season}E{Episode} | size={Size} | deletedMatch={Match}",

@@ -1231,8 +1231,9 @@ namespace NotifySync
         /// <param name="seriesName">The series name (for episodes).</param>
         /// <param name="indexNumber">The episode number (for episodes).</param>
         /// <param name="parentIndexNumber">The season number (for episodes).</param>
+        /// <param name="filePath">The path of the new file (movies): when name and year match nothing, the folder it sits in is looked up among the recent deletions.</param>
         /// <returns>The matched <see cref="DeletedItemRecord"/> or null.</returns>
-        public DeletedItemRecord? TryGetDeletedMatch(string name, string type, int? productionYear, string? seriesName = null, int? indexNumber = null, int? parentIndexNumber = null)
+        public DeletedItemRecord? TryGetDeletedMatch(string name, string type, int? productionYear, string? seriesName = null, int? indexNumber = null, int? parentIndexNumber = null, string? filePath = null)
         {
             try
             {
@@ -1273,7 +1274,8 @@ namespace NotifySync
                 using var reader = cmd.ExecuteReader();
                 if (!reader.Read())
                 {
-                    return null;
+                    reader.Close();
+                    return type == "Movie" ? TryGetDeletedMovieByFolder(connection, cutoff, type, filePath) : null;
                 }
 
                 return new DeletedItemRecord
@@ -1297,6 +1299,60 @@ namespace NotifySync
                 _logger.LogError(ex, "NotifySync: Error fetching deleted item match for {Name}.", name);
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Name and year found nothing: Jellyfin may have renamed or re-dated the movie while the file was
+        /// being replaced (a wrong year, a title identified as another film). The folder the file sits in
+        /// survives such a replacement, so a recent deletion from the same folder is the same movie.
+        /// </summary>
+        private DeletedItemRecord? TryGetDeletedMovieByFolder(SqliteConnection connection, string cutoff, string type, string? filePath)
+        {
+            var key = MediaChangeDetector.MovieFolderKey(filePath);
+            if (key == null)
+            {
+                return null;
+            }
+
+            // The folder name, without the invisible characters some libraries put in front of it, is searched
+            // as a piece of the stored path; the exact comparison is then made on the folder key.
+            var folderName = MediaChangeDetector.MovieFolderName(filePath)!;
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = @"
+                SELECT Id, ItemId, Name, Type, SeriesName, ProductionYear, IndexNumber, ParentIndexNumber, DeletedAt, FilePath, MatchedNotificationId, Size
+                FROM DeletedItems
+                WHERE Type = @Type AND DeletedAt > @Cutoff AND FilePath LIKE @Folder ESCAPE '!'
+                ORDER BY DeletedAt DESC LIMIT 20";
+            cmd.Parameters.AddWithValue("@Type", type);
+            cmd.Parameters.AddWithValue("@Cutoff", cutoff);
+            cmd.Parameters.AddWithValue("@Folder", "%" + folderName.Replace("!", "!!", StringComparison.Ordinal).Replace("%", "!%", StringComparison.Ordinal).Replace("_", "!_", StringComparison.Ordinal) + "%");
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                var path = reader.IsDBNull(9) ? null : reader.GetString(9);
+                if (MediaChangeDetector.MovieFolderKey(path) != key)
+                {
+                    continue;
+                }
+
+                return new DeletedItemRecord
+                {
+                    Id = reader.GetInt64(0),
+                    ItemId = reader.GetString(1),
+                    Name = reader.GetString(2),
+                    Type = reader.GetString(3),
+                    SeriesName = reader.IsDBNull(4) ? null : reader.GetString(4),
+                    ProductionYear = reader.IsDBNull(5) ? null : reader.GetInt32(5),
+                    IndexNumber = reader.IsDBNull(6) ? null : reader.GetInt32(6),
+                    ParentIndexNumber = reader.IsDBNull(7) ? null : reader.GetInt32(7),
+                    DeletedAt = DateTime.Parse(reader.GetString(8), CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind),
+                    FilePath = path,
+                    MatchedNotificationId = reader.IsDBNull(10) ? null : reader.GetString(10),
+                    Size = reader.IsDBNull(11) ? null : reader.GetInt64(11)
+                };
+            }
+
+            return null;
         }
 
         /// <summary>

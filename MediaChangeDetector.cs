@@ -27,6 +27,10 @@ namespace NotifySync
 
         internal const string KindAudio = "audio";
 
+        private static readonly char[] PathSeparators = { '/', '\\' };
+
+        private static readonly char[] InvisibleChars = { '\u200B', '\uFEFF', '\u200C', '\u200D', ' ' };
+
         // Path tokens (lowercase) used to detect upgrade type from filename conventions.
         // Tokens are matched as standalone tags surrounded by non-alphanumeric separators
         // (dots, dashes, underscores, spaces) — see ContainsTag for the exact rule.
@@ -350,6 +354,51 @@ namespace NotifySync
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// The name of the folder a movie file sits in, when that name identifies the movie: it carries
+        /// a year ("Title (2002)") or a provider id ("{tmdb-11544}", "[tmdbid-11544]"). Radarr and Jellyfin
+        /// keep that folder across a replacement even when Jellyfin names or dates the movie differently
+        /// afterwards, so it recognises the same title where name and year cannot. A shared folder such
+        /// as "Films" says nothing about a title: it gives <c>null</c>. Invisible characters Radarr puts in
+        /// front of the name are ignored.
+        /// </summary>
+        /// <param name="path">The path of the movie file.</param>
+        /// <returns>The folder name, trimmed and lowercased, or <c>null</c> when it does not identify a movie.</returns>
+        internal static string? MovieFolderKey(string? path)
+        {
+            var folder = MovieFolderName(path);
+            if (folder == null)
+            {
+                return null;
+            }
+
+            bool hasYear = System.Text.RegularExpressions.Regex.IsMatch(folder, @"\(\d{4}\)");
+            bool hasProviderId = System.Text.RegularExpressions.Regex.IsMatch(folder, @"[\[\{\(](tmdb|tvdb|imdb)(id)?[-=]", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            return hasYear || hasProviderId ? folder.ToLowerInvariant() : null;
+        }
+
+        /// <summary>
+        /// The name of the folder a file sits in, without the invisible characters some libraries put in front of it.
+        /// </summary>
+        /// <param name="path">The path of the file.</param>
+        /// <returns>The folder name, or <c>null</c> when the path has no parent folder.</returns>
+        internal static string? MovieFolderName(string? path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return null;
+            }
+
+            var parts = path.Split(PathSeparators, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length < 2)
+            {
+                return null;
+            }
+
+            var folder = parts[parts.Length - 2].Trim(InvisibleChars).Trim();
+            return folder.Length == 0 ? null : folder;
         }
 
         /// <summary>
